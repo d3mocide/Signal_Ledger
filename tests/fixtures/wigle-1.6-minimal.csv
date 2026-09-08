@@ -1,0 +1,3 @@
+WigleWifi-1.6,appRelease=1.0.0,model=fixture
+MAC,SSID,AuthMode,FirstSeen,Channel,Frequency,RSSI,CurrentLatitude,CurrentLongitude,Type
+00:16:3E:AA:BB:CC,Fixture AP,WPA2,2026-09-07T11:00:00Z,6,2437,-61,37.7700,-122.4100,WIFI

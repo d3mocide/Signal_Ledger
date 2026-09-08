@@ -1,0 +1,36 @@
+const $=s=>document.querySelector(s),esc=v=>String(v??"").replace(/[&<>"]/g,x=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[x]));
+let areas=[],runs=[],me=null,setupMode=false;
+const api=async(url,options={})=>{options.headers={...(options.headers||{})};const r=await fetch(url,options);if(!r.ok){const err=new Error((await r.text()).replace(/^"|"$/g,""));err.status=r.status;throw err}return r.json()};
+function areaOptions(target,label){target.innerHTML='<option value="">'+label+'</option>'+areas.map(a=>'<option value="'+a.id+'">'+esc(a.name)+' · '+esc(a.precision)+'</option>').join("")}
+function runOptions(){const target=$('#upload-form select[name=survey_run_id]');target.innerHTML='<option value="">Select survey run</option>'+runs.map(r=>'<option value="'+r.id+'">'+esc(r.name)+' (#'+r.id+')</option>').join("")}
+function stats(s){$('#metrics').innerHTML=Object.entries({Areas:s.areas,"Survey runs":s.runs,Observations:s.observations,Devices:s.devices}).map(x=>'<div class="metric"><b>'+x[1]+'</b><span>'+x[0]+'</span></div>').join("")}
+function formJSON(form){return JSON.stringify(Object.fromEntries(new FormData(form)))}
+async function refresh(){
+ try{me=await api("/v1/me")}catch(err){await authStart();return}
+ const all=await Promise.all([api("/v1/overview"),api("/v1/survey-areas"),api("/v1/survey-runs")]);
+ $('#identity').textContent=me.actor+" · "+me.role;$('#key-button').textContent="Sign out";stats(all[0]);areas=all[1];runs=all[2];
+ $('#areas').innerHTML=areas.length?areas.map(a=>'<div class="record"><b>'+esc(a.name)+'</b>'+esc(a.authorization_ref)+' · '+esc(a.precision)+' policy</div>').join(""):"<div class=record>No areas yet.</div>";
+ $('#runs').innerHTML=runs.length?runs.map(r=>'<div class="record"><b>'+esc(r.name)+'</b>Area #'+r.survey_area_id+' · '+Math.round(r.collector_coverage*100)+'% coverage · '+(r.completed?"complete":'open <button onclick="completeRun('+r.id+')">Complete</button>')+'</div>').join(""):"<div class=record>No runs yet.</div>";
+ areaOptions($('#run-form select'),"Select area");areaOptions($('#device-area'),"All areas");areaOptions($('#cluster-area'),"All areas");runOptions();
+}
+async function authStart(){
+ const s=await api("/v1/setup/status");setupMode=s.setup_required;$('#auth-title').textContent=setupMode?"Create the administrator account":"Sign in";
+ $('#auth-copy').textContent=setupMode?"This first account becomes an administrator and can add the other users later.":"Use your Signal Ledger account to access this private observatory.";
+ $('#auth-submit').textContent=setupMode?"Create account":"Sign in";$('#key-dialog').showModal();
+}
+window.completeRun=async id=>{try{await api("/v1/survey-runs/"+id+"/complete",{method:"POST"});refresh()}catch(e){alert(e.message)}};
+$('#key-button').onclick=async()=>{if(me){await api("/v1/auth/logout",{method:"POST"});me=null;$('#identity').textContent="Sign in required";$('#key-button').textContent="Sign in";authStart()}else authStart()};
+$('#key-form').onsubmit=async e=>{e.preventDefault();try{await api(setupMode?"/v1/setup":"/v1/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:formJSON(e.target)});$('#key-dialog').close();$('#key-error').textContent="";e.target.reset();refresh()}catch(err){$('#key-error').textContent=err.message}};
+$('#auth-cancel').onclick=()=>$('#key-dialog').close();
+$('#area-form').onsubmit=async e=>{e.preventDefault();try{await api("/v1/survey-areas",{method:"POST",headers:{"Content-Type":"application/json"},body:formJSON(e.target)});e.target.reset();refresh()}catch(err){alert(err.message)}};
+$('#run-form').onsubmit=async e=>{e.preventDefault();try{const d=Object.fromEntries(new FormData(e.target));d.survey_area_id=+d.survey_area_id;d.collector_coverage=+d.collector_coverage;await api("/v1/survey-runs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});e.target.reset();refresh()}catch(err){alert(err.message)}};
+$('#upload-form').onsubmit=async e=>{e.preventDefault();try{const d=new FormData(e.target),id=d.get("survey_run_id"),source=d.get("source_format");const job=await api("/v1/ingestions?survey_run_id="+id+"&source_format="+source,{method:"POST",body:d});$('#job-report').textContent="Job #"+job.id+" queued. Checking validation report…";poll(job.id)}catch(err){$('#job-report').textContent=err.message}};
+async function poll(id){const job=await api("/v1/ingestions/"+id);$('#job-report').textContent=JSON.stringify(job,null,2);if(["queued","processing"].includes(job.status))setTimeout(()=>poll(id),1100);else refresh()}
+$('#load-devices').onclick=async()=>{try{const area=$('#device-area').value,vendor=$('#vendor').value;const data=await api("/v1/devices?"+(area?"area_id="+area+"&":"")+"vendor="+encodeURIComponent(vendor));$('#devices').innerHTML=data.items.map(d=>'<tr><td><code>'+d.token.slice(0,13)+'…</code></td><td>'+esc(d.oui_organization)+'</td><td>'+Math.round(d.category_confidence*100)+'%</td><td>'+new Date(d.first_seen).toLocaleString()+'</td><td>'+new Date(d.last_seen).toLocaleString()+'</td></tr>').join("")||"<tr><td colspan=5>No matching devices.</td></tr>"}catch(err){alert(err.message)}};
+function bar(label,count,max){return '<div class=bar><span class=bar-label>'+esc(label)+'</span><div class=bar-track><div class=bar-fill style="width:'+Math.max(4,100*count/max)+'%"></div></div><span>'+count+'</span></div>'}
+async function coverage(){try{const area=$('#cluster-area').value,tail=area?"?area_id="+area:"";const [clusters,analytics]=await Promise.all([api("/v1/map/clusters"+tail),api("/v1/analytics/discovery"+tail)]);$('#clusters').innerHTML=clusters.map(c=>'<div class=cluster><b>'+c.count+'</b><span>'+esc(c.cell)+(c.avg_rssi?" · "+c.avg_rssi+" dBm":"")+'</span></div>').join("")||"<p>No coarse cells yet.</p>";const pm=Math.max(1,...Object.values(analytics.protocol_mix));$('#protocol').innerHTML=Object.entries(analytics.protocol_mix).map(x=>bar(x[0],x[1],pm)).join("")||"<p>No observations yet.</p>";const dm=Math.max(1,...analytics.daily_observations.map(x=>x.count));$('#days').innerHTML=analytics.daily_observations.map(x=>bar(x.day,x.count,dm)).join("")||"<p>No observations yet.</p>"}catch(err){alert(err.message)}}
+async function users(){if(me.role!=="admin"){$('#admin-note').textContent="(administrators only)";$('#user-form').querySelectorAll("input,select,button").forEach(x=>x.disabled=true);return}const list=await api("/v1/users");$('#users').innerHTML=list.map(u=>'<div class=record><b>'+esc(u.username)+'</b>'+esc(u.role)+(u.disabled?" · disabled":"")+'</div>').join("");}
+$('#user-form').onsubmit=async e=>{e.preventDefault();try{await api("/v1/users",{method:"POST",headers:{"Content-Type":"application/json"},body:formJSON(e.target)});e.target.reset();users()}catch(err){alert(err.message)}};
+$('#logout').onclick=()=>$('#key-button').click();$('#cluster-area').onchange=coverage;
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("selected"));document.querySelectorAll(".view").forEach(x=>x.classList.add("hidden"));b.classList.add("selected");$("#"+b.dataset.view).classList.remove("hidden");if(b.dataset.view==="inventory")$('#load-devices').click();if(b.dataset.view==="coverage")coverage();if(b.dataset.view==="access")users()});
+refresh().catch(err=>console.error(err));
