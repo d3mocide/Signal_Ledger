@@ -6,10 +6,9 @@ named validation both exist. “Implemented” is not “production hardened.”
 
 ## Current position
 
-Phase 0 is substantially complete for the first WiGLE format. Phase 1 has a
-working vertical slice, including a successful authorized real-world WiGLE
-import, but it is **not complete**. The next focused slice is to make the
-existing Phase 1 explorer fully usable and testable before beginning baselines.
+Phase 1 has a working private-operator vertical slice with successful
+authorized WiGLE and Kismet imports. Phase 2 now has its first working
+baseline-to-review loop; hardening and policy defaults remain explicit gates.
 
 ## Phase 0 — discovery and guardrails
 
@@ -19,7 +18,8 @@ existing Phase 1 explorer fully usable and testable before beginning baselines.
 - [x] Add a fixture for the WiGLE 1.6 metadata/header variant.
 - [x] Add a fixture for the initial Kismet-shaped adapter input.
 - [x] Validate the actual authorized WiGLE variant through an import job.
-- [ ] Obtain and fixture an authorized real Kismet export/version.
+- [x] Validate and fixture an authorized Kismet 2025.09 native SQLite log
+  (schema v9) through its summary-device table only.
 - [ ] Set written retention, export, and area-precision policies.
 - [ ] Define an approved survey-area polygon format and acceptance checks.
 
@@ -35,12 +35,14 @@ policy defaults, and deterministic parser reports in CI.
 - [x] First-run administrator creation and password login.
 - [x] Opaque HttpOnly persistent session cookies and server-side session hashes.
 - [x] Administrator-created users and four bounded roles.
-- [x] Survey areas and runs with authorization references and coverage estimate.
+- [x] Direct capture import with filename-derived sessions; optional collections,
+  manual session labels, and coverage estimates for organization when needed.
 - [x] Audit entries for authentication, area/run creation, uploads, retries,
   and user creation.
-- [ ] User disable/enable, session revocation, password reset/change flows.
-- [ ] Rate limiting and login/upload abuse controls.
-- [ ] TLS/secure-cookie production deployment guidance and configuration test.
+- [x] User disable/enable and administrator session revocation controls.
+- [x] Redis-backed request-rate limit and browser security headers.
+- [ ] Password reset/change flow and TLS/secure-cookie production deployment
+  runbook/configuration test.
 
 ### Ingestion
 
@@ -48,7 +50,8 @@ policy defaults, and deterministic parser reports in CI.
 - [x] File extension, size, empty-file, source selection, and identifier checks.
 - [x] Content-hash idempotency and within-upload deduplication.
 - [x] WiGLE parser including the tested 1.6 metadata row.
-- [x] Initial Kismet adapter and unit fixture.
+- [x] Kismet adapter for the initial shaped fixture and native 2025.09 SQLite
+  summary-device logs; packet/data blob tables are intentionally ignored.
 - [x] Site-scoped HMAC device tokens; no normalized full MAC column.
 - [x] Locally administered addresses labeled unattributable.
 - [x] Versioned job report: accepted, rejected, skipped, source, parser version,
@@ -56,8 +59,8 @@ policy defaults, and deterministic parser reports in CI.
 - [x] Batched processing demonstrated on the authorized real WiGLE import.
 - [ ] Restricted parser isolation, malware scan, and robust MIME validation.
 - [ ] Encrypted or external object storage with short retention configuration.
-- [ ] Downloadable, human-readable ingestion report.
-- [ ] Per-field quality/completeness report and schema/version warning UI.
+- [x] Downloadable, human-readable ingestion report.
+- [x] Location-completeness, parser-version, and rejection-reason report context.
 - [ ] Integration test: upload → worker → report → device/coverage APIs.
 
 ### Explorer
@@ -67,22 +70,27 @@ policy defaults, and deterministic parser reports in CI.
 - [x] Coarse-cell density and protocol-mix view.
 - [x] Interactive local coarse map, filterable to a collection run or a selected
   device’s sightings, without third-party map-tile requests.
+- [x] Coarse receiver-track overlay, segmented across sessions and time gaps;
+  it is distinct from device sightings.
 - [x] API pagination parameters and bounded list limits.
-- [ ] UI pagination, loading/empty/error states, and import history detail view.
-- [ ] Device detail/evidence view and observation explorer.
-- [ ] Server-side filters for time, protocol, category, RSSI, confidence, and
-  vendor consistently across inventory/map/analytics.
-- [ ] Optional MapLibre basemap mode with an explicit privacy decision for any
+- [x] UI pagination, loading/empty/error states, and import history detail view.
+- [x] Device detail/evidence view and observation explorer.
+- [x] Bounded server-side filters for time, protocol, category, RSSI, quality,
+  and vendor across inventory, observations, map, and analytics APIs.
+- [x] Optional MapLibre basemap mode with an explicit privacy decision for any
   external tile provider; the local coarse map remains the default.
 - [ ] Time-series, category/vendor, and quality/coverage overlays.
-- [ ] Replace in-memory analytics aggregation with scalable grouped queries.
-- [ ] Populate/query PostGIS geometry for the approved precision policy.
-- [ ] Complete-run UI action and clear run lifecycle status.
+- [x] Replace in-memory analytics aggregation with grouped SQL queries.
+- [x] Populate PostGIS geometry during new ingestion while retaining coarse-cell
+  UI defaults.
+- [x] Complete-run UI action and clear run lifecycle status.
 
 ### Enrichment and policy
 
-- [x] Small offline OUI seed mapping and provenance-safe display label.
-- [ ] Reviewed, versioned full IEEE OUI import and update procedure.
+- [x] Versioned local OUI catalog with administrator CSV import, provenance-safe
+  organization label, and re-enrichment of existing devices.
+- [x] Reviewed IEEE MA-L import contract: retain only prefix and organization,
+  record source hash/version, and ignore non-MA-L registry rows.
 - [ ] Transparent category-rule engine, confidence, evidence, and review override.
 - [ ] Area polygon validation/enforcement and exact-location privilege/audit path.
 - [ ] Saved-filter UI and audit-event UI.
@@ -93,33 +101,33 @@ a coarse map/analytics view. Automated integration tests cover the path.
 
 ## Phase 2 — baselines and explainable findings
 
-- [ ] Baseline creation from selected completed runs.
-- [ ] Frozen baseline version, training-run list, date/time policy, coverage
-  threshold, and derived expectations.
-- [ ] Coverage-quality findings kept distinct from security findings.
-- [ ] Explainable novel-device rule.
-- [ ] Explainable novel-vendor/category rule with valid OUI/repeat safeguards.
-- [ ] Explainable spatial outlier rule using coarse cells.
-- [ ] Explainable temporal outlier rule with sample thresholds.
-- [ ] Explainable Wi-Fi profile-change rule preserving before/after facts.
-- [ ] Anomaly queue, evidence, score components, confidence, notes, and
-  analyst disposition.
-- [ ] Audit trail for baseline and disposition changes.
-- [ ] Integration tests from ingestion through each finding type.
+- [x] Baseline creation from selected completed runs.
+- [x] Frozen baseline version, training-run list, coverage mean, and derived
+  device/vendor/category/cell/hour/profile expectations.
+- [x] Coverage-quality findings kept distinct from security findings.
+- [x] Explainable novel-device rule.
+- [x] Explainable novel-vendor rule with valid-OUI safeguards.
+- [x] Explainable spatial outlier rule using coarse cells.
+- [x] Explainable temporal outlier rule with baseline hour windows.
+- [x] Explainable Wi-Fi profile-change rule preserving source facts.
+- [x] Anomaly queue with score, confidence, explanation, and disposition.
+- [x] Audit trail for baseline creation/evaluation and dispositions.
+- [ ] Analyst disposition notes and evidence links in the UI.
+- [ ] End-to-end integration tests from upload through every finding type.
 
 **Exit gate:** selected runs yield a reproducible baseline and reviewable,
 non-automated findings with evidence and explanations.
 
 ## Phase 3 — hardening and operational learning
 
-- [ ] Retention/deletion workflow removes raw upload, observations, device
-  tokens, derived cells, and affected baseline/anomaly material; test it.
-- [ ] Backup and restore drill, including PostGIS data.
-- [ ] HMAC-key rotation and documented re-baselining drill.
+- [x] Admin-reviewed retention/deletion workflow removes raw upload, observations,
+  unreferenced device tokens, derived cells, and affected baseline/anomaly material; test it.
+- [x] Backup/restore tooling and operational runbook; restore drill pending.
+- [x] HMAC-key rotation and re-baselining procedure; live drill pending.
 - [ ] Load/performance tests for realistic import and explorer volumes.
 - [ ] Parser regression fixtures for new source variants.
-- [ ] Security review: headers, CSRF/session posture, secret handling,
-  least-privilege DB/volume settings, dependency updates.
+- [x] First hardening pass: headers, session revocation, request limiting, secret
+  handling, and deliberate destructive-operation controls.
 - [ ] Accessibility and responsive UI pass.
 - [ ] Measure false positives by area/time window and tune thresholds.
 - [ ] Deployment runbook, monitoring, structured logs, and upgrade procedure.
@@ -134,6 +142,6 @@ and evolved without weakening the privacy or authorization boundaries.
 2. Add the real coarse map and consistent server-side filters/aggregates.
 3. Add the end-to-end Phase 1 integration test suite and correct PostGIS data
    population/queries.
-4. Choose OUI and retention policy, then implement versioned enrichment and
-   retention behavior.
-5. Reassess Phase 1 exit gate before starting Phase 2 baselines.
+4. Run backup/restore and HMAC-rotation drills against a disposable stack.
+5. Exercise the completed UI in a browser and tune findings from representative
+   authorized runs.

@@ -6,6 +6,7 @@ MIGRATIONS = [
     ("0001_postgis", "CREATE EXTENSION IF NOT EXISTS postgis"),
     ("0002_observation_geom", "ALTER TABLE observations ADD COLUMN IF NOT EXISTS geom geometry(Point, 4326)"),
     ("0003_observation_geom_index", "CREATE INDEX IF NOT EXISTS ix_observations_geom ON observations USING GIST (geom)"),
+    ("0004_device_encrypted_address", "ALTER TABLE devices ADD COLUMN IF NOT EXISTS encrypted_address varchar(255)"),
 ]
 
 def upgrade():

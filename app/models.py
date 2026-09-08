@@ -1,10 +1,10 @@
 from datetime import datetime
 from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, synonym
 from .database import Base
 
-class SurveyArea(Base):
-    __tablename__ = "survey_areas"
+class Collection(Base):
+    __tablename__ = "collections"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(160), unique=True)
     authorization_ref: Mapped[str] = mapped_column(String(240))
@@ -13,10 +13,11 @@ class SurveyArea(Base):
     polygon: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-class SurveyRun(Base):
-    __tablename__ = "survey_runs"
+class CaptureSession(Base):
+    __tablename__ = "capture_sessions"
     id: Mapped[int] = mapped_column(primary_key=True)
-    survey_area_id: Mapped[int] = mapped_column(ForeignKey("survey_areas.id"), index=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id"), index=True, nullable=True)
+    survey_area_id = synonym("collection_id")  # temporary Python compatibility; no legacy DB column
     name: Mapped[str] = mapped_column(String(160))
     authorization_ref: Mapped[str] = mapped_column(String(240))
     collector_coverage: Mapped[float] = mapped_column(Float, default=1.0)
@@ -26,7 +27,8 @@ class SurveyRun(Base):
 class IngestionJob(Base):
     __tablename__ = "ingestion_jobs"
     id: Mapped[int] = mapped_column(primary_key=True)
-    survey_run_id: Mapped[int] = mapped_column(ForeignKey("survey_runs.id"), index=True)
+    capture_session_id: Mapped[int] = mapped_column(ForeignKey("capture_sessions.id"), index=True)
+    survey_run_id = synonym("capture_session_id")
     filename: Mapped[str] = mapped_column(String(255))
     source_format: Mapped[str] = mapped_column(String(32))
     file_hash: Mapped[str] = mapped_column(String(64), unique=True)
@@ -39,7 +41,8 @@ class IngestionJob(Base):
 class Device(Base):
     __tablename__ = "devices"
     id: Mapped[int] = mapped_column(primary_key=True)
-    survey_area_id: Mapped[int] = mapped_column(ForeignKey("survey_areas.id"), index=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id"), index=True, nullable=True)
+    survey_area_id = synonym("collection_id")
     token: Mapped[str] = mapped_column(String(64), index=True)
     oui_prefix: Mapped[str | None] = mapped_column(String(8), nullable=True)
     oui_organization: Mapped[str] = mapped_column(String(160), default="unattributable")
@@ -47,12 +50,29 @@ class Device(Base):
     category_confidence: Mapped[float] = mapped_column(Float, default=0)
     first_seen: Mapped[datetime] = mapped_column(DateTime)
     last_seen: Mapped[datetime] = mapped_column(DateTime)
-    __table_args__ = (UniqueConstraint("survey_area_id", "token", name="uq_area_device_token"),)
+    encrypted_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    __table_args__ = (UniqueConstraint("token", name="uq_device_token"),)
+
+class OUIImport(Base):
+    __tablename__ = "oui_imports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_name: Mapped[str] = mapped_column(String(255))
+    source_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    registry_version: Mapped[str] = mapped_column(String(80))
+    assignments: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+class OUIAssignment(Base):
+    __tablename__ = "oui_assignments"
+    prefix: Mapped[str] = mapped_column(String(6), primary_key=True)
+    organization: Mapped[str] = mapped_column(String(255))
+    import_id: Mapped[int] = mapped_column(ForeignKey("oui_imports.id"), index=True)
 
 class Observation(Base):
     __tablename__ = "observations"
     id: Mapped[int] = mapped_column(primary_key=True)
-    survey_run_id: Mapped[int] = mapped_column(ForeignKey("survey_runs.id"), index=True)
+    capture_session_id: Mapped[int] = mapped_column(ForeignKey("capture_sessions.id"), index=True)
+    survey_run_id = synonym("capture_session_id")
     device_id: Mapped[int] = mapped_column(ForeignKey("devices.id"), index=True)
     ingestion_job_id: Mapped[int] = mapped_column(ForeignKey("ingestion_jobs.id"), index=True)
     captured_at: Mapped[datetime] = mapped_column(DateTime, index=True)
@@ -69,7 +89,8 @@ class Observation(Base):
 class Baseline(Base):
     __tablename__ = "baselines"
     id: Mapped[int] = mapped_column(primary_key=True)
-    survey_area_id: Mapped[int] = mapped_column(ForeignKey("survey_areas.id"), index=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id"), index=True, nullable=True)
+    survey_area_id = synonym("collection_id")
     name: Mapped[str] = mapped_column(String(160))
     run_ids: Mapped[list] = mapped_column(JSON)
     expectations: Mapped[dict] = mapped_column(JSON)
@@ -78,7 +99,8 @@ class Baseline(Base):
 class Anomaly(Base):
     __tablename__ = "anomalies"
     id: Mapped[int] = mapped_column(primary_key=True)
-    survey_area_id: Mapped[int] = mapped_column(ForeignKey("survey_areas.id"), index=True)
+    collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id"), index=True, nullable=True)
+    survey_area_id = synonym("collection_id")
     baseline_id: Mapped[int | None] = mapped_column(ForeignKey("baselines.id"), nullable=True)
     device_id: Mapped[int | None] = mapped_column(ForeignKey("devices.id"), nullable=True)
     kind: Mapped[str] = mapped_column(String(48))
@@ -125,3 +147,7 @@ class LoginSession(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+# Public domain names. Compatibility aliases will be removed after endpoint cleanup.
+SurveyArea = Collection
+SurveyRun = CaptureSession

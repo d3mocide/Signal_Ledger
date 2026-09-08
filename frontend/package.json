@@ -3,7 +3,18 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "scripts": {"build": "tsc -b && vite build"},
-  "dependencies": {"react": "latest", "react-dom": "latest"},
-  "devDependencies": {"@types/react": "latest", "@types/react-dom": "latest", "vite": "latest", "typescript": "latest"}
+  "scripts": {
+    "build": "tsc -b && vite build"
+  },
+  "dependencies": {
+    "maplibre-gl": "^5.16.0",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  }
 }
