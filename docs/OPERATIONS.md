@@ -58,3 +58,32 @@ safe in-place token rewrite.
 
 Never put an HMAC secret in source control, exports, screenshots, or audit
 details.
+
+## Review learning and exports
+
+Use the Evidence Review page to inspect grouped uncertain classifications. Notes
+and evidence references are optional handoff context; dispositions and category
+overrides are the durable audited actions. A single-device category override
+also creates a versioned proposal in Rule Learning. Accepting a proposal marks
+it as reviewed but does not alter the live categorization rules automatically.
+
+Rule Learning can be filtered by collection and review time window to measure
+dispositions, overrides, and dismissed-among-confirmed/dismissed signals. Treat
+that rate as analyst feedback, not as an unattended threshold-tuning command.
+
+Run Comparison is limited to two runs from the same collection and reports
+new, returning, changed, and disappeared pseudonymous devices. Device
+fingerprints are bounded similarity suggestions, not identity merges.
+
+Inventory CSV exports are policy-bounded. Review the selected filters before
+exporting, and handle the resulting pseudonymous tokens as sensitive workspace
+data even though raw addresses and secrets are excluded.
+
+## Schema migrations
+
+Schema changes use the idempotent migration runner in `app/migrations.py`.
+There is no Prisma schema or automatic ORM migration generation. App startup
+applies unapplied versions recorded in `schema_migrations`. During an upgrade,
+confirm the new version is recorded and run the rebuilt-image test suite before
+accepting traffic. The current feature set includes migration
+`0013_rule_proposals`.

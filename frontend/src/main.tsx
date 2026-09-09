@@ -16,9 +16,11 @@ type Page =
   | "baselines"
   | "anomalies"
   | "reviews"
+  | "learning"
+  | "comparison"
   | "access"
   | "audit";
-const routePages = new Set<Page>(["overview", "surveys", "collections", "inventory", "categories", "vendors", "coverage", "device", "baselines", "anomalies", "reviews", "access", "audit"]);
+const routePages = new Set<Page>(["overview", "surveys", "collections", "inventory", "categories", "vendors", "coverage", "device", "baselines", "anomalies", "reviews", "learning", "comparison", "access", "audit"]);
 const pageFromHash = (): Page | null => {
   const value = window.location.hash.replace(/^#/, "").split("?")[0] as Page;
   return value && routePages.has(value) ? value : value ? null : "overview";
@@ -168,6 +170,8 @@ const navItems: { page: Page; label: string; icon: string; group: string }[] = [
     icon: "anomalies",
     group: "",
   },
+  { page: "learning", label: "Rule learning", icon: "categories", group: "" },
+  { page: "comparison", label: "Run comparison", icon: "baselines", group: "" },
   { page: "baselines", label: "Baselines", icon: "baselines", group: "" },
   {
     page: "surveys",
@@ -192,6 +196,8 @@ const descriptions: Record<Page, string> = {
   coverage: "Understand where your collection has observed signals.",
   anomalies: "Review changes against your established baselines.",
   reviews: "Review uncertain device classifications and teach the evidence model.",
+  learning: "Review analyst feedback and measure where classification rules need attention.",
+  comparison: "Compare completed capture runs without exposing raw device addresses.",
   baselines: "Define expected behavior from completed survey runs.",
   surveys: "Drop a capture to create an import session, or organize sessions when useful.",
   collections: "Create, rename, and review the collections used to group captures.",
@@ -597,6 +603,8 @@ function App() {
                 }}
               />
             )}{" "}
+            {page === "learning" && <RuleLearning areas={areas} role={me.role} />}
+            {page === "comparison" && <RunComparison runs={runs} />}
             {page === "access" && <Access me={me} />}
             {page === "audit" && <AuditEvents />}
           </WorkspaceBoundary>
@@ -1464,7 +1472,9 @@ function Inventory({
     [total, setTotal] = useState(0),
     [offset, setOffset] = useState(0),
     [loading, setLoading] = useState(false),
-    [vendorOptions, setVendorOptions] = useState<string[]>([]);
+    [vendorOptions, setVendorOptions] = useState<string[]>([]),
+    [savedViews, setSavedViews] = useState<SavedFilter[]>([]),
+    [viewName, setViewName] = useState("");
   const limit = 50;
   async function load(
     next = offset,
@@ -1474,6 +1484,7 @@ function Inventory({
     nextVendor = v,
     nextCategory = c,
     nextRole = role,
+    nextArea = a,
   ) {
     setLoading(true);
     try {
@@ -1484,7 +1495,7 @@ function Inventory({
         sort: nextSort,
         direction: nextDirection,
       });
-      if (a) q.set("area_id", a);
+      if (nextArea) q.set("area_id", nextArea);
       if (nextCategory) q.set("category", nextCategory);
       if (nextRole) q.set("role", nextRole);
       if (nextAttributedOnly) q.set("attributed_only", "true");
@@ -1524,6 +1535,25 @@ function Inventory({
       setVendorOptions(rows.map((x) => x.oui_organization)),
     );
   }, []);
+  useEffect(() => {
+    api<SavedFilter[]>("/v1/saved-filters").then((items) => setSavedViews(items.filter((item) => item.resource === "inventory"))).catch(() => undefined);
+  }, []);
+  async function saveView() {
+    if (!viewName.trim()) return;
+    try {
+      const saved = await send<SavedFilter>("/v1/saved-filters", { name: viewName.trim(), resource: "inventory", filters: { area_id: a, vendor: v, category: c, role, attributed_only: String(attributedOnly), sort, direction } });
+      setSavedViews((items) => [saved, ...items]); setViewName("");
+    } catch { /* the inventory remains usable if saving is unavailable */ }
+  }
+  function applySavedView(item: SavedFilter) {
+    const filters = item.filters || {};
+    const nextArea = filters.area_id || "", nextVendor = filters.vendor || "", nextCategory = filters.category || "", nextRole = filters.role || "", nextAttributed = filters.attributed_only === "true";
+    setA(nextArea); setV(nextVendor); setC(nextCategory); setRole(nextRole); setAttributedOnly(nextAttributed); setSort(filters.sort || "last_seen"); setDirection((filters.direction as "asc" | "desc") || "desc");
+    load(0, filters.sort || "last_seen", (filters.direction as "asc" | "desc") || "desc", nextAttributed, nextVendor, nextCategory, nextRole, nextArea);
+  }
+  const exportQuery = new URLSearchParams({ limit: "5000", vendor: v, category: c, role, attributed_only: String(attributedOnly) });
+  if (a) exportQuery.set("area_id", a);
+  const exportHref = "/v1/exports/devices.csv?" + exportQuery.toString();
   function toggleSort(column: string) {
     const nextDirection: "asc" | "desc" =
       column === sort
@@ -1627,6 +1657,7 @@ function Inventory({
           </button>
         </div>
       </form>
+      <div className="saved-filter-bar inventory-saved-views"><select aria-label="Saved inventory view" defaultValue="" onChange={(event) => { const item = savedViews.find((candidate) => String(candidate.id) === event.target.value); if (item) applySavedView(item); }}><option value="">Saved inventory views</option>{savedViews.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input aria-label="Saved inventory view name" value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name current view" /><button className="secondary" type="button" onClick={saveView} disabled={!viewName.trim()}>Save view</button><a className="secondary" href={exportHref}>Export CSV</a></div>
       <div className="inventory-summary">
         <p className="muted">
           {total.toLocaleString()} matching devices · showing{" "}
@@ -1751,6 +1782,7 @@ type Cell = {
   device_count: number;
 };
 type SavedFilter = { id: number; name: string; resource: string; filters: Record<string, string> };
+type DeviceFingerprint = { summary: { fingerprint_version: string; fingerprint: string; signal_counts: Record<string, number>; activity_windows: string[]; coarse_cell_count: number }; similar: { device_id: number; token_prefix: string; category: string; oui_organization: string; score: number; shared_signals: string[] }[]; disclaimer: string };
 function DeviceEvidence({
   id,
   back,
@@ -1768,14 +1800,19 @@ function DeviceEvidence({
     [revealing, setRevealing] = useState(false),
     [revealError, setRevealError] = useState(""),
     [category, setCategory] = useState(""),
-    [categoryNote, setCategoryNote] = useState("");
+    [categoryNote, setCategoryNote] = useState(""),
+    [fingerprint, setFingerprint] = useState<DeviceFingerprint | null>(null);
   useEffect(() => {
     setD(null);
     setAddress("");
     setRevealError("");
+    setFingerprint(null);
     api<DeviceDetail>("/v1/devices/" + id)
       .then(setD)
       .catch((x) => setError(msg(x)));
+    api<DeviceFingerprint>("/v1/devices/" + id + "/fingerprint")
+      .then(setFingerprint)
+      .catch(() => undefined);
   }, [id]);
   async function reveal() {
     setRevealing(true);
@@ -1904,6 +1941,7 @@ function DeviceEvidence({
         </p>
       )}
       {revealError && <p className="warning">{revealError}</p>}
+      {fingerprint && <div className="category-evidence fingerprint-panel"><p className="eyebrow">PRIVACY-SAFE SIMILARITY</p><h3>Related signal profiles</h3><p className="muted">{fingerprint.disclaimer}</p><p className="muted">Fingerprint {fingerprint.summary.fingerprint.slice(0, 12)}… · {fingerprint.summary.fingerprint_version} · {fingerprint.summary.coarse_cell_count} coarse cells · activity windows {fingerprint.summary.activity_windows.join(", ") || "none"}</p>{fingerprint.similar.length ? <div className="list">{fingerprint.similar.map((item) => <div key={item.device_id}><b><code>{item.token_prefix}</code></b><span>{item.category} · {item.oui_organization} · {Math.round(item.score * 100)}% similarity</span><small>{item.shared_signals.join(" · ")}</small></div>)}</div> : <p className="muted">No sufficiently similar profiles found in the bounded candidate set.</p>}</div>}
       <h3>Recent source facts</h3>
       <div className="table-scroll">
         <table>
@@ -2337,7 +2375,7 @@ function Coverage({
           </button>
         )}
       </div>
-      <div className="saved-filter-bar">
+      <div className="saved-filter-bar coverage-saved-filters">
         <select aria-label="Saved coverage filter" defaultValue="" onChange={(event) => {
           const item = savedFilters.find((candidate) => String(candidate.id) === event.target.value);
           if (item) applySavedFilter(item);
@@ -2724,7 +2762,7 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
           <h2>Classification triage</h2>
           <p className="muted">{total.toLocaleString()} groups · {deviceTotal.toLocaleString()} devices · repeated evidence is grouped before review.</p>
         </div>
-        <div className="toolbar-controls">
+        <div className="toolbar-controls review-controls">
           <select aria-label="Survey area" value={area} onChange={(event) => { setArea(event.target.value); load(event.target.value, status, bucket, 0); }}>
             <option value="">All areas</option>
             {areas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -2786,6 +2824,45 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
       </div>}
     </section>
   );
+}
+type RuleProposal = { id: number; rule_version: string; revision: number; target_category: string; matcher: Record<string, string[] | string>; evidence: string[]; support_count: number; status: string; created_by: string; review_note?: string | null; created_at: string };
+type LearningSummary = { reviewed: number; dispositions: Record<string, number>; category_overrides: number; by_category: { category: string; count: number }[]; rule_proposals: Record<string, number>; false_positive_rate: number | null; interpretation: string };
+function RuleLearning({ areas, role }: { areas: Area[]; role: string }) {
+  const [area, setArea] = useState(""), [start, setStart] = useState(""), [end, setEnd] = useState(""), [summary, setSummary] = useState<LearningSummary | null>(null), [proposals, setProposals] = useState<RuleProposal[]>([]), [note, setNote] = useState(""), [loading, setLoading] = useState(false);
+  const canReview = role === "analyst" || role === "admin";
+  async function load() {
+    setLoading(true); setNote("");
+    const query = new URLSearchParams(); if (area) query.set("area_id", area); if (start) query.set("start", start + "T00:00:00"); if (end) query.set("end", end + "T23:59:59");
+    try {
+      const [nextSummary, nextProposals] = await Promise.all([api<LearningSummary>("/v1/learning/summary?" + query), api<RuleProposal[]>("/v1/rule-proposals?status=all&limit=100")]);
+      setSummary(nextSummary); setProposals(nextProposals);
+    } catch (error) { setNote(msg(error)); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { load(); }, []);
+  async function updateProposal(id: number, status: string) {
+    try { await api("/v1/rule-proposals/" + id, { method: "PATCH", body: JSON.stringify({ status }), headers: { "Content-Type": "application/json" } }); setNote("Proposal disposition saved and audited. Rule promotion remains manual."); load(); }
+    catch (error) { setNote(msg(error)); }
+  }
+  const matcherText = (matcher: RuleProposal["matcher"]) => Object.entries(matcher || {}).map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(", ") : value}`).join(" · ");
+  return <section className="panel">
+    <div className="toolbar"><div><p className="eyebrow">ANALYST LEARNING</p><h2>Rule feedback loop</h2><p className="muted">Overrides become versioned proposals for review. Nothing here silently changes production rules.</p></div><div className="toolbar-controls learning-controls"><select aria-label="Learning collection" value={area} onChange={(event) => setArea(event.target.value)}><option value="">All collections</option>{areas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input aria-label="Learning start date" type="date" value={start} onChange={(event) => setStart(event.target.value)} /><input aria-label="Learning end date" type="date" value={end} onChange={(event) => setEnd(event.target.value)} /><button onClick={load} disabled={loading}>{loading ? "Loading…" : "Apply"}</button></div></div>
+    {note && <p className="notice">{note}</p>}
+    {summary && <><div className="category-summary taxonomy-summary"><div><b>{summary.reviewed.toLocaleString()}</b><span>reviewed devices</span></div><div><b>{summary.category_overrides.toLocaleString()}</b><span>analyst overrides</span></div><div><b>{summary.false_positive_rate === null ? "—" : Math.round(summary.false_positive_rate * 100) + "%"}</b><span>dismissed among confirmed/dismissed</span></div><div><b>{(summary.rule_proposals.open || 0).toLocaleString()}</b><span>open proposals</span></div></div><p className="muted">{summary.interpretation}</p></>}
+    <div className="taxonomy-subhead"><div><p className="eyebrow">PROPOSALS</p><h3>Candidate rule changes</h3></div><span className="muted">Accepted proposals require deliberate rule implementation.</span></div>
+    <div className="list learning-proposals">{proposals.map((proposal) => <div key={proposal.id} className="proposal-row"><div><b>{proposal.target_category} · {proposal.rule_version} revision {proposal.revision}</b><span>{proposal.support_count.toLocaleString()} supporting override(s) · {proposal.status}</span><small>{matcherText(proposal.matcher)}</small><small>{proposal.evidence?.length ? proposal.evidence.join(" · ") : "No retained rule evidence"}</small></div>{canReview && <div className="review-actions">{proposal.status !== "accepted" && <button className="quiet" onClick={() => updateProposal(proposal.id, "accepted")}>Accept proposal</button>}{proposal.status !== "rejected" && <button className="quiet" onClick={() => updateProposal(proposal.id, "rejected")}>Reject</button>}<button className="quiet" onClick={() => updateProposal(proposal.id, "needs_review")}>Needs review</button></div>}</div>)}{!proposals.length && <p className="muted">No analyst proposals yet. Apply a category override from evidence review to seed one.</p>}</div>
+    <div className="taxonomy-subhead"><div><p className="eyebrow">FALSE-POSITIVE SIGNALS</p><h3>What the selected scope is teaching us</h3></div></div><div className="table-scroll"><table><thead><tr><th>Current category</th><th>Reviewed devices</th></tr></thead><tbody>{summary?.by_category.map((item) => <tr key={item.category}><td><span className="category-chip">{item.category}</span></td><td>{item.count.toLocaleString()}</td></tr>)}</tbody></table></div>
+  </section>;
+}
+type ComparisonItem = { device_id: number; token_prefix: string; category: string; category_confidence: number; oui_organization: string; roles: string[]; observation_count: number; changed_fields: string[] };
+type ComparisonResult = { left: { id: number; name: string }; right: { id: number; name: string }; counts: Record<string, number>; new: ComparisonItem[]; returning: ComparisonItem[]; disappeared: ComparisonItem[]; changed: ComparisonItem[]; truncated: boolean };
+function RunComparison({ runs }: { runs: Run[] }) {
+  const completedRuns = runs.filter((run) => run.completed);
+  const [left, setLeft] = useState(""), [right, setRight] = useState(""), [result, setResult] = useState<ComparisonResult | null>(null), [note, setNote] = useState("");
+  useEffect(() => { if (completedRuns.length > 1) { setLeft(String(completedRuns[completedRuns.length - 1].id)); setRight(String(completedRuns[0].id)); } }, [runs]);
+  async function compare() { if (!left || !right || left === right) { setNote("Choose two different capture runs."); return; } try { setNote(""); setResult(await api<ComparisonResult>(`/v1/import-comparison?left_run_id=${left}&right_run_id=${right}&limit=100`)); } catch (error) { setNote(msg(error)); } }
+  const rows = (items: ComparisonItem[]) => <div className="table-scroll"><table><thead><tr><th>Site token</th><th>Category</th><th>Vendor</th><th>Observations</th><th>Changed fields</th></tr></thead><tbody>{items.map((item) => <tr key={item.device_id}><td><code>{item.token_prefix}</code></td><td>{item.category}</td><td>{item.oui_organization}</td><td>{item.observation_count}</td><td>{item.changed_fields.join(", ") || "—"}</td></tr>)}</tbody></table></div>;
+  return <section className="panel"><div className="toolbar"><div><p className="eyebrow">IMPORT COMPARISON</p><h2>Run-to-run change</h2><p className="muted">Compare pseudonymous device presence and retained facts. Raw addresses are never included.</p></div><div className="toolbar-controls comparison-controls"><select aria-label="Earlier capture run" value={left} onChange={(event) => setLeft(event.target.value)}><option value="">Earlier run</option>{completedRuns.map((run) => <option key={run.id} value={run.id}>{run.name}</option>)}</select><select aria-label="Later capture run" value={right} onChange={(event) => setRight(event.target.value)}><option value="">Later run</option>{completedRuns.map((run) => <option key={run.id} value={run.id}>{run.name}</option>)}</select><button onClick={compare} disabled={completedRuns.length < 2}>Compare</button></div></div>{note && <p className="warning">{note}</p>}{!completedRuns.length && <p className="muted">Complete at least two capture runs to compare them.</p>}{result && <><div className="category-summary taxonomy-summary">{["new", "returning", "changed", "disappeared"].map((key) => <div key={key}><b>{(result.counts[key] || 0).toLocaleString()}</b><span>{key} devices</span></div>)}</div>{result.truncated && <p className="muted">Some lists are capped at 100 devices; counts are complete.</p>}<div className="taxonomy-subhead"><div><p className="eyebrow">NEW</p><h3>New in {result.right.name}</h3></div></div>{rows(result.new)}<div className="taxonomy-subhead"><div><p className="eyebrow">RETURNING</p><h3>Present in both runs</h3></div></div>{rows(result.returning)}<div className="taxonomy-subhead"><div><p className="eyebrow">CHANGED</p><h3>Changed retained facts</h3></div></div>{rows(result.changed)}<div className="taxonomy-subhead"><div><p className="eyebrow">DISAPPEARED</p><h3>Only in {result.left.name}</h3></div></div>{rows(result.disappeared)}</>}</section>;
 }
 function OUIImportPanel() {
   const [status, setStatus] = useState<{

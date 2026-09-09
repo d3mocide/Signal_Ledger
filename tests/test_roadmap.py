@@ -12,13 +12,16 @@ from app.main import (
     AnomalyPatch,
     CategoryPatch,
     DeviceReviewGroupPatch,
+    RuleProposalPatch,
     PasswordChangeInput,
     RetentionSettingsInput,
     change_password,
     device_category_summary,
     device_role_summary,
+    device_fingerprint,
     devices,
     list_device_reviews,
+    list_rule_proposals,
     establish_session,
     override_device_category,
     retention_preview,
@@ -26,6 +29,9 @@ from app.main import (
     update_retention_settings,
     update_device_review,
     update_device_review_group,
+    update_rule_proposal,
+    learning_summary,
+    import_comparison,
 )
 from app.models import Anomaly, Device, DeviceReview, Observation, SurveyRun, User
 from app.categorization import rebuild_categories
@@ -186,6 +192,59 @@ def test_category_override_is_persisted_and_audited():
     assert result["category"] == "camera"
     assert result["category_overridden"] is True
     assert db.get(Device, device.id).category_confidence == 1.0
+
+
+def test_category_override_creates_reviewable_versioned_rule_proposal():
+    db = make_db()
+    run = SurveyRun(name="Feedback run", authorization_ref="AUTH-FEEDBACK")
+    device = Device(token="f" * 64, oui_organization="Example Motors", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add_all([run, device]); db.flush()
+    db.add(Observation(survey_run_id=run.id, ingestion_job_id=1, device_id=device.id, captured_at=datetime(2026, 1, 1), protocol="wifi", ssid="My VW", source_row=1))
+    db.commit()
+    result = override_device_category(device.id, CategoryPatch(category="automotive"), db=db, principal=Principal(1, "analyst", "analyst"))
+    assert result["rule_proposal_id"]
+    proposals = list_rule_proposals(status="all", db=db, principal=Principal(1, "viewer", "viewer"))
+    assert proposals[0]["target_category"] == "automotive"
+    assert proposals[0]["revision"] == 1
+    updated = update_rule_proposal(proposals[0]["id"], RuleProposalPatch(status="accepted", review_note="Promote after batch review"), db=db, principal=Principal(1, "analyst", "analyst"))
+    assert updated["status"] == "accepted"
+    assert db.get(Device, device.id).category == "automotive"
+
+
+def test_learning_summary_measures_dispositions_and_scope():
+    db = make_db()
+    run = SurveyRun(name="Learning run", authorization_ref="AUTH-LEARNING")
+    confirmed = Device(token="c" * 64, category="network", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    dismissed = Device(token="d" * 64, category="unknown", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add_all([run, confirmed, dismissed]); db.flush()
+    for index, device in enumerate((confirmed, dismissed), start=1):
+        db.add(Observation(survey_run_id=run.id, ingestion_job_id=1, device_id=device.id, captured_at=datetime(2026, 1, 2), protocol="wifi", ssid="review", source_row=index))
+    db.add_all([DeviceReview(device_id=confirmed.id, status="confirmed", reviewed_at=datetime(2026, 1, 3)), DeviceReview(device_id=dismissed.id, status="dismissed", reviewed_at=datetime(2026, 1, 3))]); db.commit()
+    summary = learning_summary(start=datetime(2026, 1, 1), end=datetime(2026, 1, 4), db=db, principal=Principal(1, "viewer", "viewer"))
+    assert summary["reviewed"] == 2
+    assert summary["dispositions"] == {"confirmed": 1, "dismissed": 1}
+    assert summary["false_positive_rate"] == .5
+
+
+def test_fingerprint_and_run_comparison_are_privacy_safe():
+    db = make_db()
+    older = SurveyRun(name="Older", authorization_ref="AUTH-COMPARE")
+    newer = SurveyRun(name="Newer", authorization_ref="AUTH-COMPARE")
+    returning = Device(token="r" * 64, oui_organization="Example Vendor", category="network", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 2))
+    new_device = Device(token="n" * 64, oui_organization="Example Vendor", category="network", first_seen=datetime(2026, 1, 2), last_seen=datetime(2026, 1, 2))
+    db.add_all([older, newer, returning, new_device]); db.flush()
+    db.add_all([
+        Observation(survey_run_id=older.id, ingestion_job_id=1, device_id=returning.id, captured_at=datetime(2026, 1, 1), protocol="wifi", ssid="office", source_row=1),
+        Observation(survey_run_id=newer.id, ingestion_job_id=1, device_id=returning.id, captured_at=datetime(2026, 1, 2), protocol="wifi", ssid="office-new", source_row=2),
+        Observation(survey_run_id=newer.id, ingestion_job_id=1, device_id=new_device.id, captured_at=datetime(2026, 1, 2), protocol="wifi", ssid="office", source_row=3),
+    ]); db.commit()
+    fingerprint = device_fingerprint(returning.id, db=db, principal=Principal(1, "viewer", "viewer"))
+    assert len(fingerprint["summary"]["fingerprint"]) == 32
+    assert "r" * 64 not in str(fingerprint)
+    comparison = import_comparison(older.id, newer.id, db=db, principal=Principal(1, "viewer", "viewer"))
+    assert comparison["counts"]["new"] == 1
+    assert comparison["counts"]["returning"] == 1
+    assert comparison["counts"]["changed"] == 1
 
 
 def test_anomaly_disposition_keeps_notes_and_bounded_evidence_links():

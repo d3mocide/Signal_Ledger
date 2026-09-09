@@ -1075,6 +1075,38 @@ input[type="file"]::file-selector-button {
   flex: 1;
   min-width: 0;
 }
+.learning-controls {
+  width: min(680px, 100%);
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) repeat(2, minmax(135px, 1fr)) auto;
+  align-items: center;
+}
+.learning-controls select,
+.learning-controls input {
+  width: 100%;
+  min-width: 0;
+}
+.learning-controls button {
+  white-space: nowrap;
+}
+.review-controls {
+  width: min(460px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(175px, 1fr));
+}
+.review-controls select {
+  width: 100%;
+  min-width: 0;
+}
+.comparison-controls {
+  width: min(600px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(185px, 1fr)) auto;
+}
+.comparison-controls select {
+  width: 100%;
+  min-width: 0;
+}
 .review-list {
   margin-top: 4px;
 }
@@ -1344,6 +1376,22 @@ input[type="file"]::file-selector-button {
 }
 .saved-filter-bar button {
   flex: 0 0 auto;
+}
+.saved-filter-bar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto auto;
+}
+.coverage-saved-filters {
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+}
+.saved-filter-bar select,
+.saved-filter-bar input {
+  width: 100%;
+  min-width: 0;
+}
+.saved-filter-bar a,
+.saved-filter-bar button {
+  white-space: nowrap;
 }
 .retention-settings {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1817,6 +1865,35 @@ footer {
   .profile {
     flex-wrap: wrap;
   }
+  .learning-controls {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+  }
+  .learning-controls select,
+  .learning-controls input,
+  .learning-controls button {
+    width: 100%;
+  }
+  .review-controls {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .comparison-controls {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .comparison-controls button {
+    grid-column: 1 / -1;
+  }
+  .saved-filter-bar,
+  .coverage-saved-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .saved-filter-bar button,
+  .saved-filter-bar a {
+    width: 100%;
+    text-align: center;
+  }
 }
 @media (max-width: 620px) {
   .sidebar {
@@ -1957,6 +2034,15 @@ footer {
   }
   .review-buckets {
     grid-template-columns: 1fr;
+  }
+  .review-controls,
+  .comparison-controls,
+  .saved-filter-bar,
+  .coverage-saved-filters {
+    grid-template-columns: 1fr;
+  }
+  .comparison-controls button {
+    grid-column: auto;
   }
 }
 @media (max-width: 620px) {

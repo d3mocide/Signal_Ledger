@@ -1,9 +1,9 @@
 # Signal Ledger — Build Log
 
 This is an append-only engineering log. It records what changed, the evidence
-we have, and what that evidence does **not** prove. Product intent belongs in
-`plan.md`; decisions belong in `DESIGN.md`; remaining work belongs in
-`ROADMAP.md`.
+we have, and what that evidence does **not** prove. Current product scope is
+tracked in `ROADMAP.md`; decisions belong in `DESIGN.md`; policy boundaries
+belong in `POLICIES.md`.
 
 ## 2026-09-07 — Initial vertical slice and first field import
 
@@ -1080,3 +1080,33 @@ at any width since it's a ratio, not a fixed number.
   the real MAC (`32:B4:B8:2A:82:0A`) alongside it - both pieces of
   evidence now visible on the same page instead of the address living in
   isolation.
+
+## 2026-09-09 — Current-state documentation and analyst learning package
+
+### Built
+
+- Added the analyst feedback loop: category overrides create versioned,
+  reviewable rule proposals, while proposal acceptance remains audited and
+  never auto-promotes a production rule.
+- Added collection/time-window learning summaries with a dismissed-review
+  false-positive signal.
+- Added privacy-safe HMAC-derived device fingerprints and bounded similarity
+  suggestions without identity merging.
+- Added same-collection run comparison for new, returning, changed, and
+  disappeared devices.
+- Added saved inventory views and policy-bounded pseudonymous device CSV
+  exports.
+- Added paginated evidence review, hash-route navigation, device deep links,
+  and responsive picker layouts across review, comparison, and saved-filter
+  surfaces.
+- Added `docs/CURRENT_STATE.md` and refreshed the README, design, policy,
+  operations, deployment, roadmap, and build-log documentation.
+
+### Evidence
+
+- Migration `0013_rule_proposals` applied in the live database.
+- Containerized regression suite: **47 passed**.
+- Frontend TypeScript/Vite production build passed.
+- Live `/health` check passed after deployment.
+- Browser visual and authenticated interaction validation remain separate open
+  gates; no browser surface was available for this documentation pass.

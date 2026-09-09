@@ -1,10 +1,54 @@
 .env
+.env.*
+!.env.example
+
+# Local runtime data and exports
+data/
+backups/
+raw/
+uploads/
+downloads/
+*.dump
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Packet captures and other potentially sensitive evidence
+*.pcap
+*.pcapng
+*.cap
+*.kismet
+*.netxml
+*.wiglecsv
+
+# Secrets and local certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Test/build/coverage output
 __pycache__/
 .pytest_cache/
-data/
 *.pyc
-
+coverage.xml
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
 
 frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
+
+# Local tooling and OS metadata
+.agents/
+.claude/
+.codex/
+.DS_Store
+.idea/
+.vscode/

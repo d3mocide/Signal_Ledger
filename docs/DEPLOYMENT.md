@@ -16,9 +16,14 @@ application container should not be exposed directly to an untrusted network.
    original HTTPS scheme, and redirect HTTP to HTTPS. Do not expose Postgres or
    Redis ports.
 4. Run `docker compose up -d --build`, then verify `GET /health` and the
-   `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` headers.
+  `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` headers.
 5. Create the first administrator through the browser and make a backup before
-   importing source files.
+  importing source files.
+
+The current UI includes Evidence Review, Rule Learning, Run Comparison,
+privacy-safe device fingerprints, saved inventory views, and policy-bounded
+device CSV export. These surfaces are authenticated and should be checked
+against the intended role before granting access to another operator.
 
 ## Monitoring and logs
 
@@ -37,8 +42,15 @@ application container should not be exposed directly to an untrusted network.
 2. Record the image/repository revision being deployed.
 3. Run `docker compose build app` and `docker compose up -d`; startup applies
    idempotent schema migrations before serving traffic.
-4. Verify `/health`, sign in, review the overview, open one inventory record,
-   and inspect the audit log. Run the backend suite from the rebuilt image.
+4. Confirm the expected migration version is present in `schema_migrations`,
+   then verify `/health`, sign in, review the overview, open one inventory
+   record, and inspect the audit log. Run the backend suite from the rebuilt
+   image.
 5. If the application is unhealthy, stop writes, preserve logs, restore the
    known-good image, and use the guarded restore procedure in `OPERATIONS.md`.
    Never test a restore against the production database.
+
+Automated build and API checks do not replace a browser acceptance pass. Before
+calling a deployment production-ready, verify authenticated navigation,
+responsive picker layouts, browser back/forward routes, evidence dispositions,
+exports, and role restrictions in a real browser.

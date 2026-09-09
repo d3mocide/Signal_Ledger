@@ -15,6 +15,9 @@ before using the system for a new authorized area.
   outside the normal explorer UI.
 - Database backups and raw-upload volume copies are separate artifacts. Both
   need the deployment's encryption-at-rest and access-control policy.
+- Device CSV exports are pseudonymous evidence exports. They may include site
+  tokens, categories, confidence, roles, and provenance, but must not include
+  raw addresses, HMAC secrets, exact coordinates, or encrypted address values.
 - `RAW_STORAGE_ENCRYPTION_KEY` can additionally wrap new raw uploads with
   Fernet before they are written to the raw volume. Existing plaintext jobs
   are legacy artifacts and require a separately verified migration or purge;
@@ -51,6 +54,19 @@ before using the system for a new authorized area.
   device category and is never treated as proof of ownership, purpose, or
   physical location.
 - Analysts may override a category; the override is durable and audited.
+- A category override creates a versioned rule proposal keyed to the retained
+  vendor/name/type/SSID/protocol evidence. Proposal acceptance is a human
+  review decision only; it does not automatically promote a production rule.
+- Learning summaries may report dismissed reviews as a false-positive signal
+  by collection and time window. This is a measurement aid, not an automatic
+  threshold change.
+- Device fingerprints are HMAC-derived opaque summaries of signal families
+  such as vendor, protocol, type, normalized name signals, activity windows,
+  security, and coarse cells. Similarity is a suggestion and never an identity
+  merge.
+- Run comparison uses pseudonymous device tokens within the same collection to
+  show new, returning, changed, and disappeared observations. It is not a
+  cross-site identity or tracking feature.
 - Baseline findings are review prompts, not automated security verdicts.
   Disposition notes and up to eight evidence references are retained with the
   finding; secrets and raw addresses must never be entered there.

@@ -1,11 +1,11 @@
-import csv, hashlib, io, os, re, time
+import csv, hashlib, io, json, os, re, time
 import urllib.error, urllib.request
 from collections import Counter, defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from redis import Redis
@@ -16,9 +16,10 @@ from sqlalchemy.orm import Session
 from .crypto import decrypt_address
 from .categorization import rebuild_categories
 from .database import SessionLocal
+from .fingerprints import FINGERPRINT_VERSION, public_summary, signal_payload, similarity
 from .migrations import upgrade
-from .models import Anomaly, AuditEvent, Baseline, Device, DeviceReview, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, SavedFilter, SurveyArea, SurveyRun, User, WorkspaceSetting
-from .policies import DEVICE_ROLE_NAMES, ROLE_RULE_VERSION, validate_polygon
+from .models import Anomaly, AuditEvent, Baseline, Device, DeviceReview, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, RuleProposal, SavedFilter, SurveyArea, SurveyRun, User, WorkspaceSetting
+from .policies import CATEGORY_RULE_VERSION, DEVICE_ROLE_NAMES, ROLE_RULE_VERSION, validate_polygon
 from .raw_storage import write_raw
 from .security import Principal, ROLE_ORDER, ROLES, SESSION_COOKIE, authenticate, expires_at, password_hash, password_valid, session_token, token_hash
 from .tasks import process_ingestion
@@ -131,6 +132,52 @@ def _review_groups(db, area_id=None, status="all"):
     return list(groups.values())
 def _public_review_group(group):
     return {"group_key": group["group_key"], "evidence_tier": group["evidence_tier"], "label": group["label"], "device_count": group["device_count"], "observation_count": group["observation_count"], "priority": group["priority"], "categories": dict(group["categories"]), "roles": dict(group["roles"]), "evidence": group["evidence"][:8], "representative": group["representative"]}
+def _feedback_matcher(db, device):
+    observations = list(db.scalars(select(Observation).where(Observation.device_id == device.id).order_by(Observation.captured_at.desc()).limit(32)).all())
+    def common(values):
+        values = [_review_text(value) for value in values if _review_text(value)]
+        return Counter(values).most_common(3)
+    matcher = {}
+    if device.oui_organization != "unattributable": matcher["vendor"] = _review_text(device.oui_organization)
+    for key, values in (("device_name", [item.device_name for item in observations]), ("device_type", [item.device_type for item in observations]), ("ssid", [item.ssid for item in observations]), ("protocol", [item.protocol for item in observations])):
+        values = common(values)
+        if values: matcher[key] = [value for value, _ in values]
+    if not matcher:
+        matcher["retained_evidence"] = (device.category_evidence or [])[:4]
+    return matcher, (device.category_evidence or [])[:8]
+def record_category_feedback(db, device, category, principal):
+    matcher, evidence = _feedback_matcher(db, device)
+    proposal_key = hashlib.sha256(json.dumps({"category": category, "matcher": matcher}, sort_keys=True).encode()).hexdigest()
+    proposal = db.scalar(select(RuleProposal).where(RuleProposal.proposal_key == proposal_key, RuleProposal.status.in_(("open", "needs_review"))).order_by(RuleProposal.id.desc()))
+    if proposal:
+        sources = list(proposal.source_device_ids or [])
+        if device.id not in sources: sources.append(device.id)
+        proposal.source_device_ids = sources[-50:]
+        proposal.support_count = len(sources)
+        proposal.revision += 1
+    else:
+        proposal = RuleProposal(proposal_key=proposal_key, rule_version=CATEGORY_RULE_VERSION, target_category=category, matcher=matcher, evidence=evidence, source_device_ids=[device.id], support_count=1, status="open", created_by=principal.actor)
+        db.add(proposal)
+    db.flush()
+    return proposal
+def _scoped_device_ids(area_id=None, start=None, end=None):
+    query = select(Observation.device_id).join(SurveyRun)
+    if area_id: query = query.where(SurveyRun.survey_area_id == area_id)
+    if start: query = query.where(Observation.captured_at >= start)
+    if end: query = query.where(Observation.captured_at <= end)
+    return query.distinct()
+def _run_snapshot(db, run_id):
+    rows = db.execute(select(Observation, Device).join(Device).where(Observation.survey_run_id == run_id).order_by(Observation.captured_at.desc())).all()
+    snapshot = {}
+    for observation, device in rows:
+        item = snapshot.setdefault(device.id, {"device": device, "facts": set(), "observation_count": 0, "last_seen": observation.captured_at, "cells": set()})
+        item["observation_count"] += 1
+        item["facts"].update(value for value in (observation.protocol, _review_text(observation.ssid), _review_text(observation.device_name), _review_text(observation.device_type), _review_text(observation.security)) if value)
+        if observation.spatial_cell: item["cells"].add(observation.spatial_cell)
+    return snapshot
+def _comparison_item(item, changed_fields=None):
+    device = item["device"]
+    return {"device_id": device.id, "token_prefix": device.token[:14] + "…", "category": device.category, "category_confidence": device.category_confidence, "oui_organization": device.oui_organization, "roles": device.device_roles or [], "observation_count": item["observation_count"], "last_seen": item["last_seen"], "changed_fields": changed_fields or []}
 def filtered_observations(query, area_id=None, run_id=None, device_id=None, protocol=None, vendor=None, category=None, start=None, end=None, min_quality=None, min_rssi=None):
     """Apply the same bounded discovery filters to queries already joined to runs/devices."""
     if area_id: query = query.where(SurveyRun.survey_area_id == area_id)
@@ -216,9 +263,13 @@ class DeviceReviewPatch(BaseModel):
 class DeviceReviewGroupPatch(DeviceReviewPatch):
     group_key: str = Field(min_length=8, max_length=64)
     area_id: int | None = None
+class RuleProposalPatch(BaseModel):
+    status: str
+    review_note: str | None = Field(default=None, max_length=2000)
 
 ALLOWED_CATEGORIES = {"unknown", "camera", "printer", "network", "mobile", "iot", "bluetooth", "workstation", "audio", "entertainment", "wearable", "automotive"}
 DEVICE_REVIEW_STATUSES = {"open", "confirmed", "dismissed", "needs_review", "insufficient_evidence"}
+RULE_PROPOSAL_STATUSES = {"open", "accepted", "rejected", "needs_review"}
 
 def baseline_expectations(db, area_id, run_ids):
     # run_ids are already validated (in create_baseline) to belong to area_id,
@@ -721,8 +772,89 @@ def override_device_category(device_id: int, body: CategoryPatch, db: Session = 
     if not device: raise HTTPException(404, "Device not found")
     device.category = body.category; device.category_confidence = 1.0; device.category_overridden = True
     device.category_evidence = [f"analyst override by {principal.actor}"]
-    audit(db, principal, "device.category_overridden", "device", device.id, {"category": body.category}); db.commit()
-    return device_view(device)
+    proposal = record_category_feedback(db, device, body.category, principal)
+    audit(db, principal, "device.category_overridden", "device", device.id, {"category": body.category, "rule_proposal_id": proposal.id}); db.commit()
+    result = device_view(device); result["rule_proposal_id"] = proposal.id; return result
+@app.get("/v1/rule-proposals")
+def list_rule_proposals(status: str = "open", limit: int = Query(100, ge=1, le=500), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    if status != "all" and status not in RULE_PROPOSAL_STATUSES: raise HTTPException(422, "Unknown rule proposal status")
+    limit_value = limit if isinstance(limit, int) else 100
+    query = select(RuleProposal).order_by(RuleProposal.status.asc(), RuleProposal.support_count.desc(), RuleProposal.created_at.desc()).limit(limit_value)
+    if status != "all": query = query.where(RuleProposal.status == status)
+    return [dump(item) for item in db.scalars(query).all()]
+@app.patch("/v1/rule-proposals/{proposal_id}")
+def update_rule_proposal(proposal_id: int, body: RuleProposalPatch, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
+    if body.status not in RULE_PROPOSAL_STATUSES: raise HTTPException(422, "Unknown rule proposal status")
+    item = db.get(RuleProposal, proposal_id)
+    if not item: raise HTTPException(404, "Rule proposal not found")
+    item.status = body.status; item.review_note = body.review_note; item.reviewed_by = principal.actor; item.reviewed_at = datetime.utcnow()
+    audit(db, principal, "rule_proposal." + body.status, "rule_proposal", item.id, {"rule_version": item.rule_version, "revision": item.revision, "automatic_promotion": False})
+    db.commit(); return dump(item)
+@app.get("/v1/learning/summary")
+def learning_summary(area_id: int | None = None, start: datetime | None = None, end: datetime | None = None, db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    scope = _scoped_device_ids(area_id, start, end)
+    review_query = select(DeviceReview.status, func.count(DeviceReview.id)).where(DeviceReview.device_id.in_(scope))
+    if start: review_query = review_query.where(DeviceReview.reviewed_at >= start)
+    if end: review_query = review_query.where(DeviceReview.reviewed_at <= end)
+    disposition_counts = {status: count for status, count in db.execute(review_query.group_by(DeviceReview.status))}
+    category_query = select(Device.category, func.count(Device.id)).join(DeviceReview, DeviceReview.device_id == Device.id).where(Device.id.in_(scope))
+    if start: category_query = category_query.where(DeviceReview.reviewed_at >= start)
+    if end: category_query = category_query.where(DeviceReview.reviewed_at <= end)
+    by_category = [{"category": category or "unknown", "count": count} for category, count in db.execute(category_query.group_by(Device.category).order_by(func.count(Device.id).desc()))]
+    override_query = select(func.count(Device.id)).where(Device.category_overridden == True, Device.id.in_(scope))
+    overrides = db.scalar(override_query) or 0
+    proposal_query = select(RuleProposal.status, func.count(RuleProposal.id))
+    if start: proposal_query = proposal_query.where(RuleProposal.created_at >= start)
+    if end: proposal_query = proposal_query.where(RuleProposal.created_at <= end)
+    proposals = {status: count for status, count in db.execute(proposal_query.group_by(RuleProposal.status))}
+    confirmed = disposition_counts.get("confirmed", 0); dismissed = disposition_counts.get("dismissed", 0)
+    denominator = confirmed + dismissed
+    return {"scope": {"area_id": area_id, "start": start, "end": end}, "dispositions": disposition_counts, "reviewed": sum(disposition_counts.values()), "category_overrides": overrides, "by_category": by_category, "rule_proposals": proposals, "false_positive_rate": round(dismissed / denominator, 3) if denominator else None, "interpretation": "Dismissed is a review signal for a likely false positive; it is not an automatic rule change."}
+@app.get("/v1/devices/{device_id}/fingerprint")
+def device_fingerprint(device_id: int, limit: int = Query(10, ge=1, le=25), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    device = db.get(Device, device_id)
+    if not device: raise HTTPException(404, "Device not found")
+    observations = list(db.scalars(select(Observation).where(Observation.device_id == device.id).order_by(Observation.captured_at.desc()).limit(250)).all())
+    target = signal_payload(device, observations)
+    candidates = list(db.scalars(select(Device).where(Device.id != device.id, or_(Device.oui_organization == device.oui_organization, Device.category == device.category)).order_by(Device.last_seen.desc()).limit(400)).all())
+    candidate_ids = [item.id for item in candidates]
+    candidate_observations = defaultdict(list)
+    if candidate_ids:
+        for observation in db.scalars(select(Observation).where(Observation.device_id.in_(candidate_ids)).order_by(Observation.captured_at.desc())).all():
+            if len(candidate_observations[observation.device_id]) < 40: candidate_observations[observation.device_id].append(observation)
+    similar = []
+    for candidate in candidates:
+        score, shared = similarity(target, signal_payload(candidate, candidate_observations[candidate.id]))
+        if score >= .18: similar.append({"device_id": candidate.id, "token_prefix": candidate.token[:14] + "…", "category": candidate.category, "oui_organization": candidate.oui_organization, "score": score, "shared_signals": shared})
+    similar.sort(key=lambda item: (-item["score"], item["token_prefix"]))
+    limit_value = limit if isinstance(limit, int) else 10
+    return {"device_id": device.id, "summary": public_summary(target), "similar": similar[:limit_value], "disclaimer": "Similarity is a privacy-safe suggestion based on retained signal families, not an identity merge."}
+@app.get("/v1/import-comparison")
+def import_comparison(left_run_id: int, right_run_id: int, limit: int = Query(100, ge=1, le=500), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    if left_run_id == right_run_id: raise HTTPException(422, "Choose two different runs")
+    left_run = db.get(SurveyRun, left_run_id); right_run = db.get(SurveyRun, right_run_id)
+    if not left_run or not right_run: raise HTTPException(404, "Import session not found")
+    if left_run.survey_area_id != right_run.survey_area_id: raise HTTPException(422, "Runs must belong to the same collection")
+    limit_value = limit if isinstance(limit, int) else 100
+    left = _run_snapshot(db, left_run_id); right = _run_snapshot(db, right_run_id)
+    left_ids, right_ids = set(left), set(right)
+    new_ids, disappeared_ids, returning_ids = right_ids - left_ids, left_ids - right_ids, left_ids & right_ids
+    changed = []
+    for device_id in returning_ids:
+        fields = []
+        if left[device_id]["device"].category != right[device_id]["device"].category: fields.append("category")
+        if left[device_id]["device"].oui_organization != right[device_id]["device"].oui_organization: fields.append("vendor")
+        if left[device_id]["device"].device_roles != right[device_id]["device"].device_roles: fields.append("role/context")
+        if left[device_id]["facts"] != right[device_id]["facts"]: fields.append("observed facts")
+        if fields: changed.append(_comparison_item(right[device_id], fields))
+    return {"left": {"id": left_run.id, "name": left_run.name, "completed": left_run.completed}, "right": {"id": right_run.id, "name": right_run.name, "completed": right_run.completed}, "counts": {"new": len(new_ids), "returning": len(returning_ids), "disappeared": len(disappeared_ids), "changed": len(changed)}, "new": [_comparison_item(right[item]) for item in sorted(new_ids)[:limit_value]], "returning": [_comparison_item(right[item]) for item in sorted(returning_ids)[:limit_value]], "disappeared": [_comparison_item(left[item]) for item in sorted(disappeared_ids)[:limit_value]], "changed": changed[:limit_value], "truncated": any(len(group) > limit_value for group in (new_ids, returning_ids, disappeared_ids)) or len(changed) > limit_value}
+@app.get("/v1/exports/devices.csv")
+def export_devices_csv(area_id: int | None = None, vendor: str | None = None, category: str | None = None, role: str | None = None, attributed_only: bool = False, limit: int = Query(5000, ge=1, le=10000), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    result = devices(area_id=area_id, vendor=vendor, category=category, role=role, attributed_only=attributed_only, limit=limit, offset=0, db=db, principal=principal)
+    output = io.StringIO(); writer = csv.writer(output); writer.writerow(["site_token", "oui_organization", "category", "category_confidence", "roles", "first_seen", "last_seen"])
+    for item in result["items"]: writer.writerow([item["token"], item["oui_organization"], item["category"], item["category_confidence"], ";".join(item.get("device_roles") or []), item["first_seen"], item["last_seen"]])
+    audit(db, principal, "device.exported", "device_inventory", None, {"count": len(result["items"]), "limit": limit, "area_id": area_id, "category": category, "role": role}); db.commit()
+    return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=signal-ledger-devices.csv"})
 @app.post("/v1/devices/{device_id}/reveal-address")
 def reveal_device_address(device_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
     device = db.get(Device, device_id)

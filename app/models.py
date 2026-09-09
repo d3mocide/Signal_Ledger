@@ -74,6 +74,24 @@ class DeviceReview(Base):
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+class RuleProposal(Base):
+    __tablename__ = "rule_proposals"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    proposal_key: Mapped[str] = mapped_column(String(64), index=True)
+    rule_version: Mapped[str] = mapped_column(String(32), default="rules-v6")
+    revision: Mapped[int] = mapped_column(Integer, default=1)
+    target_category: Mapped[str] = mapped_column(String(48))
+    matcher: Mapped[dict] = mapped_column(JSON, default=dict)
+    evidence: Mapped[list] = mapped_column(JSON, default=list)
+    source_device_ids: Mapped[list] = mapped_column(JSON, default=list)
+    support_count: Mapped[int] = mapped_column(Integer, default=1)
+    status: Mapped[str] = mapped_column(String(24), default="open", index=True)
+    created_by: Mapped[str] = mapped_column(String(120))
+    reviewed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
 class OUIImport(Base):
     __tablename__ = "oui_imports"
     id: Mapped[int] = mapped_column(primary_key=True)

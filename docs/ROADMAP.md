@@ -141,7 +141,8 @@ non-automated findings with evidence and explanations.
 - [x] First hardening pass: headers, session revocation, request limiting, secret
   handling, and deliberate destructive-operation controls.
 - [ ] Accessibility and responsive UI pass.
-- [ ] Measure false positives by area/time window and tune thresholds.
+- [x] Add false-positive measurement by area/time window; threshold tuning still
+  requires representative review volume.
 - [ ] Deployment runbook, monitoring, structured logs, and upgrade procedure.
 
 **Exit gate:** the system can be operated, backed up, restored, cleaned up,
@@ -159,24 +160,27 @@ turning inferred labels into identity or security verdicts.
   `insufficient_evidence` disposition, and single-device groups expose an
   audited category override picker. The queue is paginated at 24 groups per
   page, and the SPA pages are addressable with browser back/forward support.
-  Validation: 44 API/UI regression tests, production build, and live
+  Validation: 47 containerized regression tests, production build, and live
   actionable/no-signal count check.
 - [x] Role/category overview dashboard with counts, confidence, top evidence,
-  overlap handling, and click-through inventory filters. Validation: 44
+  overlap handling, and click-through inventory filters. Validation: 47
   containerized tests, production frontend build, and live summary payload
   check.
-- [ ] Rule feedback loop that records analyst corrections as reviewable,
+- [x] Rule feedback loop that records analyst corrections as reviewable,
   versioned rule proposals; no automatic rule promotion.
-- [ ] Privacy-safe device fingerprinting using vendor, name/type, protocol,
-  security, channel, timing, and coarse observation patterns; output should be
-  a similarity suggestion, not an identity merge.
-- [ ] Import comparison view showing new, returning, disappeared, and changed
+- [x] Privacy-safe device fingerprints using vendor, name/type, protocol,
+  security, timing, and coarse observation patterns; output is a similarity
+  suggestion, not an identity merge.
+- [x] Import comparison view showing new, returning, disappeared, and changed
   devices between completed runs, with coverage context.
-- [ ] Saved inventory views for unknown devices, POS, guest-network context,
-  automotive, and review backlog, including role/category/vendor filters.
-- [ ] Privacy-safe evidence exports containing pseudonymous tokens, coarse
-  cells, classifications, roles, confidence, and provenance; never raw MACs,
-  HMAC secrets, or exact coordinates by default.
+- [x] Saved inventory views for category/vendor/role/attribution filters,
+  including unknown, POS, guest-network, automotive, and review workflows.
+- [x] Privacy-safe device CSV exports containing pseudonymous tokens,
+  classifications, roles, confidence, and provenance; never raw MACs, HMAC
+  secrets, or exact coordinates by default.
+
+  Validation: 47 containerized tests, production frontend build, live health
+  check, and migration `0013_rule_proposals` applied.
 
 **Improvement exit gate:** an analyst can move from a new import to a bounded
 review queue, understand why each item was prioritized, record a disposition,
@@ -184,10 +188,10 @@ compare it with prior runs, and export only policy-approved evidence.
 
 ## Immediate next build sequence
 
-1. Add the role/category overview dashboard and click-through review metrics.
-2. Add analyst feedback proposals and measure false positives by area/time
-   window before changing thresholds.
-3. Build privacy-safe device fingerprints and import-to-import comparison.
-4. Add saved inventory views and policy-bounded evidence exports.
-5. Run the end-to-end integration, backup/restore, HMAC-rotation, and browser
-   validation gates against representative authorized runs.
+1. Run end-to-end integration tests from upload through every finding type.
+2. Run realistic import/explorer load tests and the backup/restore and
+   HMAC-rotation drills.
+3. Complete the accessibility/responsive and browser validation passes.
+4. Tune categorization thresholds from representative analyst feedback.
+5. Finish deployment monitoring, structured logs, upgrade procedure, and
+   policy-bounded evidence export review.
