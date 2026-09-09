@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from redis import Redis
 from rq import Queue
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .crypto import decrypt_address
 from .database import SessionLocal
@@ -91,10 +92,14 @@ def purge_run_data(db, run, principal, action="survey_run.deleted"):
     for baseline in list(db.scalars(select(Baseline).where(Baseline.survey_area_id == area_id)).all()):
         if run_id in baseline.run_ids:
             db.execute(delete(Anomaly).where(Anomaly.baseline_id == baseline.id)); db.delete(baseline)
+    # Devices are never scoped to an area (Device.survey_area_id is not
+    # populated by ingestion), so orphan detection is scoped to this run's own
+    # devices instead - not a survey_area_id match, which would never hit.
+    device_ids = list(db.scalars(select(Observation.device_id).where(Observation.survey_run_id == run_id).distinct()).all())
     db.execute(delete(Observation).where(Observation.survey_run_id == run_id))
     db.execute(delete(IngestionJob).where(IngestionJob.survey_run_id == run_id))
     db.delete(run)
-    orphan_ids = list(db.scalars(select(Device.id).where(Device.survey_area_id == area_id, ~select(Observation.id).where(Observation.device_id == Device.id).exists())).all())
+    orphan_ids = list(db.scalars(select(Device.id).where(Device.id.in_(device_ids), ~select(Observation.id).where(Observation.device_id == Device.id).exists())).all()) if device_ids else []
     if orphan_ids:
         db.execute(delete(Anomaly).where(Anomaly.device_id.in_(orphan_ids)))
         db.execute(delete(Device).where(Device.id.in_(orphan_ids)))
@@ -131,7 +136,10 @@ class CollectionAssignment(BaseModel):
     name: str = Field(min_length=1, max_length=160)
 
 def baseline_expectations(db, area_id, run_ids):
-    rows = db.execute(select(Observation, Device).join(Device).where(Observation.survey_run_id.in_(run_ids), Device.survey_area_id == area_id)).all()
+    # run_ids are already validated (in create_baseline) to belong to area_id,
+    # so no area filter is needed here; Device.survey_area_id is never
+    # populated by real ingestion and must not be used to scope this query.
+    rows = db.execute(select(Observation, Device).join(Device).where(Observation.survey_run_id.in_(run_ids))).all()
     devices, vendors, categories = set(), set(), set()
     cells, hours, profiles = defaultdict(set), defaultdict(set), defaultdict(set)
     for observation, device in rows:
@@ -147,7 +155,7 @@ def baseline_expectations(db, area_id, run_ids):
 def build_anomalies(db, baseline):
     expectation = baseline.expectations or {}; known = set(expectation.get("devices", [])); vendors = set(expectation.get("vendors", [])); cells = expectation.get("cells", {}); hours = expectation.get("hours", {}); profiles = expectation.get("profiles", {})
     db.execute(delete(Anomaly).where(Anomaly.baseline_id == baseline.id))
-    observations = db.execute(select(Observation, Device).join(Device).where(Device.survey_area_id == baseline.survey_area_id, ~Observation.survey_run_id.in_(baseline.run_ids))).all()
+    observations = db.execute(select(Observation, Device).join(Device).join(SurveyRun).where(SurveyRun.survey_area_id == baseline.survey_area_id, ~Observation.survey_run_id.in_(baseline.run_ids))).all()
     emitted = set()
     def emit(kind, device, score, confidence, explanation):
         key = (kind, device.id if device else None)
@@ -272,7 +280,16 @@ def overview(db: Session = Depends(db_session), principal: Principal = Depends(p
 @app.post("/v1/survey-areas")
 def create_area(body: AreaInput, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
     if body.precision not in {"coarse", "exact"}: raise HTTPException(422, "precision must be coarse or exact")
-    area = SurveyArea(**body.model_dump()); db.add(area); db.flush(); audit(db, principal, "survey_area.created", "survey_area", area.id, {"precision": area.precision}); db.commit(); db.refresh(area); return dump(area)
+    name = body.name.strip()
+    if not name: raise HTTPException(422, "name must not be empty")
+    if db.scalar(select(SurveyArea).where(SurveyArea.name == name)): raise HTTPException(409, "A collection with that name already exists")
+    data = body.model_dump(); data["name"] = name; data["authorization_ref"] = data["authorization_ref"].strip()
+    area = SurveyArea(**data); db.add(area)
+    try:
+        db.flush(); audit(db, principal, "survey_area.created", "survey_area", area.id, {"precision": area.precision}); db.commit()
+    except IntegrityError:
+        db.rollback(); raise HTTPException(409, "A collection with that name already exists")
+    db.refresh(area); return dump(area)
 @app.get("/v1/survey-areas")
 def list_areas(db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     areas = db.scalars(select(SurveyArea).order_by(SurveyArea.name)).all()
@@ -289,8 +306,22 @@ def rename_area(area_id: int, body: AreaPatch, db: Session = Depends(db_session)
     previous = area.name
     area.name = name
     audit(db, principal, "survey_area.renamed", "survey_area", area.id, {"previous": previous, "name": name})
-    db.commit(); db.refresh(area)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback(); raise HTTPException(409, "Another collection already uses that name")
+    db.refresh(area)
     return dump(area)
+@app.delete("/v1/survey-areas/{area_id}")
+def delete_area(area_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
+    area = db.get(SurveyArea, area_id)
+    if not area: raise HTTPException(404, "Survey area not found")
+    if db.scalar(select(func.count()).select_from(SurveyRun).where(SurveyRun.survey_area_id == area_id)):
+        raise HTTPException(409, "Delete or refile this collection's runs before deleting it")
+    audit(db, principal, "survey_area.deleted", "survey_area", area.id, {"name": area.name})
+    db.delete(area)
+    db.commit()
+    return {"status": "deleted", "area_id": area_id}
 @app.post("/v1/survey-runs")
 def create_run(body: RunInput, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
     if not db.get(SurveyArea, body.survey_area_id): raise HTTPException(404, "Survey area not found")
@@ -457,7 +488,10 @@ def device_detail(device_id: int, limit: int = Query(100, ge=1, le=500), db: Ses
     observation_count = db.scalar(select(func.count()).select_from(Observation).where(Observation.device_id == device_id))
     run_count = db.scalar(select(func.count(func.distinct(Observation.survey_run_id))).where(Observation.device_id == device_id))
     cells = db.scalar(select(func.count(func.distinct(Observation.spatial_cell))).where(Observation.device_id == device_id, Observation.spatial_cell.is_not(None)))
-    return {"device": device_view(device), "summary": {"observations": observation_count, "runs": run_count, "coarse_cells": cells}, "observations": [{**dump(item), "run_name": run_name} for item, run_name in records]}
+    # Device.collection_id is never populated by ingestion; a device's actual
+    # collection(s) can only be derived by joining its observations' runs.
+    collections = list(db.scalars(select(SurveyArea.name).join(SurveyRun, SurveyRun.survey_area_id == SurveyArea.id).join(Observation, Observation.survey_run_id == SurveyRun.id).where(Observation.device_id == device_id).distinct().order_by(SurveyArea.name)).all())
+    return {"device": device_view(device), "summary": {"observations": observation_count, "runs": run_count, "coarse_cells": cells}, "collections": collections, "observations": [{**dump(item), "run_name": run_name} for item, run_name in records]}
 @app.post("/v1/devices/{device_id}/reveal-address")
 def reveal_device_address(device_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
     device = db.get(Device, device_id)

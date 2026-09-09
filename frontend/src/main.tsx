@@ -7,6 +7,7 @@ import "./style.css";
 type Page =
   | "overview"
   | "surveys"
+  | "collections"
   | "inventory"
   | "vendors"
   | "coverage"
@@ -37,6 +38,7 @@ type Device = {
 type DeviceDetail = {
   device: Device;
   summary: { observations: number; runs: number; coarse_cells: number };
+  collections: string[];
   observations: {
     id: number;
     captured_at: string;
@@ -137,6 +139,12 @@ const navItems: { page: Page; label: string; icon: string; group: string }[] = [
     icon: "surveys",
     group: "COLLECTION",
   },
+  {
+    page: "collections",
+    label: "Collections",
+    icon: "collections",
+    group: "",
+  },
   { page: "access", label: "Administration", icon: "access", group: "" },
 ];
 const descriptions: Record<Page, string> = {
@@ -147,6 +155,7 @@ const descriptions: Record<Page, string> = {
   anomalies: "Review changes against your established baselines.",
   baselines: "Define expected behavior from completed survey runs.",
   surveys: "Drop a capture to create an import session, or organize sessions when useful.",
+  collections: "Create, rename, and review the collections used to group captures.",
   access: "Manage workspace access and local enrichment.",
   device: "Trace an observed device back to its source evidence.",
 };
@@ -155,6 +164,7 @@ function Icon({ name }: { name: string }) {
     overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
     inventory: "M4 5h16v14H4z M8 9h8 M8 13h5",
     vendors: "M4 6h13 M4 12h17 M4 18h9",
+    collections: "M3 7h6l2 2h10v10H3z",
     coverage:
       "M12 3v3 M12 18v3 M3 12h3 M18 12h3 M19 12a7 7 0 1 1-14 0 7 7 0 0 1 14 0 M14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0",
     anomalies: "M12 3 2 20h20L12 3z M12 9v5 M12 17v.1",
@@ -214,7 +224,8 @@ function App() {
     [note, setNote] = useState(""),
     [loading, setLoading] = useState(true),
     [refresh, setRefresh] = useState(0),
-    [updated, setUpdated] = useState("");
+    [updated, setUpdated] = useState(""),
+    [importing, setImporting] = useState<string | null>(null);
   const load = async () => {
     setLoading(true);
     try {
@@ -230,7 +241,6 @@ function App() {
       setAreas(b);
       setRuns(c);
       setJobs(d);
-      setNote("");
       setUpdated(
         new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -411,12 +421,36 @@ function App() {
               </button>
             </div>
           )}
+          {importing && (
+            <div className="progress-toast" role="status">
+              <div className="progress-toast-bar">
+                <span />
+              </div>
+              <div>
+                <b>Importing {importing}…</b>
+                <small>
+                  Large files can take a couple of minutes. You can keep
+                  working elsewhere in the meantime.
+                </small>
+              </div>
+            </div>
+          )}
           <WorkspaceBoundary key={page + refresh}>
             {page === "overview" && (
               <Dashboard overview={o} jobs={jobs} runs={runs} go={setPage} />
             )}{" "}
             {page === "surveys" && (
-              <Surveys areas={areas} runs={runs} reload={load} say={setNote} />
+              <Surveys
+                areas={areas}
+                runs={runs}
+                reload={load}
+                say={setNote}
+                role={me.role}
+                setImporting={setImporting}
+              />
+            )}{" "}
+            {page === "collections" && (
+              <CollectionsPage role={me.role} reload={load} say={setNote} />
             )}{" "}
             {page === "inventory" && (
               <Inventory
@@ -576,156 +610,161 @@ function Dashboard({
           </div>
         ))}
       </div>
-      <div className="dashboard-grid">
-        <section className="panel landscape">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">SPATIAL INTELLIGENCE</p>
-              <h2>Observation footprint</h2>
-            </div>
-            <button className="text-action" onClick={() => go("coverage")}>
-              Explore coverage <Icon name="arrow" />
-            </button>
-          </div>
-          {!ready ? (
-            <div className="map-empty">Loading observation footprint…</div>
-          ) : (
-            <LocalMap cells={cells} compact />
-          )}
-          <div className="map-caption">
-            <span>
-              <i className="legend-dot" /> {cells.length.toLocaleString()}{" "}
-              coarse cells shown · up to 1,000
-            </span>
-            <span>Relative coordinates · no external tiles</span>
-          </div>
-        </section>
-        <section className="panel protocol-panel">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">SIGNAL COMPOSITION</p>
-              <h2>Protocol distribution</h2>
-            </div>
-            <Icon name="baselines" />
-          </div>
-          <div className="protocol-total">
-            <b>{ready && !error ? total.toLocaleString() : "—"}</b>
-            <span>retained observations</span>
-          </div>
-          <div className="stack-bar">
-            {protocols.map(([k, v], i) => (
-              <span
-                key={k}
-                style={{
-                  width: (v / total) * 100 + "%",
-                  background: ["#a6e36d", "#72b4ef", "#b8a2f4"][i % 3],
-                }}
-              />
-            ))}
-          </div>
-          <div className="protocol-list">
-            {protocols.map(([k, v], i) => (
-              <div key={k}>
-                <span>
-                  <i
-                    style={{
-                      background: ["#a6e36d", "#72b4ef", "#b8a2f4"][i % 3],
-                    }}
-                  />
-                  {k === "wifi" ? "Wi-Fi" : k === "bluetooth" ? "Bluetooth" : k}
-                </span>
-                <b>{v.toLocaleString()}</b>
-                <small>{Math.round((v / total) * 100)}%</small>
+      <div className="dashboard-columns">
+        <div className="dashboard-column wide">
+          <section className="panel landscape">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">SPATIAL INTELLIGENCE</p>
+                <h2>Observation footprint</h2>
               </div>
-            ))}
-            {ready && !protocols.length && (
-              <p className="muted">Import a survey to see your signal mix.</p>
-            )}
-          </div>
-          <div className="quality-row">
-            <span>Mean evidence quality</span>
-            <b>
-              {analytics && total
-                ? Math.round(analytics.mean_quality * 100) + "%"
-                : "—"}
-            </b>
-          </div>
-        </section>
-        <section className="panel activity-panel">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">COLLECTION HISTORY</p>
-              <h2>Discovery activity</h2>
+              <button className="text-action" onClick={() => go("coverage")}>
+                Explore coverage <Icon name="arrow" />
+              </button>
             </div>
-            <span className="tag">Last {daily.length} observed days</span>
-          </div>
-          <div
-            className="activity-chart"
-            role="img"
-            aria-label={
-              daily.length
-                ? "Daily retained observations: " +
-                  daily.map((x) => x.day + ": " + x.count).join(", ")
-                : "No recorded activity"
-            }
-          >
-            {daily.length ? (
-              daily.map((x) => (
-                <div className="activity-column" key={x.day}>
-                  <div
-                    style={{
-                      height: Math.max(3, (x.count / peak) * 100) + "%",
-                    }}
-                  >
-                    <title>
-                      {x.day}: {x.count.toLocaleString()} observations
-                    </title>
-                    <span>
-                      {x.count.toLocaleString()}
-                      <br />
-                      {x.day}
-                    </span>
-                  </div>
-                </div>
-              ))
+            {!ready ? (
+              <div className="map-empty">Loading observation footprint…</div>
             ) : (
-              <p className="muted">
-                Your collection timeline will appear after the first import.
-              </p>
+              <LocalMap cells={cells} compact />
             )}
-          </div>
-          <div className="chart-axis">
-            <span>{daily[0]?.day || "No observations"}</span>
-            <span>{daily.at(-1)?.day || ""}</span>
-          </div>
-        </section>
-        <section className="panel review-panel">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">ATTENTION & REVIEW</p>
-              <h2>Changes to investigate</h2>
+            <div className="map-caption">
+              <span>
+                <i className="legend-dot" /> {cells.length.toLocaleString()}{" "}
+                coarse cells shown · up to 1,000
+              </span>
+              <span>Relative coordinates · no external tiles</span>
             </div>
-            <span className="review-icon">
-              <Icon name="anomalies" />
-            </span>
-          </div>
-          <div className="review-count">
-            <b>{ready && !error ? pending.length : "—"}</b>
-            <span>findings awaiting review</span>
-          </div>
-          <p className="muted">
-            {pending.length
-              ? "Compare these changes with the baseline evidence before assigning a disposition."
-              : "Baseline comparisons surface changes here. Scores guide review, not security verdicts."}
-          </p>
-          <button
-            className="secondary full-width"
-            onClick={() => go(pending.length ? "anomalies" : "baselines")}
-          >
-            {pending.length ? "Open review queue" : "Manage baselines"}
-            <Icon name="arrow" />
-          </button>
-        </section>
+          </section>
+        </div>
+        <div className="dashboard-column narrow">
+          <section className="panel protocol-panel">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">SIGNAL COMPOSITION</p>
+                <h2>Protocol distribution</h2>
+              </div>
+              <Icon name="baselines" />
+            </div>
+            <div className="protocol-total">
+              <b>{ready && !error ? total.toLocaleString() : "—"}</b>
+              <span>retained observations</span>
+            </div>
+            <div className="stack-bar">
+              {protocols.map(([k, v], i) => (
+                <span
+                  key={k}
+                  style={{
+                    width: (v / total) * 100 + "%",
+                    background: ["#a6e36d", "#72b4ef", "#b8a2f4"][i % 3],
+                  }}
+                />
+              ))}
+            </div>
+            <div className="protocol-list">
+              {protocols.map(([k, v], i) => (
+                <div key={k}>
+                  <span>
+                    <i
+                      style={{
+                        background: ["#a6e36d", "#72b4ef", "#b8a2f4"][i % 3],
+                      }}
+                    />
+                    {k === "wifi" ? "Wi-Fi" : k === "bluetooth" ? "Bluetooth" : k}
+                  </span>
+                  <b>{v.toLocaleString()}</b>
+                  <small>{Math.round((v / total) * 100)}%</small>
+                </div>
+              ))}
+              {ready && !protocols.length && (
+                <p className="muted">Import a survey to see your signal mix.</p>
+              )}
+            </div>
+            <div className="quality-row">
+              <span>Mean evidence quality</span>
+              <b>
+                {analytics && total
+                  ? Math.round(analytics.mean_quality * 100) + "%"
+                  : "—"}
+              </b>
+            </div>
+          </section>
+          <section className="panel review-panel">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">ATTENTION & REVIEW</p>
+                <h2>Changes to investigate</h2>
+              </div>
+              <span className="review-icon">
+                <Icon name="anomalies" />
+              </span>
+            </div>
+            <div className="review-count">
+              <b>{ready && !error ? pending.length : "—"}</b>
+              <span>findings awaiting review</span>
+            </div>
+            <p className="muted">
+              {pending.length
+                ? "Compare these changes with the baseline evidence before assigning a disposition."
+                : "Baseline comparisons surface changes here. Scores guide review, not security verdicts."}
+            </p>
+            <button
+              className="secondary full-width"
+              onClick={() => go(pending.length ? "anomalies" : "baselines")}
+            >
+              {pending.length ? "Open review queue" : "Manage baselines"}
+              <Icon name="arrow" />
+            </button>
+          </section>
+          <section className="panel activity-panel">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">COLLECTION HISTORY</p>
+                <h2>Discovery activity</h2>
+              </div>
+              <span className="tag">Last {daily.length} observed days</span>
+            </div>
+            <div
+              className="activity-chart"
+              role="img"
+              aria-label={
+                daily.length
+                  ? "Daily retained observations: " +
+                    daily.map((x) => x.day + ": " + x.count).join(", ")
+                  : "No recorded activity"
+              }
+            >
+              {daily.length ? (
+                daily.map((x) => (
+                  <div className="activity-column" key={x.day}>
+                    <div
+                      style={{
+                        height: Math.max(3, (x.count / peak) * 100) + "%",
+                      }}
+                    >
+                      <title>
+                        {x.day}: {x.count.toLocaleString()} observations
+                      </title>
+                      <span>
+                        {x.count.toLocaleString()}
+                        <br />
+                        {x.day}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="muted">
+                  Your collection timeline will appear after the first import.
+                </p>
+              )}
+            </div>
+            <div className="chart-axis">
+              <span>{daily[0]?.day || "No observations"}</span>
+              <span>{daily.at(-1)?.day || ""}</span>
+            </div>
+          </section>
+        </div>
+      </div>
         <section className="panel imports-panel">
           <div className="panel-heading">
             <div>
@@ -812,7 +851,6 @@ function Dashboard({
             )}
           </div>
         </section>
-      </div>
     </div>
   );
 }
@@ -821,19 +859,32 @@ function Surveys({
   runs,
   reload,
   say,
+  role,
+  setImporting,
 }: {
   areas: Area[];
   runs: Run[];
   reload: () => void;
   say: (x: string) => void;
+  role: string;
+  setImporting: (x: string | null) => void;
 }) {
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false),
+    [uploadTarget, setUploadTarget] = useState(""),
+    [uploadNewCollectionName, setUploadNewCollectionName] = useState("");
   async function quickUpload(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const body = new FormData(form);
-    if (!(body.get("file") instanceof File)) return;
+    const file = body.get("file");
+    if (!(file instanceof File)) return;
+    const collectionName =
+      uploadTarget === "__new__"
+        ? uploadNewCollectionName.trim()
+        : uploadTarget;
+    if (collectionName) body.set("collection_name", collectionName);
     setBusy(true);
+    setImporting(file.name);
     try {
       const response = await fetch("/v1/imports", {
         method: "POST",
@@ -843,6 +894,8 @@ function Surveys({
       if (!response.ok) throw new Error(await response.text());
       const job = await response.json();
       form.reset();
+      setUploadTarget("");
+      setUploadNewCollectionName("");
       say("Import queued. The new session will be named from this file.");
       for (let attempt = 0; attempt < 120; attempt++) {
         const status = await api<Job>("/v1/ingestions/" + job.id);
@@ -858,6 +911,7 @@ function Surveys({
       say(msg(error));
     } finally {
       setBusy(false);
+      setImporting(null);
     }
   }
   const [selected, setSelected] = useState<Set<number>>(new Set()),
@@ -907,99 +961,34 @@ function Surveys({
     }
   }
   const collectionNames = new Map(areas.map((area) => [area.id, area.name]));
-  async function addArea(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget,
-      f = new FormData(form);
+  async function deleteRun(run: Run) {
+    if (
+      !window.confirm(
+        "Permanently delete \"" +
+          run.name +
+          "\" and all of its observations and orphaned devices? This cannot be undone.",
+      )
+    )
+      return;
     try {
-      await send("/v1/survey-areas", {
-        name: f.get("name"),
-        authorization_ref: f.get("authorization_ref"),
-        precision: f.get("precision"),
+      await api("/v1/survey-runs/" + run.id, { method: "DELETE" });
+      say("Deleted " + run.name + ".");
+      setSelected((current) => {
+        const next = new Set(current);
+        next.delete(run.id);
+        return next;
       });
-      form.reset();
       reload();
-    } catch (x) {
-      say(msg(x));
-    }
-  }
-  async function addRun(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget,
-      f = new FormData(form);
-    try {
-      await send("/v1/survey-runs", {
-        survey_area_id: Number(f.get("survey_area_id")),
-        name: f.get("name"),
-        authorization_ref: f.get("authorization_ref"),
-        collector_coverage: Number(f.get("collector_coverage")),
-      });
-      form.reset();
-      reload();
-    } catch (x) {
-      say(msg(x));
-    }
-  }
-  async function complete(id: number) {
-    try {
-      await send("/v1/survey-runs/" + id + "/complete", {});
-      say("Run marked complete.");
-      reload();
-    } catch (x) {
-      say(msg(x));
-    }
-  }
-  async function upload(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const f = new FormData(e.currentTarget),
-      file = f.get("file");
-    if (!(file instanceof File)) return;
-    setBusy(true);
-    const body = new FormData();
-    body.set("file", file);
-    body.set("source_format", String(f.get("source_format")));
-    if (f.get("session_name")) body.set("session_name", String(f.get("session_name")));
-    if (f.get("collection_name")) body.set("collection_name", String(f.get("collection_name")));
-    try {
-      const x = await fetch(
-        "/v1/imports",
-        { method: "POST", body, credentials: "same-origin" },
-      );
-      if (!x.ok) throw new Error(await x.text());
-      const j = await x.json();
-      for (let n = 0; n < 120; n++) {
-        const z = await api<Job>("/v1/ingestions/" + j.id);
-        if (!["queued", "processing"].includes(z.status)) {
-          say(
-            "Import " +
-              z.status +
-              ": " +
-              count(z.report.accepted).toLocaleString() +
-              " accepted · " +
-              count(z.report.rejected).toLocaleString() +
-              " rejected.",
-          );
-          reload();
-          return;
-        }
-        await new Promise((q) => setTimeout(q, 1000));
-      }
-      say(
-        "Import is still processing. Refresh the command center to check its status.",
-      );
-    } catch (x) {
-      say(msg(x));
-    } finally {
-      setBusy(false);
+    } catch (error) {
+      say(msg(error));
     }
   }
   return (
-    <>
     <div className="capture-flow">
       <section className="panel capture-drop">
         <p className="eyebrow">NEW CAPTURE</p>
         <h2>Drop a WiGLE or Kismet log</h2>
-        <p className="muted">That is all you need to do. Signal Ledger names the import session from the filename and time, then you can explore it immediately.</p>
+        <p className="muted">Signal Ledger names the import session from the filename and time. Naming and filing into a collection are both optional.</p>
         <form onSubmit={quickUpload}>
           <select aria-label="Source format" name="source_format">
             <option value="wigle">WiGLE CSV</option>
@@ -1009,8 +998,40 @@ function Surveys({
             Source log<span>Choose a WiGLE or Kismet file</span>
             <input name="file" type="file" accept=".csv,.json,.ndjson,.kismet" required />
           </label>
+          <label className="field-label">
+            Session name (optional)
+            <input name="session_name" placeholder="Defaults to the filename" />
+          </label>
+          <label className="field-label">
+            Collection (optional)
+            <select
+              aria-label="Collection"
+              value={uploadTarget}
+              onChange={(x) => setUploadTarget(x.target.value)}
+            >
+              <option value="">Leave unfiled</option>
+              {areas.map((x) => (
+                <option key={x.id} value={x.name}>
+                  {x.name}
+                </option>
+              ))}
+              <option value="__new__">+ New collection…</option>
+            </select>
+          </label>
+          {uploadTarget === "__new__" && (
+            <input
+              value={uploadNewCollectionName}
+              onChange={(x) => setUploadNewCollectionName(x.target.value)}
+              placeholder="New collection name"
+            />
+          )}
           <button disabled={busy}>{busy ? "Importing…" : "Import capture"}</button>
         </form>
+        <p className="muted">
+          A collection created here defaults to coarse precision. For an
+          exact-precision collection, create it first on the Collections
+          page.
+        </p>
       </section>
       <section className="panel capture-history">
         <div className="panel-heading"><div><p className="eyebrow">RECENT CAPTURES</p><h2>Organize only when useful</h2></div><span className="tag">{runs.length} sessions</span></div>
@@ -1073,122 +1094,18 @@ function Surveys({
                 />
                 <b>{run.name}</b>
               </label>
-              <span>{collectionNames.get(run.survey_area_id) || "Unfiled"} · {run.completed ? "Imported" : "Processing"}</span>
+              <span>{collectionNames.get(run.collection_id) || "Unfiled"} · {run.completed ? "Imported" : "Processing"}</span>
+              {role === "admin" && (
+                <button className="quiet" onClick={() => deleteRun(run)}>
+                  Delete
+                </button>
+              )}
             </div>
           ))}
           {!runs.length && <p>No captures yet. Import a log to begin.</p>}
         </div>
       </section>
     </div>
-    <div className="cards">
-      <section className="panel">
-        <p className="eyebrow">OPTIONAL GROUPING</p>
-        <h2>Collection</h2>
-        <p className="muted">
-          Use a collection only when you want to compare or filter a set of captures.
-        </p>
-        <form onSubmit={addArea}>
-          <label className="field-label">
-            Collection name
-            <input name="name" placeholder="e.g. Portland drives" required />
-          </label>
-          <label className="field-label">
-            Notes (optional)
-            <input
-              name="authorization_ref"
-              placeholder="e.g. device, route, or purpose"
-            />
-          </label>
-          <select aria-label="Location precision" name="precision">
-            <option value="coarse">Coarse cells (recommended)</option>
-            <option value="exact">Exact, policy-approved</option>
-          </select>
-          <button>Create collection</button>
-        </form>
-        <List rows={areas.map((x) => x.name + " · " + x.precision)} />
-      </section>
-      <section className="panel">
-        <p className="eyebrow">OPTIONAL LABEL</p>
-        <h2>Named session</h2>
-        <p className="muted">
-          Direct imports make these automatically. Add one manually only when you need it.
-        </p>
-        <form onSubmit={addRun}>
-          <select aria-label="Collection" name="survey_area_id" required>
-            <option value="">Choose collection</option>
-            {areas.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
-          <label className="field-label">
-            Session name
-            <input name="name" placeholder="e.g. Sunday north loop" required />
-          </label>
-          <label className="field-label">
-            Notes (optional)
-            <input
-              name="authorization_ref"
-              placeholder="e.g. source device or route"
-            />
-          </label>
-          <label className="field-label">
-            Collector coverage (0–1)
-            <input
-              name="collector_coverage"
-              type="number"
-              min="0"
-              max="1"
-              step=".05"
-              defaultValue="1"
-            />
-          </label>
-          <button>Create session</button>
-        </form>
-        <div className="list">
-          {runs.map((x) => (
-            <div key={x.id}>
-              <b>
-                {x.name} · {Math.round(x.collector_coverage * 100)}% coverage
-              </b>
-              <span>{x.completed ? "Complete" : "Open"}</span>
-              {!x.completed && (
-                <button className="quiet" onClick={() => complete(x.id)}>
-                  Mark complete
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="panel">
-        <p className="eyebrow">DIRECT IMPORT</p>
-        <h2>Drop a capture</h2>
-        <p className="muted">A session is created from the filename and import time. Both fields below are optional.</p>
-        <form onSubmit={upload}>
-          <label className="field-label">Session name (optional)<input name="session_name" placeholder="Defaults to the filename" /></label>
-          <label className="field-label">Collection (optional)<input name="collection_name" placeholder="Defaults to Personal captures" /></label>
-          <select aria-label="Source format" name="source_format">
-            <option value="wigle">WiGLE CSV</option>
-            <option value="kismet">Kismet database / CSV / JSON</option>
-          </select>
-          <label className="file-drop">
-            Source export<span>Choose a WiGLE or Kismet file</span>
-            <input
-              name="file"
-              type="file"
-              accept=".csv,.json,.ndjson,.kismet"
-              required
-            />
-          </label>
-          <button disabled={busy}>
-            {busy ? "Validating…" : "Upload & validate"}
-          </button>
-        </form>
-      </section>
-    </div>
-    </>
   );
 }
 type VendorRow = { oui_organization: string; device_count: number; share: number };
@@ -1218,7 +1135,10 @@ function VendorBreakdown({
     load();
   }, []);
   const totalDevices = rows.reduce((sum, x) => sum + x.device_count, 0),
-    top = rows.slice(0, 15),
+    unattributable = rows.find((x) => x.oui_organization === "unattributable"),
+    attributed = rows.filter((x) => x.oui_organization !== "unattributable"),
+    attributedTotal = attributed.reduce((sum, x) => sum + x.device_count, 0),
+    top = attributed.slice(0, 15),
     max = Math.max(1, ...top.map((x) => x.device_count));
   return (
     <section className="panel">
@@ -1229,8 +1149,11 @@ function VendorBreakdown({
           <p className="muted">
             {totalDevices.toLocaleString()} devices across{" "}
             {rows.length.toLocaleString()} OUI organizations
-            {top.length < rows.length
-              ? " · top " + top.length + " charted below"
+            {unattributable
+              ? " · " + unattributable.device_count.toLocaleString() + " unattributable"
+              : ""}
+            {top.length < attributed.length
+              ? " · top " + top.length + " attributed vendors charted below"
               : ""}
             .
           </p>
@@ -1267,19 +1190,20 @@ function VendorBreakdown({
             </div>
           ))}
           {!top.length && !loading && (
-            <p className="muted">No devices matched.</p>
+            <p className="muted">No attributed vendors matched.</p>
           )}
         </div>
         <aside>
-          <h3>Leading vendor</h3>
+          <h3>Leading attributed vendor</h3>
           {top[0] ? (
             <p>
               <b>{top[0].oui_organization}</b>
               <br />
-              {Math.round(top[0].share * 100)}% of devices
+              {Math.round((top[0].device_count / attributedTotal) * 100)}% of
+              attributed devices
             </p>
           ) : (
-            <p className="muted">No data yet.</p>
+            <p className="muted">No attributed devices yet.</p>
           )}
         </aside>
       </div>
@@ -1338,7 +1262,8 @@ function Inventory({
     [d, setD] = useState<Device[]>([]),
     [total, setTotal] = useState(0),
     [offset, setOffset] = useState(0),
-    [loading, setLoading] = useState(false);
+    [loading, setLoading] = useState(false),
+    [vendorOptions, setVendorOptions] = useState<string[]>([]);
   const limit = 50;
   async function load(
     next = offset,
@@ -1377,6 +1302,11 @@ function Inventory({
       load(0, sort, direction, attributedOnly, initialVendor);
     }
   }, [initialVendor]);
+  useEffect(() => {
+    api<{ oui_organization: string }[]>("/v1/devices/vendors").then((rows) =>
+      setVendorOptions(rows.map((x) => x.oui_organization)),
+    );
+  }, []);
   function toggleSort(column: string) {
     const nextDirection: "asc" | "desc" =
       column === sort
@@ -1417,7 +1347,13 @@ function Inventory({
           value={v}
           onChange={(x) => setV(x.target.value)}
           placeholder="OUI organization"
+          list="inventory-vendor-options"
         />
+        <datalist id="inventory-vendor-options">
+          {vendorOptions.map((x) => (
+            <option key={x} value={x} />
+          ))}
+        </datalist>
         <label className="check">
           <input
             type="checkbox"
@@ -1585,6 +1521,7 @@ function DeviceEvidence({
     );
   if (!d) return <section className="panel">Loading device evidence…</section>;
   const x = d.device;
+  const collectionName = d.collections.length ? d.collections.join(", ") : "Unfiled";
   return (
     <section className="panel">
       <button className="quiet" onClick={back}>
@@ -1597,6 +1534,11 @@ function DeviceEvidence({
       <p className="muted">
         OUI organization: {x.oui_organization} · Category hypothesis:{" "}
         {x.category}
+      </p>
+      <p className="muted">
+        First seen: {new Date(x.first_seen).toLocaleString()} · Last seen:{" "}
+        {new Date(x.last_seen).toLocaleString()} · Collection:{" "}
+        {collectionName}
       </p>
       <div className="result">
         <b>{d.summary.observations.toLocaleString()}</b>
@@ -1627,6 +1569,12 @@ function DeviceEvidence({
             {address ? "Revealed" : revealing ? "Revealing…" : "Reveal address"}
           </button>
         </div>
+      )}
+      {role === "admin" && !x.has_stored_address && (
+        <p className="muted">
+          No address on file — this device was only captured under
+          coarse-precision collections.
+        </p>
       )}
       {revealError && <p className="warning">{revealError}</p>}
       <h3>Recent source facts</h3>
@@ -1699,6 +1647,8 @@ function LocalMap({
   track?: Track;
   compact?: boolean;
 }) {
+  const canvasRef = useRef<HTMLDivElement>(null),
+    [measured, setMeasured] = useState({ width: 1120, height: 460 });
   const points = cells
     .map((x) => {
       const [lat, lon] = x.cell.split(",").map(Number);
@@ -1710,6 +1660,18 @@ function LocalMap({
         Number.isFinite(x.lon) &&
         !(x.lat === 0 && x.lon === 0),
     );
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const el = canvasRef.current;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) setMeasured({ width, height });
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [points.length > 0]);
   if (!points.length)
     return (
       <div className="map-empty">
@@ -1727,15 +1689,15 @@ function LocalMap({
     spanLat = Math.max(0.001, maxLat - minLat),
     spanLon = Math.max(0.001, (maxLon - minLon) * longitudeScale),
     maxCount = Math.max(...points.map((x) => x.count));
-  const W = compact ? 1120 : 800;
-  const H = compact ? 300 : 464;
+  const W = Math.round(measured.width);
+  const H = Math.round(measured.height);
   const left = compact ? 52 : 42;
   const right = compact ? 18 : 42;
   const top = compact ? 44 : 58;
   const bottom = compact ? 46 : 42;
   const plotW = W - left - right;
   const plotH = H - top - bottom;
-  const EDGE_PAD = 31; // largest halo radius (27 + 4); keeps points off the axis labels
+  const EDGE_PAD = 22; // largest halo radius; keeps points off the axis labels
   const xy = (x: { lat: number; lon: number }) => ({
     x:
       left +
@@ -1762,6 +1724,7 @@ function LocalMap({
     ticks.map((t) => `M${left + (t * plotW) / 4} ${top}V${top + plotH}`).join(" ");
   return (
     <figure className="local-map">
+      <div ref={canvasRef} className="local-map-canvas">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Coarse observation map">
         <rect x="0" y="0" width={W} height={H} rx="12" />
         <path className="map-grid" d={gridPath} />
@@ -1801,11 +1764,11 @@ function LocalMap({
         )}
         {points.map((p) => {
           const q = xy(p),
-            radius = 7 + Math.sqrt(p.count / maxCount) * 20;
+            haloRadius = 6 + Math.sqrt(p.count / maxCount) * 16;
           return (
             <g key={p.cell}>
-              <circle className="map-halo" cx={q.x} cy={q.y} r={radius + 4} />
-              <circle className="map-point" cx={q.x} cy={q.y} r={radius}>
+              <circle className="map-halo" cx={q.x} cy={q.y} r={haloRadius} />
+              <circle className="map-point" cx={q.x} cy={q.y} r={4}>
                 <title>
                   {p.cell}: {p.count.toLocaleString()} observations across{" "}
                   {p.device_count.toLocaleString()} device
@@ -1818,6 +1781,7 @@ function LocalMap({
         <text className="axis-title" x={left} y={top - 27}>Latitude (°)</text>
         <text className="axis-title" x={left + plotW} y={top + plotH + 36} textAnchor="end">Longitude (°)</text>
       </svg>
+      </div>
       <figcaption>
         <b>{points.length.toLocaleString()} coarse location cells</b> shown. One
         circle is a rounded 0.001° GPS cell, not a device; its size represents
@@ -1853,7 +1817,8 @@ function Coverage({
     [tileNotice, setTileNotice] = useState(false),
     [mix, setMix] = useState<Record<string, number>>({}),
     [runs, setRuns] = useState<Run[]>([]),
-    [devices, setDevices] = useState<Device[]>([]);
+    [devices, setDevices] = useState<Device[]>([]),
+    [vendorOptions, setVendorOptions] = useState<string[]>([]);
   function params(area = a, run = r, device = d) {
     const q = new URLSearchParams();
     if (area) q.set("area_id", area);
@@ -1894,6 +1859,11 @@ function Coverage({
     setD(initialDevice);
     load(a, r, initialDevice);
   }, [initialDevice]);
+  useEffect(() => {
+    api<{ oui_organization: string }[]>("/v1/devices/vendors").then((rows) =>
+      setVendorOptions(rows.map((x) => x.oui_organization)),
+    );
+  }, []);
   const max = Math.max(1, ...c.map((x) => x.count));
   return (
     <section className="panel">
@@ -1945,7 +1915,7 @@ function Coverage({
         >
           <option value="">All sessions</option>
           {runs
-            .filter((x) => !a || String(x.survey_area_id) === a)
+            .filter((x) => !a || String(x.collection_id) === a)
             .map((x) => (
               <option key={x.id} value={x.id}>
                 {x.name}
@@ -1979,7 +1949,13 @@ function Coverage({
           value={vendor}
           onChange={(x) => setVendor(x.target.value)}
           placeholder="OUI organization"
+          list="coverage-vendor-options"
         />
+        <datalist id="coverage-vendor-options">
+          {vendorOptions.map((x) => (
+            <option key={x} value={x} />
+          ))}
+        </datalist>
         <input
           value={minRssi}
           onChange={(x) => setMinRssi(x.target.value)}
@@ -2056,7 +2032,7 @@ function Coverage({
 type Baseline = {
   id: number;
   name: string;
-  survey_area_id: number;
+  collection_id: number;
   run_ids: number[];
   expectations: { version: string; coverage_mean: number };
   created_at: string;
@@ -2147,7 +2123,7 @@ function Baselines({ areas, runs }: { areas: Area[]; runs: Run[] }) {
             required
           />
           {runs
-            .filter((x) => x.completed && String(x.survey_area_id) === a)
+            .filter((x) => x.completed && String(x.collection_id) === a)
             .map((x) => (
               <label className="check" key={x.id}>
                 <input
@@ -2440,32 +2416,61 @@ function RetentionPanel() {
           {(p.raw_uploads.length > 5 || p.survey_runs.length > 5) && (
             <span>Only the first five of each are shown here.</span>
           )}
-          <label className="field-label compact-field">
+          <label className="field-label compact-field" htmlFor="retention-confirm">
             Type PURGE to run the reviewed sweep
+          </label>
+          <div className="purge-row">
             <input
+              id="retention-confirm"
               value={confirm}
               onChange={(x) => setConfirm(x.target.value)}
               aria-label="Retention confirmation"
             />
-          </label>
-          <button disabled={confirm !== "PURGE"} onClick={purge}>
-            Purge reviewed candidates
-          </button>
+            <button disabled={confirm !== "PURGE"} onClick={purge}>
+              Purge reviewed candidates
+            </button>
+          </div>
         </div>
       )}
       {note && <p className="notice">{note}</p>}
     </section>
   );
 }
-function CollectionsPanel() {
-  const [areas, setAreas] = useState<Area[]>([]),
-    [note, setNote] = useState("");
+function CollectionsPage({
+  role,
+  reload,
+  say,
+}: {
+  role: string;
+  reload: () => void;
+  say: (x: string) => void;
+}) {
+  const [areas, setAreas] = useState<Area[]>([]);
+  const canCreate = role === "analyst" || role === "admin";
   async function load() {
     setAreas(await api<Area[]>("/v1/survey-areas"));
   }
   useEffect(() => {
     load();
   }, []);
+  async function create(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget,
+      f = new FormData(form);
+    try {
+      await send("/v1/survey-areas", {
+        name: f.get("name"),
+        authorization_ref: f.get("authorization_ref"),
+        precision: f.get("precision"),
+      });
+      form.reset();
+      say("Collection created.");
+      load();
+      reload();
+    } catch (x) {
+      say(msg(x));
+    }
+  }
   async function rename(e: FormEvent<HTMLFormElement>, id: number) {
     e.preventDefault();
     const name = new FormData(e.currentTarget).get("name");
@@ -2474,37 +2479,105 @@ function CollectionsPanel() {
         method: "PATCH",
         body: JSON.stringify({ name }),
       });
-      setNote("Renamed.");
+      say("Renamed.");
       load();
+      reload();
     } catch (x) {
-      setNote(msg(x));
+      say(msg(x));
+    }
+  }
+  async function remove(area: Area) {
+    if (
+      !window.confirm(
+        "Permanently delete the collection \"" + area.name + "\"?",
+      )
+    )
+      return;
+    try {
+      await api("/v1/survey-areas/" + area.id, { method: "DELETE" });
+      say("Deleted " + area.name + ".");
+      load();
+      reload();
+    } catch (x) {
+      say(msg(x));
     }
   }
   return (
-    <section className="panel">
-      <p className="eyebrow">COLLECTION MANAGEMENT</p>
-      <h2>Collections</h2>
-      <p className="muted">
-        Created from the Surveys page when importing. Rename one here; its
-        precision (coarse vs. exact) is set at creation and not editable.
-      </p>
-      <div className="list">
-        {areas.map((x) => (
-          <div key={x.id}>
-            <form className="inline-form" onSubmit={(e) => rename(e, x.id)}>
-              <input name="name" defaultValue={x.name} required />
-              <button className="quiet">Rename</button>
-            </form>
-            <span>
-              {x.precision} · {(x.run_count ?? 0).toLocaleString()} runs ·{" "}
-              {(x.device_count ?? 0).toLocaleString()} devices
-            </span>
-          </div>
-        ))}
-        {!areas.length && <p>No collections yet.</p>}
-      </div>
-      {note && <p className="notice">{note}</p>}
-    </section>
+    <div className="split">
+      {canCreate && (
+        <section className="panel">
+          <p className="eyebrow">NEW COLLECTION</p>
+          <h2>Create a collection</h2>
+          <p className="muted">
+            Use a collection only when you want to compare or filter a set of
+            captures. Precision is set here and cannot be changed later:
+            "exact" retains each device's real address, encrypted, for later
+            admin review; "coarse" never does.
+          </p>
+          <form onSubmit={create}>
+            <label className="field-label">
+              Collection name
+              <input name="name" placeholder="e.g. Portland drives" required />
+            </label>
+            <label className="field-label">
+              Notes (optional)
+              <input
+                name="authorization_ref"
+                placeholder="e.g. device, route, or purpose"
+              />
+            </label>
+            <select aria-label="Location precision" name="precision">
+              <option value="coarse">Coarse cells (recommended)</option>
+              <option value="exact">Exact, policy-approved</option>
+            </select>
+            <button>Create collection</button>
+          </form>
+        </section>
+      )}
+      <section className="panel">
+        <p className="eyebrow">COLLECTION MANAGEMENT</p>
+        <h2>Collections</h2>
+        <p className="muted">
+          Assign captures to a collection from the Surveys page, either at
+          import time or afterward.
+          {role === "admin"
+            ? " Rename one here, or delete one once it has no runs."
+            : ""}
+        </p>
+        <div className="list">
+          {areas.map((x) => (
+            <div key={x.id}>
+              {role === "admin" ? (
+                <form className="inline-form" onSubmit={(e) => rename(e, x.id)}>
+                  <input name="name" defaultValue={x.name} required />
+                  <button className="secondary">Rename</button>
+                  <button
+                    type="button"
+                    className="secondary danger"
+                    disabled={!!x.run_count}
+                    title={
+                      x.run_count
+                        ? "Refile or delete this collection's runs first"
+                        : undefined
+                    }
+                    onClick={() => remove(x)}
+                  >
+                    Delete
+                  </button>
+                </form>
+              ) : (
+                <b>{x.name}</b>
+              )}
+              <span>
+                {x.precision} · {(x.run_count ?? 0).toLocaleString()} runs ·{" "}
+                {(x.device_count ?? 0).toLocaleString()} devices
+              </span>
+            </div>
+          ))}
+          {!areas.length && <p>No collections yet.</p>}
+        </div>
+      </section>
+    </div>
   );
 }
 function Access({ me }: { me: Me }) {
@@ -2625,14 +2698,6 @@ function Access({ me }: { me: Me }) {
       </section>
       <OUIImportPanel />
       <RetentionPanel />
-      <CollectionsPanel />
-    </div>
-  );
-}
-function List({ rows }: { rows: string[] }) {
-  return (
-    <div className="list">
-      {rows.length ? rows.map((x) => <p key={x}>{x}</p>) : <p>Nothing yet.</p>}
     </div>
   );
 }

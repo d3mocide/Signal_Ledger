@@ -4,7 +4,7 @@ from io import BytesIO
 
 import pytest
 from cryptography.fernet import Fernet
-from sqlalchemy import create_engine, select, text
+from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.sql.elements import TextClause
 from starlette.datastructures import UploadFile
@@ -13,7 +13,7 @@ import app.main as main_module
 import app.tasks as tasks_module
 from app.crypto import decrypt_address
 from app.database import Base
-from app.main import AnomalyPatch, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_baseline, device_detail, device_vendor_summary, devices, import_oui, list_anomalies, list_areas, map_clusters, map_track, purge_retention, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
+from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, import_oui, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
 from app.models import Device, IngestionJob, Observation, SurveyArea, SurveyRun
 from app.security import Principal
 from app.tasks import process_ingestion
@@ -88,8 +88,10 @@ def test_frozen_baseline_flags_later_novel_device():
     training = SurveyRun(survey_area_id=area.id, name="Training", authorization_ref="AUTH-2", collector_coverage=1, completed=True)
     later = SurveyRun(survey_area_id=area.id, name="Later", authorization_ref="AUTH-2", collector_coverage=1, completed=True)
     db.add_all([training, later]); db.flush()
-    known = Device(survey_area_id=area.id, token="c" * 64, oui_organization="Example OUI", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
-    novel = Device(survey_area_id=area.id, token="d" * 64, oui_organization="New OUI", first_seen=datetime(2026, 1, 2), last_seen=datetime(2026, 1, 2))
+    # Matches real ingestion: Device.survey_area_id is never populated, so the
+    # baseline/anomaly path must scope by run, not by this column.
+    known = Device(token="c" * 64, oui_organization="Example OUI", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    novel = Device(token="d" * 64, oui_organization="New OUI", first_seen=datetime(2026, 1, 2), last_seen=datetime(2026, 1, 2))
     db.add_all([known, novel]); db.flush()
     db.add_all([
         Observation(survey_run_id=training.id, ingestion_job_id=1, device_id=known.id, captured_at=datetime(2026, 1, 1, 9), protocol="wifi", ssid="known", security="WPA2", rssi=-50, latitude=1, longitude=2, spatial_cell="1.000,2.000", quality=1, source_row=1),
@@ -342,3 +344,106 @@ def test_device_vendor_summary_ranks_by_device_count_and_supports_area_filter():
 
     scoped = device_vendor_summary(area_id=area_two.id, db=db, principal=viewer)
     assert scoped == [{"oui_organization": "Vendor B", "device_count": 1, "share": 1.0}]
+
+
+def test_create_area_trims_whitespace_and_rejects_names_that_collide_after_trimming():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    analyst = Principal(1, "analyst", "analyst")
+
+    created = create_area(AreaInput(name="Test 1", precision="exact"), db=db, principal=analyst)
+    assert created["name"] == "Test 1"
+
+    with pytest.raises(HTTPException) as excinfo:
+        create_area(AreaInput(name="Test 1 ", precision="coarse"), db=db, principal=analyst)
+    assert excinfo.value.status_code == 409
+    assert db.scalar(select(func.count()).select_from(SurveyArea)) == 1
+
+
+def test_purge_run_data_removes_orphaned_devices_even_when_filed_into_a_collection():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    area = SurveyArea(name="Filed area", authorization_ref="AUTH-12", precision="coarse")
+    db.add(area); db.flush()
+    run = SurveyRun(survey_area_id=area.id, name="Filed run", authorization_ref="AUTH-12")
+    db.add(run); db.flush()
+    # Matches real ingestion: Device.survey_area_id is never populated by
+    # process_ingestion, so orphan detection must not depend on it matching
+    # the run's area.
+    device = Device(token="k" * 64, oui_organization="unattributable", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add(device); db.flush()
+    db.add(Observation(survey_run_id=run.id, ingestion_job_id=1, device_id=device.id, captured_at=datetime(2026, 1, 1), protocol="wifi", quality=1, source_row=1))
+    db.commit()
+    run_id, device_id = run.id, device.id
+    admin = Principal(1, "admin", "admin")
+
+    purge_run_data(db, run, admin)
+    db.commit()
+    assert db.scalar(select(SurveyRun).where(SurveyRun.id == run_id)) is None
+    assert db.scalar(select(Device).where(Device.id == device_id)) is None
+
+
+def test_survey_run_json_exposes_collection_id_not_the_survey_area_id_synonym():
+    # SurveyRun.survey_area_id is a Python-only synonym for the real
+    # collection_id column (see models.py); dump() walks __table__.columns,
+    # so it only ever emits collection_id. The frontend must read that key,
+    # not survey_area_id - a prior mismatch there silently broke the
+    # Coverage/Baselines run-by-area filters and Surveys' filed/unfiled label.
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    area = SurveyArea(name="JSON shape area", authorization_ref="AUTH-13", precision="coarse")
+    db.add(area); db.flush()
+    run = SurveyRun(survey_area_id=area.id, name="Run", authorization_ref="AUTH-13")
+    db.add(run); db.commit()
+    admin = Principal(1, "admin", "admin")
+
+    listed = list_runs(db=db, principal=admin)
+    assert listed[0]["collection_id"] == area.id
+    assert "survey_area_id" not in listed[0]
+    assert dump(run) == listed[0]
+
+
+def test_delete_area_rejects_a_collection_with_runs_but_allows_an_empty_one():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    admin = Principal(1, "admin", "admin")
+    filed = SurveyArea(name="Has runs", authorization_ref="AUTH-14", precision="coarse")
+    empty = SurveyArea(name="Empty", authorization_ref="AUTH-15", precision="exact")
+    db.add_all([filed, empty]); db.flush()
+    run = SurveyRun(survey_area_id=filed.id, name="Run", authorization_ref="AUTH-14")
+    db.add(run); db.commit()
+
+    with pytest.raises(HTTPException) as excinfo:
+        delete_area(filed.id, db=db, principal=admin)
+    assert excinfo.value.status_code == 409
+    assert db.get(SurveyArea, filed.id) is not None
+
+    result = delete_area(empty.id, db=db, principal=admin)
+    assert result == {"status": "deleted", "area_id": empty.id}
+    assert db.get(SurveyArea, empty.id) is None
+
+
+def test_device_detail_derives_collections_via_observations_not_the_device_column():
+    # Device.survey_area_id is never populated by real ingestion (see the
+    # 2026-09-08 baseline/anomaly fix); device_detail's "collections" must be
+    # derived from the device's own observations' runs instead, so this
+    # deliberately leaves it unset to match reality.
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    area = SurveyArea(name="Filed area", authorization_ref="AUTH-16", precision="coarse")
+    db.add(area); db.flush()
+    run = SurveyRun(survey_area_id=area.id, name="Run", authorization_ref="AUTH-16")
+    db.add(run); db.flush()
+    device = Device(token="m" * 64, oui_organization="unattributable", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add(device); db.flush()
+    db.add(Observation(survey_run_id=run.id, ingestion_job_id=1, device_id=device.id, captured_at=datetime(2026, 1, 1), protocol="wifi", quality=1, source_row=1))
+    db.commit()
+    viewer = Principal(1, "tester", "viewer")
+
+    detail = device_detail(device.id, limit=100, db=db, principal=viewer)
+    assert detail["collections"] == ["Filed area"]

@@ -122,6 +122,11 @@ non-automated findings with evidence and explanations.
 
 - [x] Admin-reviewed retention/deletion workflow removes raw upload, observations,
   unreferenced device tokens, derived cells, and affected baseline/anomaly material; test it.
+- [ ] Admin-editable retention windows (raw/normalized) with selectable presets
+  (30/90/180 days, custom), replacing the current env-var-only
+  `RAW_RETENTION_DAYS`/`NORMALIZED_RETENTION_DAYS` read-only display; needs a
+  persisted settings row, an audited update endpoint, and the purge sweep
+  reading from it instead of the environment.
 - [x] Backup/restore tooling and operational runbook; restore drill pending.
 - [x] HMAC-key rotation and re-baselining procedure; live drill pending.
 - [ ] Load/performance tests for realistic import and explorer volumes.
