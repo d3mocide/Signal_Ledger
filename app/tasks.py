@@ -19,7 +19,7 @@ def process_ingestion(job_id: int):
         if not job or job.status == "complete": return
         job.status = "processing"; db.commit()
         run = db.get(SurveyRun, job.survey_run_id)
-        area = db.get(SurveyArea, run.survey_area_id)
+        area = db.get(SurveyArea, run.survey_area_id) if run.survey_area_id else None
         exact_area = bool(area and area.precision == "exact")
         accepted = rejected = skipped = 0; reasons = {}; seen = set(); valid = []
         with materialize_raw(job.raw_path, bool(job.raw_encrypted)) as source_path:
@@ -83,6 +83,7 @@ def process_ingestion(job_id: int):
         db.execute(text("UPDATE observations SET geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) WHERE ingestion_job_id = :job_id AND latitude IS NOT NULL AND longitude IS NOT NULL"), {"job_id": job.id})
         accepted = len(valid)
         located = sum(1 for _, parsed, _, _, _ in valid if parsed.latitude is not None and parsed.longitude is not None)
+        run.completed = True
         job.status = "complete"; job.parser_version = PARSER_VERSION; job.report = {"accepted": accepted, "rejected": rejected, "skipped_duplicates": skipped, "reasons": reasons, "parser_version": PARSER_VERSION, "source": job.source_format, "coverage": run.collector_coverage, "location_present": located, "location_completeness": round(located / accepted, 3) if accepted else 0}
         db.add(AuditEvent(actor="worker", role="system", action="ingestion.completed", resource_type="ingestion_job", resource_id=str(job.id), detail=job.report))
         db.commit()

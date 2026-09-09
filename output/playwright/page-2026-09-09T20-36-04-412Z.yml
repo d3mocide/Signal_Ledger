@@ -1,0 +1,177 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Command center" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [ref=e35] [cursor=pointer]
+      - button "Category view" [ref=e39] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e43] [cursor=pointer]
+      - button "Coverage explorer" [ref=e47] [cursor=pointer]
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: ANALYSIS
+        - button "Finding queue" [ref=e52] [cursor=pointer]
+      - button "Evidence review" [ref=e56] [cursor=pointer]
+      - button "Rule learning" [ref=e60] [cursor=pointer]
+      - button "Run comparison" [ref=e64] [cursor=pointer]
+      - button "Baselines" [ref=e68] [cursor=pointer]
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: COLLECTION
+        - button "Capture imports" [ref=e73] [cursor=pointer]
+      - button "Collections" [ref=e77] [cursor=pointer]
+      - button "Administration" [ref=e81] [cursor=pointer]
+      - generic [ref=e84]:
+        - paragraph [ref=e85]: GOVERNANCE
+        - button "Audit log" [ref=e86] [cursor=pointer]
+    - generic [ref=e89]:
+      - generic [ref=e93]:
+        - text: Private by design
+        - generic [ref=e94]: Site-scoped tokens. Local maps.
+      - generic [ref=e95]:
+        - generic [ref=e96]: D3
+        - generic [ref=e97]:
+          - text: d3mo
+          - generic [ref=e98]: admin
+        - button "Sign out" [ref=e99] [cursor=pointer]
+  - generic [ref=e100]:
+    - banner [ref=e101]:
+      - generic [ref=e102]: Workspace/Device evidence
+      - generic [ref=e103]: Private instance
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - paragraph [ref=e108]: SIGNAL LEDGER / INVENTORY
+          - heading "Device evidence" [level=1] [ref=e322]
+          - paragraph [ref=e110]: Trace an observed device back to its source evidence.
+        - generic [ref=e111]:
+          - button "Refresh" [ref=e112] [cursor=pointer]
+          - button "Import data" [ref=e115] [cursor=pointer]
+      - generic [ref=e323]:
+        - button "← Inventory" [ref=e324] [cursor=pointer]
+        - paragraph [ref=e325]: DEVICE EVIDENCE
+        - heading [level=2] [ref=e326]:
+          - code [ref=e327]: 80973908542f9ab37feb53…
+        - paragraph [ref=e328]: "OUI organization: unattributable · Category hypothesis: unknown · 0% confidence"
+        - paragraph [ref=e329]: "Roles / context: guest network"
+        - generic [ref=e330]:
+          - generic [ref=e331]:
+            - text: Review category
+            - combobox "Review category" [ref=e332]:
+              - option "unknown" [selected]
+              - option "camera"
+              - option "printer"
+              - option "network"
+              - option "mobile"
+              - option "iot"
+              - option "bluetooth"
+              - option "workstation"
+              - option "audio"
+              - option "entertainment"
+              - option "wearable"
+              - option "automotive"
+          - button "Save category override" [ref=e333] [cursor=pointer]
+        - generic [ref=e334]:
+          - paragraph [ref=e335]: "Rule set: rules-v6 · Evidence is derived from retained vendor, SSID, and protocol facts."
+          - paragraph [ref=e336]: "Rule evidence: unknown: no retained observation matched a configured rule"
+        - generic [ref=e337]:
+          - paragraph [ref=e338]: "Role rules: roles-v1 · Role evidence is derived from retained vendor, SSID, and device name/type facts."
+          - paragraph [ref=e339]: "Role evidence: guest_network: SSID contains 'guest'"
+          - generic [ref=e340]: guest network 1.10
+        - paragraph [ref=e342]: "First seen: 8/29/2026, 7:18:13 PM · Last seen: 8/29/2026, 7:18:23 PM · Collection: Test 1"
+        - generic [ref=e343]:
+          - generic [ref=e344]: "2"
+          - generic [ref=e345]: observations
+          - generic [ref=e346]: "1"
+          - generic [ref=e347]: runs
+          - generic [ref=e348]: "2"
+          - generic [ref=e349]: coarse cells
+        - button "Map sightings" [ref=e350] [cursor=pointer]
+        - generic [ref=e351]:
+          - generic [ref=e352]: This device was captured in a policy-approved exact-precision area, so its real address was retained, encrypted.
+          - button "Reveal address" [ref=e353] [cursor=pointer]
+        - generic [ref=e354]:
+          - paragraph [ref=e355]: PRIVACY-SAFE SIMILARITY
+          - heading "Related signal profiles" [level=3] [ref=e356]
+          - paragraph [ref=e357]: Similarity is a privacy-safe suggestion based on retained signal families, not an identity merge.
+          - paragraph [ref=e358]: Fingerprint de064602e826… · fingerprint-v1 · 2 coarse cells · activity windows 4
+          - generic [ref=e359]:
+            - generic [ref=e360]:
+              - code [ref=e362]: 00d6b83d5643cf…
+              - generic [ref=e363]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e364]:
+              - code [ref=e366]: 00e0460145413d…
+              - generic [ref=e367]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e368]:
+              - code [ref=e370]: 013a6150bbc9f2…
+              - generic [ref=e371]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e372]:
+              - code [ref=e374]: 01eb5a7c5b5c6a…
+              - generic [ref=e375]: network · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e376]:
+              - code [ref=e378]: 02b0d648643099…
+              - generic [ref=e379]: network · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e380]:
+              - code [ref=e382]: 04e7cd4abc9ee0…
+              - generic [ref=e383]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e384]:
+              - code [ref=e386]: 085775b2958a0b…
+              - generic [ref=e387]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e388]:
+              - code [ref=e390]: 08eb423b7d14da…
+              - generic [ref=e391]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e392]:
+              - code [ref=e394]: 0a4a473f5ef1c5…
+              - generic [ref=e395]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+            - generic [ref=e396]:
+              - code [ref=e398]: 0b1ba139eacc79…
+              - generic [ref=e399]: unknown · unattributable · 26% similarity
+              - text: same radio protocol · same security mode
+        - heading "Recent source facts" [level=3] [ref=e400]
+        - table [ref=e402]:
+          - rowgroup [ref=e403]:
+            - row [ref=e404]:
+              - columnheader "When" [ref=e405]
+              - columnheader "Run" [ref=e406]
+              - columnheader "Radio" [ref=e407]
+              - columnheader "Network" [ref=e408]
+              - columnheader "RSSI" [ref=e409]
+              - columnheader "Coarse cell" [ref=e410]
+          - rowgroup [ref=e411]:
+            - row [ref=e412]:
+              - cell "8/29/2026, 7:18:23 PM" [ref=e413]
+              - cell "ouispy_wardrive_20260829_104036 · 2026-09-09 03:04 UTC" [ref=e414]
+              - cell "wifi" [ref=e415]
+              - cell "MSRV-Guest" [ref=e416]
+              - cell "-68" [ref=e417]
+              - cell "45.466,-122.704" [ref=e418]
+            - row [ref=e419]:
+              - cell "8/29/2026, 7:18:13 PM" [ref=e420]
+              - cell "ouispy_wardrive_20260829_104036 · 2026-09-09 03:04 UTC" [ref=e421]
+              - cell "wifi" [ref=e422]
+              - cell "MSRV-Guest" [ref=e423]
+              - cell "-88" [ref=e424]
+              - cell "45.466,-122.706" [ref=e425]
+      - generic [ref=e189]:
+        - generic [ref=e190]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e191]: Workspace refreshed at 01:33 PM

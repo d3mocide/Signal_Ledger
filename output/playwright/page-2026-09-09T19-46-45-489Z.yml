@@ -1,0 +1,1042 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Command center" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [active] [ref=e36] [cursor=pointer]
+      - button "Category view" [ref=e40] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e44] [cursor=pointer]
+      - button "Coverage explorer" [ref=e48] [cursor=pointer]
+      - generic [ref=e51]:
+        - paragraph [ref=e52]: ANALYSIS
+        - button "Finding queue" [ref=e53] [cursor=pointer]
+      - button "Evidence review" [ref=e57] [cursor=pointer]
+      - button "Rule learning" [ref=e61] [cursor=pointer]
+      - button "Run comparison" [ref=e65] [cursor=pointer]
+      - button "Baselines" [ref=e69] [cursor=pointer]
+      - generic [ref=e72]:
+        - paragraph [ref=e73]: COLLECTION
+        - button "Capture imports" [ref=e74] [cursor=pointer]
+      - button "Collections" [ref=e78] [cursor=pointer]
+      - button "Administration" [ref=e82] [cursor=pointer]
+      - generic [ref=e85]:
+        - paragraph [ref=e86]: GOVERNANCE
+        - button "Audit log" [ref=e87] [cursor=pointer]
+    - generic [ref=e90]:
+      - generic [ref=e94]:
+        - text: Private by design
+        - generic [ref=e95]: Site-scoped tokens. Local maps.
+      - generic [ref=e96]:
+        - generic [ref=e97]: D3
+        - generic [ref=e98]:
+          - text: d3mo
+          - generic [ref=e99]: admin
+        - button "Sign out" [ref=e100] [cursor=pointer]
+  - generic [ref=e101]:
+    - banner [ref=e102]:
+      - generic [ref=e103]: Workspace/Device inventory
+      - generic [ref=e104]: Private instance
+    - main [ref=e106]:
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - paragraph [ref=e109]: SIGNAL LEDGER / INVENTORY
+          - heading "Device inventory" [level=1] [ref=e1912]
+          - paragraph [ref=e111]: Explore site-scoped devices and the evidence behind them.
+        - generic [ref=e112]:
+          - button "Refresh" [ref=e113] [cursor=pointer]
+          - button "Import data" [ref=e116] [cursor=pointer]
+      - generic [ref=e1913]:
+        - generic [ref=e1914]:
+          - generic [ref=e1915]:
+            - paragraph [ref=e1916]: PSEUDONYMOUS INVENTORY
+            - heading "Devices from imported runs" [level=2] [ref=e1917]
+            - paragraph [ref=e1918]: Review device hypotheses and the latest observed network evidence.
+          - generic [ref=e1919]:
+            - generic [ref=e1920]: Scope
+            - combobox "Survey area" [ref=e1921]:
+              - option "All areas" [selected]
+              - option "Test 1"
+        - generic [ref=e1922]:
+          - generic [ref=e1923]:
+            - generic [ref=e1924]: Vendor evidence
+            - combobox "Vendor evidence" [ref=e1925]
+          - generic [ref=e1926]:
+            - generic [ref=e1927]: Category hypothesis
+            - combobox "Device category" [ref=e1928]:
+              - option "All categories" [selected]
+              - option "unknown"
+              - option "camera"
+              - option "printer"
+              - option "network"
+              - option "mobile"
+              - option "iot"
+              - option "bluetooth"
+              - option "workstation"
+              - option "audio"
+              - option "entertainment"
+              - option "wearable"
+              - option "automotive"
+          - generic [ref=e1929]:
+            - generic [ref=e1930]: Role or context
+            - combobox "Device role or context" [ref=e1931]:
+              - option "All roles" [selected]
+              - option "retail pos"
+              - option "security access"
+              - option "smart home"
+              - option "industrial ot"
+              - option "medical"
+              - option "guest network"
+          - generic [ref=e1932]:
+            - checkbox "Attributed only" [ref=e1933]
+            - generic [ref=e1934]: Attributed only
+          - generic [ref=e1935]:
+            - button "Apply filters" [ref=e1936] [cursor=pointer]
+            - button "Clear" [ref=e1937] [cursor=pointer]
+        - generic [ref=e1938]:
+          - combobox "Saved inventory view" [ref=e1939]:
+            - option "Saved inventory views" [selected]
+          - textbox "Saved inventory view name" [ref=e1940]:
+            - /placeholder: Name current view
+          - button "Save view" [disabled] [ref=e1941]
+          - link "Export CSV" [ref=e1942] [cursor=pointer]:
+            - /url: /v1/exports/devices.csv?limit=5000&vendor=&category=&role=&attributed_only=false
+        - generic [ref=e1943]:
+          - paragraph [ref=e1944]: 25,498 matching devices · showing 1–50
+          - generic [ref=e1945]: Sorted by last seen newest first
+        - table [ref=e1947]:
+          - rowgroup [ref=e1948]:
+            - row [ref=e1949]:
+              - columnheader "Device" [ref=e1950]
+              - columnheader [ref=e1951]:
+                - button "Category" [ref=e1952] [cursor=pointer]
+              - columnheader "Role / context" [ref=e1953]
+              - columnheader [ref=e1954]:
+                - button "Vendor evidence" [ref=e1955] [cursor=pointer]
+              - columnheader "Last radio" [ref=e1956]
+              - columnheader "Last network" [ref=e1957]
+              - columnheader [ref=e1958]:
+                - button "First seen" [ref=e1959] [cursor=pointer]
+              - columnheader [ref=e1960]:
+                - button "Last seen ▼" [ref=e1961] [cursor=pointer]
+              - columnheader [ref=e1962]
+          - rowgroup [ref=e1963]:
+            - row [ref=e1964]:
+              - cell "ac7d7dc30511a5… site token" [ref=e1965]:
+                - button [ref=e1966] [cursor=pointer]:
+                  - code [ref=e1967]: ac7d7dc30511a5…
+                - generic [ref=e1968]: site token
+              - cell "automotive 59% confidence" [ref=e1969]:
+                - generic [ref=e1970]: automotive
+                - generic [ref=e1971]: 59% confidence
+              - cell "No role signal" [ref=e1972]
+              - cell "unattributable OUI evidence" [ref=e1974]:
+                - text: unattributable
+                - generic [ref=e1975]: OUI evidence
+              - cell "wifi" [ref=e1976]
+              - cell "My VW 9101SSID · My VW 9101" [ref=e1978]
+              - cell "8/29/2026, 8:18:02 PM" [ref=e1979]
+              - cell "8/29/2026, 8:18:02 PM" [ref=e1980]
+              - cell [ref=e1981]:
+                - button "Map sightings" [ref=e1982] [cursor=pointer]
+            - row [ref=e1983]:
+              - cell "ed8c20306dce55… site token" [ref=e1984]:
+                - button [ref=e1985] [cursor=pointer]:
+                  - code [ref=e1986]: ed8c20306dce55…
+                - generic [ref=e1987]: site token
+              - cell "bluetooth 57% confidence" [ref=e1988]:
+                - generic [ref=e1989]: bluetooth
+                - generic [ref=e1990]: 57% confidence
+              - cell "No role signal" [ref=e1991]
+              - cell "unattributable OUI evidence" [ref=e1993]:
+                - text: unattributable
+                - generic [ref=e1994]: OUI evidence
+              - cell "bluetooth" [ref=e1995]
+              - cell "No name observedNo network name" [ref=e1997]
+              - cell "8/29/2026, 8:18:00 PM" [ref=e1998]
+              - cell "8/29/2026, 8:18:00 PM" [ref=e1999]
+              - cell [ref=e2000]:
+                - button "Map sightings" [ref=e2001] [cursor=pointer]
+            - row [ref=e2002]:
+              - cell "654e046cd6b31e… site token" [ref=e2003]:
+                - button [ref=e2004] [cursor=pointer]:
+                  - code [ref=e2005]: 654e046cd6b31e…
+                - generic [ref=e2006]: site token
+              - cell "unknown No hypothesis" [ref=e2007]:
+                - generic [ref=e2008]: unknown
+                - generic [ref=e2009]: No hypothesis
+              - cell "No role signal" [ref=e2010]
+              - cell "unattributable OUI evidence" [ref=e2012]:
+                - text: unattributable
+                - generic [ref=e2013]: OUI evidence
+              - cell "wifi" [ref=e2014]
+              - cell "No name observedNo network name" [ref=e2016]
+              - cell "8/29/2026, 8:18:00 PM" [ref=e2017]
+              - cell "8/29/2026, 8:18:00 PM" [ref=e2018]
+              - cell [ref=e2019]:
+                - button "Map sightings" [ref=e2020] [cursor=pointer]
+            - row [ref=e2021]:
+              - cell "19de7a84c4966a… site token" [ref=e2022]:
+                - button [ref=e2023] [cursor=pointer]:
+                  - code [ref=e2024]: 19de7a84c4966a…
+                - generic [ref=e2025]: site token
+              - cell "bluetooth 68% confidence" [ref=e2026]:
+                - generic [ref=e2027]: bluetooth
+                - generic [ref=e2028]: 68% confidence
+              - cell "No role signal" [ref=e2029]
+              - cell "unattributable OUI evidence" [ref=e2031]:
+                - text: unattributable
+                - generic [ref=e2032]: OUI evidence
+              - cell "bluetooth" [ref=e2033]
+              - cell "No name observedNo network name" [ref=e2035]
+              - cell "8/29/2026, 8:17:05 PM" [ref=e2036]
+              - cell "8/29/2026, 8:18:00 PM" [ref=e2037]
+              - cell [ref=e2038]:
+                - button "Map sightings" [ref=e2039] [cursor=pointer]
+            - row [ref=e2040]:
+              - cell "441958f1a13ebf… site token" [ref=e2041]:
+                - button [ref=e2042] [cursor=pointer]:
+                  - code [ref=e2043]: 441958f1a13ebf…
+                - generic [ref=e2044]: site token
+              - cell "bluetooth 68% confidence" [ref=e2045]:
+                - generic [ref=e2046]: bluetooth
+                - generic [ref=e2047]: 68% confidence
+              - cell "No role signal" [ref=e2048]
+              - cell "unattributable OUI evidence" [ref=e2050]:
+                - text: unattributable
+                - generic [ref=e2051]: OUI evidence
+              - cell "bluetooth" [ref=e2052]
+              - cell "No name observedNo network name" [ref=e2054]
+              - cell "8/29/2026, 8:17:15 PM" [ref=e2055]
+              - cell "8/29/2026, 8:17:59 PM" [ref=e2056]
+              - cell [ref=e2057]:
+                - button "Map sightings" [ref=e2058] [cursor=pointer]
+            - row [ref=e2059]:
+              - cell "6cfaa52ef80218… site token" [ref=e2060]:
+                - button [ref=e2061] [cursor=pointer]:
+                  - code [ref=e2062]: 6cfaa52ef80218…
+                - generic [ref=e2063]: site token
+              - cell "unknown No hypothesis" [ref=e2064]:
+                - generic [ref=e2065]: unknown
+                - generic [ref=e2066]: No hypothesis
+              - cell "No role signal" [ref=e2067]
+              - cell "unattributable OUI evidence" [ref=e2069]:
+                - text: unattributable
+                - generic [ref=e2070]: OUI evidence
+              - cell "wifi" [ref=e2071]
+              - cell "No name observedNo network name" [ref=e2073]
+              - cell "8/29/2026, 8:17:58 PM" [ref=e2074]
+              - cell "8/29/2026, 8:17:58 PM" [ref=e2075]
+              - cell [ref=e2076]:
+                - button "Map sightings" [ref=e2077] [cursor=pointer]
+            - row [ref=e2078]:
+              - cell "3a786e2d81257b… site token" [ref=e2079]:
+                - button [ref=e2080] [cursor=pointer]:
+                  - code [ref=e2081]: 3a786e2d81257b…
+                - generic [ref=e2082]: site token
+              - cell "bluetooth 87% confidence" [ref=e2083]:
+                - generic [ref=e2084]: bluetooth
+                - generic [ref=e2085]: 87% confidence
+              - cell "No role signal" [ref=e2086]
+              - cell "unattributable OUI evidence" [ref=e2088]:
+                - text: unattributable
+                - generic [ref=e2089]: OUI evidence
+              - cell "bluetooth" [ref=e2090]
+              - cell "No name observedNo network name" [ref=e2092]
+              - cell "8/29/2026, 8:16:57 PM" [ref=e2093]
+              - cell "8/29/2026, 8:17:57 PM" [ref=e2094]
+              - cell [ref=e2095]:
+                - button "Map sightings" [ref=e2096] [cursor=pointer]
+            - row [ref=e2097]:
+              - cell "9eb657f24d89b0… site token" [ref=e2098]:
+                - button [ref=e2099] [cursor=pointer]:
+                  - code [ref=e2100]: 9eb657f24d89b0…
+                - generic [ref=e2101]: site token
+              - cell "automotive 59% confidence" [ref=e2102]:
+                - generic [ref=e2103]: automotive
+                - generic [ref=e2104]: 59% confidence
+              - cell "No role signal" [ref=e2105]
+              - cell "unattributable OUI evidence" [ref=e2107]:
+                - text: unattributable
+                - generic [ref=e2108]: OUI evidence
+              - cell "wifi" [ref=e2109]
+              - cell "My VW 6236SSID · My VW 6236" [ref=e2111]
+              - cell "8/29/2026, 8:17:57 PM" [ref=e2112]
+              - cell "8/29/2026, 8:17:57 PM" [ref=e2113]
+              - cell [ref=e2114]:
+                - button "Map sightings" [ref=e2115] [cursor=pointer]
+            - row [ref=e2116]:
+              - cell "26af02c38ff545… site token" [ref=e2117]:
+                - button [ref=e2118] [cursor=pointer]:
+                  - code [ref=e2119]: 26af02c38ff545…
+                - generic [ref=e2120]: site token
+              - cell "unknown No hypothesis" [ref=e2121]:
+                - generic [ref=e2122]: unknown
+                - generic [ref=e2123]: No hypothesis
+              - cell "No role signal" [ref=e2124]
+              - cell "MITSUMI ELECTRIC CO.,LTD. OUI evidence" [ref=e2126]:
+                - text: MITSUMI ELECTRIC CO.,LTD.
+                - generic [ref=e2127]: OUI evidence
+              - cell "wifi" [ref=e2128]
+              - cell "aguirreSSID · aguirre" [ref=e2130]
+              - cell "8/29/2026, 8:17:55 PM" [ref=e2131]
+              - cell "8/29/2026, 8:17:55 PM" [ref=e2132]
+              - cell [ref=e2133]:
+                - button "Map sightings" [ref=e2134] [cursor=pointer]
+            - row [ref=e2135]:
+              - cell "4bf7f4961b04c7… site token" [ref=e2136]:
+                - button [ref=e2137] [cursor=pointer]:
+                  - code [ref=e2138]: 4bf7f4961b04c7…
+                - generic [ref=e2139]: site token
+              - cell "network 64% confidence" [ref=e2140]:
+                - generic [ref=e2141]: network
+                - generic [ref=e2142]: 64% confidence
+              - cell "No role signal" [ref=e2143]
+              - cell "Vantiva USA LLC OUI evidence" [ref=e2145]:
+                - text: Vantiva USA LLC
+                - generic [ref=e2146]: OUI evidence
+              - cell "wifi" [ref=e2147]
+              - cell "CBCI-0AD6-2.4SSID · CBCI-0AD6-2.4" [ref=e2149]
+              - cell "8/29/2026, 8:17:55 PM" [ref=e2150]
+              - cell "8/29/2026, 8:17:55 PM" [ref=e2151]
+              - cell [ref=e2152]:
+                - button "Map sightings" [ref=e2153] [cursor=pointer]
+            - row [ref=e2154]:
+              - cell "5da05b8e38300e… site token" [ref=e2155]:
+                - button [ref=e2156] [cursor=pointer]:
+                  - code [ref=e2157]: 5da05b8e38300e…
+                - generic [ref=e2158]: site token
+              - cell "unknown No hypothesis" [ref=e2159]:
+                - generic [ref=e2160]: unknown
+                - generic [ref=e2161]: No hypothesis
+              - cell "No role signal" [ref=e2162]
+              - cell "unattributable OUI evidence" [ref=e2164]:
+                - text: unattributable
+                - generic [ref=e2165]: OUI evidence
+              - cell "wifi" [ref=e2166]
+              - cell "No name observedNo network name" [ref=e2168]
+              - cell "8/29/2026, 8:17:53 PM" [ref=e2169]
+              - cell "8/29/2026, 8:17:53 PM" [ref=e2170]
+              - cell [ref=e2171]:
+                - button "Map sightings" [ref=e2172] [cursor=pointer]
+            - row [ref=e2173]:
+              - cell "a107950582ffbf… site token" [ref=e2174]:
+                - button [ref=e2175] [cursor=pointer]:
+                  - code [ref=e2176]: a107950582ffbf…
+                - generic [ref=e2177]: site token
+              - cell "bluetooth 92% confidence" [ref=e2178]:
+                - generic [ref=e2179]: bluetooth
+                - generic [ref=e2180]: 92% confidence
+              - cell "No role signal" [ref=e2181]
+              - cell "unattributable OUI evidence" [ref=e2183]:
+                - text: unattributable
+                - generic [ref=e2184]: OUI evidence
+              - cell "bluetooth" [ref=e2185]
+              - cell "S7b00b9af7dff97a5CSSID · S7b00b9af7dff97a5C" [ref=e2187]
+              - cell "8/29/2026, 8:16:53 PM" [ref=e2188]
+              - cell "8/29/2026, 8:17:53 PM" [ref=e2189]
+              - cell [ref=e2190]:
+                - button "Map sightings" [ref=e2191] [cursor=pointer]
+            - row [ref=e2192]:
+              - cell "cc7a882ebd4af4… site token" [ref=e2193]:
+                - button [ref=e2194] [cursor=pointer]:
+                  - code [ref=e2195]: cc7a882ebd4af4…
+                - generic [ref=e2196]: site token
+              - cell "unknown No hypothesis" [ref=e2197]:
+                - generic [ref=e2198]: unknown
+                - generic [ref=e2199]: No hypothesis
+              - cell "No role signal" [ref=e2200]
+              - cell "unattributable OUI evidence" [ref=e2202]:
+                - text: unattributable
+                - generic [ref=e2203]: OUI evidence
+              - cell "wifi" [ref=e2204]
+              - cell "No name observedNo network name" [ref=e2206]
+              - cell "8/29/2026, 8:17:51 PM" [ref=e2207]
+              - cell "8/29/2026, 8:17:51 PM" [ref=e2208]
+              - cell [ref=e2209]:
+                - button "Map sightings" [ref=e2210] [cursor=pointer]
+            - row [ref=e2211]:
+              - cell "c239ce93290d76… site token" [ref=e2212]:
+                - button [ref=e2213] [cursor=pointer]:
+                  - code [ref=e2214]: c239ce93290d76…
+                - generic [ref=e2215]: site token
+              - cell "network 56% confidence" [ref=e2216]:
+                - generic [ref=e2217]: network
+                - generic [ref=e2218]: 56% confidence
+              - cell "No role signal" [ref=e2219]
+              - cell "Arcadyan Corporation OUI evidence" [ref=e2221]:
+                - text: Arcadyan Corporation
+                - generic [ref=e2222]: OUI evidence
+              - cell "wifi" [ref=e2223]
+              - cell "FerrariSSID · Ferrari" [ref=e2225]
+              - cell "8/29/2026, 8:17:49 PM" [ref=e2226]
+              - cell "8/29/2026, 8:17:49 PM" [ref=e2227]
+              - cell [ref=e2228]:
+                - button "Map sightings" [ref=e2229] [cursor=pointer]
+            - row [ref=e2230]:
+              - cell "ae0c71ec88eff4… site token" [ref=e2231]:
+                - button [ref=e2232] [cursor=pointer]:
+                  - code [ref=e2233]: ae0c71ec88eff4…
+                - generic [ref=e2234]: site token
+              - cell "bluetooth 57% confidence" [ref=e2235]:
+                - generic [ref=e2236]: bluetooth
+                - generic [ref=e2237]: 57% confidence
+              - cell "No role signal" [ref=e2238]
+              - cell "unattributable OUI evidence" [ref=e2240]:
+                - text: unattributable
+                - generic [ref=e2241]: OUI evidence
+              - cell "bluetooth" [ref=e2242]
+              - cell "No name observedNo network name" [ref=e2244]
+              - cell "8/29/2026, 8:17:48 PM" [ref=e2245]
+              - cell "8/29/2026, 8:17:48 PM" [ref=e2246]
+              - cell [ref=e2247]:
+                - button "Map sightings" [ref=e2248] [cursor=pointer]
+            - row [ref=e2249]:
+              - cell "5560ddb85b8961… site token" [ref=e2250]:
+                - button [ref=e2251] [cursor=pointer]:
+                  - code [ref=e2252]: 5560ddb85b8961…
+                - generic [ref=e2253]: site token
+              - cell "network 91% confidence" [ref=e2254]:
+                - generic [ref=e2255]: network
+                - generic [ref=e2256]: 91% confidence
+              - cell "No role signal" [ref=e2257]
+              - cell "Sagemcom Broadband SAS OUI evidence" [ref=e2259]:
+                - text: Sagemcom Broadband SAS
+                - generic [ref=e2260]: OUI evidence
+              - cell "wifi" [ref=e2261]
+              - cell "goawaySSID · goaway" [ref=e2263]
+              - cell "8/29/2026, 8:16:45 PM" [ref=e2264]
+              - cell "8/29/2026, 8:17:47 PM" [ref=e2265]
+              - cell [ref=e2266]:
+                - button "Map sightings" [ref=e2267] [cursor=pointer]
+            - row [ref=e2268]:
+              - cell "9707a8d93032ee… site token" [ref=e2269]:
+                - button [ref=e2270] [cursor=pointer]:
+                  - code [ref=e2271]: 9707a8d93032ee…
+                - generic [ref=e2272]: site token
+              - cell "bluetooth 57% confidence" [ref=e2273]:
+                - generic [ref=e2274]: bluetooth
+                - generic [ref=e2275]: 57% confidence
+              - cell "No role signal" [ref=e2276]
+              - cell "unattributable OUI evidence" [ref=e2278]:
+                - text: unattributable
+                - generic [ref=e2279]: OUI evidence
+              - cell "bluetooth" [ref=e2280]
+              - cell "No name observedNo network name" [ref=e2282]
+              - cell "8/29/2026, 8:17:45 PM" [ref=e2283]
+              - cell "8/29/2026, 8:17:45 PM" [ref=e2284]
+              - cell [ref=e2285]:
+                - button "Map sightings" [ref=e2286] [cursor=pointer]
+            - row [ref=e2287]:
+              - cell "069421f81c0a70… site token" [ref=e2288]:
+                - button [ref=e2289] [cursor=pointer]:
+                  - code [ref=e2290]: 069421f81c0a70…
+                - generic [ref=e2291]: site token
+              - cell "bluetooth 57% confidence" [ref=e2292]:
+                - generic [ref=e2293]: bluetooth
+                - generic [ref=e2294]: 57% confidence
+              - cell "No role signal" [ref=e2295]
+              - cell "unattributable OUI evidence" [ref=e2297]:
+                - text: unattributable
+                - generic [ref=e2298]: OUI evidence
+              - cell "bluetooth" [ref=e2299]
+              - cell "No name observedNo network name" [ref=e2301]
+              - cell "8/29/2026, 8:17:45 PM" [ref=e2302]
+              - cell "8/29/2026, 8:17:45 PM" [ref=e2303]
+              - cell [ref=e2304]:
+                - button "Map sightings" [ref=e2305] [cursor=pointer]
+            - row [ref=e2306]:
+              - cell "4ea0e65bdd21cd… site token" [ref=e2307]:
+                - button [ref=e2308] [cursor=pointer]:
+                  - code [ref=e2309]: 4ea0e65bdd21cd…
+                - generic [ref=e2310]: site token
+              - cell "unknown No hypothesis" [ref=e2311]:
+                - generic [ref=e2312]: unknown
+                - generic [ref=e2313]: No hypothesis
+              - cell "No role signal" [ref=e2314]
+              - cell "AUMOVIO Systems, Inc. OUI evidence" [ref=e2316]:
+                - text: AUMOVIO Systems, Inc.
+                - generic [ref=e2317]: OUI evidence
+              - cell "wifi" [ref=e2318]
+              - cell "HotspotE7D8SSID · HotspotE7D8" [ref=e2320]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2321]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2322]
+              - cell [ref=e2323]:
+                - button "Map sightings" [ref=e2324] [cursor=pointer]
+            - row [ref=e2325]:
+              - cell "69ec7fdae57d40… site token" [ref=e2326]:
+                - button [ref=e2327] [cursor=pointer]:
+                  - code [ref=e2328]: 69ec7fdae57d40…
+                - generic [ref=e2329]: site token
+              - cell "unknown No hypothesis" [ref=e2330]:
+                - generic [ref=e2331]: unknown
+                - generic [ref=e2332]: No hypothesis
+              - cell "No role signal" [ref=e2333]
+              - cell "unattributable OUI evidence" [ref=e2335]:
+                - text: unattributable
+                - generic [ref=e2336]: OUI evidence
+              - cell "wifi" [ref=e2337]
+              - cell "Unit201SSID · Unit201" [ref=e2339]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2340]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2341]
+              - cell [ref=e2342]:
+                - button "Map sightings" [ref=e2343] [cursor=pointer]
+            - row [ref=e2344]:
+              - cell "131c063244a42a… site token" [ref=e2345]:
+                - button [ref=e2346] [cursor=pointer]:
+                  - code [ref=e2347]: 131c063244a42a…
+                - generic [ref=e2348]: site token
+              - cell "network 64% confidence" [ref=e2349]:
+                - generic [ref=e2350]: network
+                - generic [ref=e2351]: 64% confidence
+              - cell "No role signal" [ref=e2352]
+              - cell "Arcadyan Corporation OUI evidence" [ref=e2354]:
+                - text: Arcadyan Corporation
+                - generic [ref=e2355]: OUI evidence
+              - cell "wifi" [ref=e2356]
+              - cell "The ForestSSID · The Forest" [ref=e2358]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2359]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2360]
+              - cell [ref=e2361]:
+                - button "Map sightings" [ref=e2362] [cursor=pointer]
+            - row [ref=e2363]:
+              - cell "bebecbc6a5e4d4… site token" [ref=e2364]:
+                - button [ref=e2365] [cursor=pointer]:
+                  - code [ref=e2366]: bebecbc6a5e4d4…
+                - generic [ref=e2367]: site token
+              - cell "unknown No hypothesis" [ref=e2368]:
+                - generic [ref=e2369]: unknown
+                - generic [ref=e2370]: No hypothesis
+              - cell "No role signal" [ref=e2371]
+              - cell "MITSUMI ELECTRIC CO.,LTD. OUI evidence" [ref=e2373]:
+                - text: MITSUMI ELECTRIC CO.,LTD.
+                - generic [ref=e2374]: OUI evidence
+              - cell "wifi" [ref=e2375]
+              - cell "kayla toneySSID · kayla toney" [ref=e2377]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2378]
+              - cell "8/29/2026, 8:17:43 PM" [ref=e2379]
+              - cell [ref=e2380]:
+                - button "Map sightings" [ref=e2381] [cursor=pointer]
+            - row [ref=e2382]:
+              - cell "095aab115c8ecb… site token" [ref=e2383]:
+                - button [ref=e2384] [cursor=pointer]:
+                  - code [ref=e2385]: 095aab115c8ecb…
+                - generic [ref=e2386]: site token
+              - cell "unknown No hypothesis" [ref=e2387]:
+                - generic [ref=e2388]: unknown
+                - generic [ref=e2389]: No hypothesis
+              - cell "No role signal" [ref=e2390]
+              - cell "unattributable OUI evidence" [ref=e2392]:
+                - text: unattributable
+                - generic [ref=e2393]: OUI evidence
+              - cell "wifi" [ref=e2394]
+              - cell "No name observedNo network name" [ref=e2396]
+              - cell "8/29/2026, 8:17:42 PM" [ref=e2397]
+              - cell "8/29/2026, 8:17:42 PM" [ref=e2398]
+              - cell [ref=e2399]:
+                - button "Map sightings" [ref=e2400] [cursor=pointer]
+            - row [ref=e2401]:
+              - cell "08fb046c1d083b… site token" [ref=e2402]:
+                - button [ref=e2403] [cursor=pointer]:
+                  - code [ref=e2404]: 08fb046c1d083b…
+                - generic [ref=e2405]: site token
+              - cell "unknown No hypothesis" [ref=e2406]:
+                - generic [ref=e2407]: unknown
+                - generic [ref=e2408]: No hypothesis
+              - cell "No role signal" [ref=e2409]
+              - cell "unattributable OUI evidence" [ref=e2411]:
+                - text: unattributable
+                - generic [ref=e2412]: OUI evidence
+              - cell "wifi" [ref=e2413]
+              - cell "No name observedNo network name" [ref=e2415]
+              - cell "8/29/2026, 8:17:40 PM" [ref=e2416]
+              - cell "8/29/2026, 8:17:40 PM" [ref=e2417]
+              - cell [ref=e2418]:
+                - button "Map sightings" [ref=e2419] [cursor=pointer]
+            - row [ref=e2420]:
+              - cell "6881f50ad7961f… site token" [ref=e2421]:
+                - button [ref=e2422] [cursor=pointer]:
+                  - code [ref=e2423]: 6881f50ad7961f…
+                - generic [ref=e2424]: site token
+              - cell "unknown No hypothesis" [ref=e2425]:
+                - generic [ref=e2426]: unknown
+                - generic [ref=e2427]: No hypothesis
+              - cell "No role signal" [ref=e2428]
+              - cell "unattributable OUI evidence" [ref=e2430]:
+                - text: unattributable
+                - generic [ref=e2431]: OUI evidence
+              - cell "wifi" [ref=e2432]
+              - cell "No name observedNo network name" [ref=e2434]
+              - cell "8/29/2026, 8:17:40 PM" [ref=e2435]
+              - cell "8/29/2026, 8:17:40 PM" [ref=e2436]
+              - cell [ref=e2437]:
+                - button "Map sightings" [ref=e2438] [cursor=pointer]
+            - row [ref=e2439]:
+              - cell "622e82bca3fd1a… site token" [ref=e2440]:
+                - button [ref=e2441] [cursor=pointer]:
+                  - code [ref=e2442]: 622e82bca3fd1a…
+                - generic [ref=e2443]: site token
+              - cell "unknown No hypothesis" [ref=e2444]:
+                - generic [ref=e2445]: unknown
+                - generic [ref=e2446]: No hypothesis
+              - cell "No role signal" [ref=e2447]
+              - cell "unattributable OUI evidence" [ref=e2449]:
+                - text: unattributable
+                - generic [ref=e2450]: OUI evidence
+              - cell "wifi" [ref=e2451]
+              - cell "No name observedNo network name" [ref=e2453]
+              - cell "8/29/2026, 8:17:38 PM" [ref=e2454]
+              - cell "8/29/2026, 8:17:38 PM" [ref=e2455]
+              - cell [ref=e2456]:
+                - button "Map sightings" [ref=e2457] [cursor=pointer]
+            - row [ref=e2458]:
+              - cell "d942509b555704… site token" [ref=e2459]:
+                - button [ref=e2460] [cursor=pointer]:
+                  - code [ref=e2461]: d942509b555704…
+                - generic [ref=e2462]: site token
+              - cell "unknown No hypothesis" [ref=e2463]:
+                - generic [ref=e2464]: unknown
+                - generic [ref=e2465]: No hypothesis
+              - cell "No role signal" [ref=e2466]
+              - cell "unattributable OUI evidence" [ref=e2468]:
+                - text: unattributable
+                - generic [ref=e2469]: OUI evidence
+              - cell "wifi" [ref=e2470]
+              - cell "No name observedNo network name" [ref=e2472]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2473]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2474]
+              - cell [ref=e2475]:
+                - button "Map sightings" [ref=e2476] [cursor=pointer]
+            - row [ref=e2477]:
+              - cell "495ffffac1e964… site token" [ref=e2478]:
+                - button [ref=e2479] [cursor=pointer]:
+                  - code [ref=e2480]: 495ffffac1e964…
+                - generic [ref=e2481]: site token
+              - cell "network 64% confidence" [ref=e2482]:
+                - generic [ref=e2483]: network
+                - generic [ref=e2484]: 64% confidence
+              - cell "No role signal" [ref=e2485]
+              - cell "Commscope OUI evidence" [ref=e2487]:
+                - text: Commscope
+                - generic [ref=e2488]: OUI evidence
+              - cell "wifi" [ref=e2489]
+              - cell "SassieSSID · Sassie" [ref=e2491]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2492]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2493]
+              - cell [ref=e2494]:
+                - button "Map sightings" [ref=e2495] [cursor=pointer]
+            - row [ref=e2496]:
+              - cell "9809ed26dd93fb… site token" [ref=e2497]:
+                - button [ref=e2498] [cursor=pointer]:
+                  - code [ref=e2499]: 9809ed26dd93fb…
+                - generic [ref=e2500]: site token
+              - cell "unknown No hypothesis" [ref=e2501]:
+                - generic [ref=e2502]: unknown
+                - generic [ref=e2503]: No hypothesis
+              - cell "No role signal" [ref=e2504]
+              - cell "unattributable OUI evidence" [ref=e2506]:
+                - text: unattributable
+                - generic [ref=e2507]: OUI evidence
+              - cell "wifi" [ref=e2508]
+              - cell "No name observedNo network name" [ref=e2510]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2511]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2512]
+              - cell [ref=e2513]:
+                - button "Map sightings" [ref=e2514] [cursor=pointer]
+            - row [ref=e2515]:
+              - cell "c2a821fb2bb5e4… site token" [ref=e2516]:
+                - button [ref=e2517] [cursor=pointer]:
+                  - code [ref=e2518]: c2a821fb2bb5e4…
+                - generic [ref=e2519]: site token
+              - cell "network 64% confidence" [ref=e2520]:
+                - generic [ref=e2521]: network
+                - generic [ref=e2522]: 64% confidence
+              - cell "No role signal" [ref=e2523]
+              - cell "ASKEY COMPUTER CORP OUI evidence" [ref=e2525]:
+                - text: ASKEY COMPUTER CORP
+                - generic [ref=e2526]: OUI evidence
+              - cell "wifi" [ref=e2527]
+              - cell "Verizon_FL4SF3SSID · Verizon_FL4SF3" [ref=e2529]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2530]
+              - cell "8/29/2026, 8:17:37 PM" [ref=e2531]
+              - cell [ref=e2532]:
+                - button "Map sightings" [ref=e2533] [cursor=pointer]
+            - row [ref=e2534]:
+              - cell "12f16b50cfd02e… site token" [ref=e2535]:
+                - button [ref=e2536] [cursor=pointer]:
+                  - code [ref=e2537]: 12f16b50cfd02e…
+                - generic [ref=e2538]: site token
+              - cell "unknown No hypothesis" [ref=e2539]:
+                - generic [ref=e2540]: unknown
+                - generic [ref=e2541]: No hypothesis
+              - cell "No role signal" [ref=e2542]
+              - cell "SHENZHEN BILIAN ELECTRONIC CO.，LTD OUI evidence" [ref=e2544]:
+                - text: SHENZHEN BILIAN ELECTRONIC CO.，LTD
+                - generic [ref=e2545]: OUI evidence
+              - cell "wifi" [ref=e2546]
+              - cell "F8-5E3B31SSID · F8-5E3B31" [ref=e2548]
+              - cell "8/29/2026, 8:16:53 PM" [ref=e2549]
+              - cell "8/29/2026, 8:17:35 PM" [ref=e2550]
+              - cell [ref=e2551]:
+                - button "Map sightings" [ref=e2552] [cursor=pointer]
+            - row [ref=e2553]:
+              - cell "c57e2e8a2a8e33… site token" [ref=e2554]:
+                - button [ref=e2555] [cursor=pointer]:
+                  - code [ref=e2556]: c57e2e8a2a8e33…
+                - generic [ref=e2557]: site token
+              - cell "unknown No hypothesis" [ref=e2558]:
+                - generic [ref=e2559]: unknown
+                - generic [ref=e2560]: No hypothesis
+              - cell "No role signal" [ref=e2561]
+              - cell "unattributable OUI evidence" [ref=e2563]:
+                - text: unattributable
+                - generic [ref=e2564]: OUI evidence
+              - cell "wifi" [ref=e2565]
+              - cell "Unit303SSID · Unit303" [ref=e2567]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2568]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2569]
+              - cell [ref=e2570]:
+                - button "Map sightings" [ref=e2571] [cursor=pointer]
+            - row [ref=e2572]:
+              - cell "dde87ade1c3db4… site token" [ref=e2573]:
+                - button [ref=e2574] [cursor=pointer]:
+                  - code [ref=e2575]: dde87ade1c3db4…
+                - generic [ref=e2576]: site token
+              - cell "unknown No hypothesis" [ref=e2577]:
+                - generic [ref=e2578]: unknown
+                - generic [ref=e2579]: No hypothesis
+              - cell "No role signal" [ref=e2580]
+              - cell "unattributable OUI evidence" [ref=e2582]:
+                - text: unattributable
+                - generic [ref=e2583]: OUI evidence
+              - cell "wifi" [ref=e2584]
+              - cell "mphSSID · mph" [ref=e2586]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2587]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2588]
+              - cell [ref=e2589]:
+                - button "Map sightings" [ref=e2590] [cursor=pointer]
+            - row [ref=e2591]:
+              - cell "27f7aba1ca981f… site token" [ref=e2592]:
+                - button [ref=e2593] [cursor=pointer]:
+                  - code [ref=e2594]: 27f7aba1ca981f…
+                - generic [ref=e2595]: site token
+              - cell "unknown No hypothesis" [ref=e2596]:
+                - generic [ref=e2597]: unknown
+                - generic [ref=e2598]: No hypothesis
+              - cell "No role signal" [ref=e2599]
+              - cell "unattributable OUI evidence" [ref=e2601]:
+                - text: unattributable
+                - generic [ref=e2602]: OUI evidence
+              - cell "wifi" [ref=e2603]
+              - cell "Dorothy-2.4SSID · Dorothy-2.4" [ref=e2605]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2606]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2607]
+              - cell [ref=e2608]:
+                - button "Map sightings" [ref=e2609] [cursor=pointer]
+            - row [ref=e2610]:
+              - cell "780afe93843a56… site token" [ref=e2611]:
+                - button [ref=e2612] [cursor=pointer]:
+                  - code [ref=e2613]: 780afe93843a56…
+                - generic [ref=e2614]: site token
+              - cell "unknown No hypothesis" [ref=e2615]:
+                - generic [ref=e2616]: unknown
+                - generic [ref=e2617]: No hypothesis
+              - cell "No role signal" [ref=e2618]
+              - cell "unattributable OUI evidence" [ref=e2620]:
+                - text: unattributable
+                - generic [ref=e2621]: OUI evidence
+              - cell "wifi" [ref=e2622]
+              - cell "Unit309SSID · Unit309" [ref=e2624]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2625]
+              - cell "8/29/2026, 8:17:34 PM" [ref=e2626]
+              - cell [ref=e2627]:
+                - button "Map sightings" [ref=e2628] [cursor=pointer]
+            - row [ref=e2629]:
+              - cell "1d6e9e6cb8c252… site token" [ref=e2630]:
+                - button [ref=e2631] [cursor=pointer]:
+                  - code [ref=e2632]: 1d6e9e6cb8c252…
+                - generic [ref=e2633]: site token
+              - cell "unknown No hypothesis" [ref=e2634]:
+                - generic [ref=e2635]: unknown
+                - generic [ref=e2636]: No hypothesis
+              - cell "No role signal" [ref=e2637]
+              - cell "unattributable OUI evidence" [ref=e2639]:
+                - text: unattributable
+                - generic [ref=e2640]: OUI evidence
+              - cell "wifi" [ref=e2641]
+              - cell "Galaxy A36 5G 67E6SSID · Galaxy A36 5G 67E6" [ref=e2643]
+              - cell "8/29/2026, 8:17:33 PM" [ref=e2644]
+              - cell "8/29/2026, 8:17:33 PM" [ref=e2645]
+              - cell [ref=e2646]:
+                - button "Map sightings" [ref=e2647] [cursor=pointer]
+            - row [ref=e2648]:
+              - cell "738bc97fa9478d… site token" [ref=e2649]:
+                - button [ref=e2650] [cursor=pointer]:
+                  - code [ref=e2651]: 738bc97fa9478d…
+                - generic [ref=e2652]: site token
+              - cell "unknown No hypothesis" [ref=e2653]:
+                - generic [ref=e2654]: unknown
+                - generic [ref=e2655]: No hypothesis
+              - cell "No role signal" [ref=e2656]
+              - cell "unattributable OUI evidence" [ref=e2658]:
+                - text: unattributable
+                - generic [ref=e2659]: OUI evidence
+              - cell "wifi" [ref=e2660]
+              - cell "No name observedNo network name" [ref=e2662]
+              - cell "8/29/2026, 8:17:32 PM" [ref=e2663]
+              - cell "8/29/2026, 8:17:32 PM" [ref=e2664]
+              - cell [ref=e2665]:
+                - button "Map sightings" [ref=e2666] [cursor=pointer]
+            - row [ref=e2667]:
+              - cell "27bb34b0845367… site token" [ref=e2668]:
+                - button [ref=e2669] [cursor=pointer]:
+                  - code [ref=e2670]: 27bb34b0845367…
+                - generic [ref=e2671]: site token
+              - cell "unknown No hypothesis" [ref=e2672]:
+                - generic [ref=e2673]: unknown
+                - generic [ref=e2674]: No hypothesis
+              - cell "No role signal" [ref=e2675]
+              - cell "unattributable OUI evidence" [ref=e2677]:
+                - text: unattributable
+                - generic [ref=e2678]: OUI evidence
+              - cell "wifi" [ref=e2679]
+              - cell "No name observedNo network name" [ref=e2681]
+              - cell "8/29/2026, 8:17:31 PM" [ref=e2682]
+              - cell "8/29/2026, 8:17:31 PM" [ref=e2683]
+              - cell [ref=e2684]:
+                - button "Map sightings" [ref=e2685] [cursor=pointer]
+            - row [ref=e2686]:
+              - cell "a5a4cc4c5cc7a5… site token" [ref=e2687]:
+                - button [ref=e2688] [cursor=pointer]:
+                  - code [ref=e2689]: a5a4cc4c5cc7a5…
+                - generic [ref=e2690]: site token
+              - cell "unknown No hypothesis" [ref=e2691]:
+                - generic [ref=e2692]: unknown
+                - generic [ref=e2693]: No hypothesis
+              - cell "No role signal" [ref=e2694]
+              - cell "unattributable OUI evidence" [ref=e2696]:
+                - text: unattributable
+                - generic [ref=e2697]: OUI evidence
+              - cell "wifi" [ref=e2698]
+              - cell "Unit144SSID · Unit144" [ref=e2700]
+              - cell "8/29/2026, 8:17:30 PM" [ref=e2701]
+              - cell "8/29/2026, 8:17:30 PM" [ref=e2702]
+              - cell [ref=e2703]:
+                - button "Map sightings" [ref=e2704] [cursor=pointer]
+            - row [ref=e2705]:
+              - cell "e3026eff73da83… site token" [ref=e2706]:
+                - button [ref=e2707] [cursor=pointer]:
+                  - code [ref=e2708]: e3026eff73da83…
+                - generic [ref=e2709]: site token
+              - cell "bluetooth 57% confidence" [ref=e2710]:
+                - generic [ref=e2711]: bluetooth
+                - generic [ref=e2712]: 57% confidence
+              - cell "No role signal" [ref=e2713]
+              - cell "unattributable OUI evidence" [ref=e2715]:
+                - text: unattributable
+                - generic [ref=e2716]: OUI evidence
+              - cell "bluetooth" [ref=e2717]
+              - cell "No name observedNo network name" [ref=e2719]
+              - cell "8/29/2026, 8:17:30 PM" [ref=e2720]
+              - cell "8/29/2026, 8:17:30 PM" [ref=e2721]
+              - cell [ref=e2722]:
+                - button "Map sightings" [ref=e2723] [cursor=pointer]
+            - row [ref=e2724]:
+              - cell "c0dcfee04a5478… site token" [ref=e2725]:
+                - button [ref=e2726] [cursor=pointer]:
+                  - code [ref=e2727]: c0dcfee04a5478…
+                - generic [ref=e2728]: site token
+              - cell "unknown No hypothesis" [ref=e2729]:
+                - generic [ref=e2730]: unknown
+                - generic [ref=e2731]: No hypothesis
+              - cell "No role signal" [ref=e2732]
+              - cell "unattributable OUI evidence" [ref=e2734]:
+                - text: unattributable
+                - generic [ref=e2735]: OUI evidence
+              - cell "wifi" [ref=e2736]
+              - cell "No name observedNo network name" [ref=e2738]
+              - cell "8/29/2026, 8:17:29 PM" [ref=e2739]
+              - cell "8/29/2026, 8:17:29 PM" [ref=e2740]
+              - cell [ref=e2741]:
+                - button "Map sightings" [ref=e2742] [cursor=pointer]
+            - row [ref=e2743]:
+              - cell "19ded99c5454e1… site token" [ref=e2744]:
+                - button [ref=e2745] [cursor=pointer]:
+                  - code [ref=e2746]: 19ded99c5454e1…
+                - generic [ref=e2747]: site token
+              - cell "unknown No hypothesis" [ref=e2748]:
+                - generic [ref=e2749]: unknown
+                - generic [ref=e2750]: No hypothesis
+              - cell "No role signal" [ref=e2751]
+              - cell "unattributable OUI evidence" [ref=e2753]:
+                - text: unattributable
+                - generic [ref=e2754]: OUI evidence
+              - cell "wifi" [ref=e2755]
+              - cell "No name observedNo network name" [ref=e2757]
+              - cell "8/29/2026, 8:17:29 PM" [ref=e2758]
+              - cell "8/29/2026, 8:17:29 PM" [ref=e2759]
+              - cell [ref=e2760]:
+                - button "Map sightings" [ref=e2761] [cursor=pointer]
+            - row [ref=e2762]:
+              - cell "d45e2e4c7dc711… site token" [ref=e2763]:
+                - button [ref=e2764] [cursor=pointer]:
+                  - code [ref=e2765]: d45e2e4c7dc711…
+                - generic [ref=e2766]: site token
+              - cell "unknown No hypothesis" [ref=e2767]:
+                - generic [ref=e2768]: unknown
+                - generic [ref=e2769]: No hypothesis
+              - cell "No role signal" [ref=e2770]
+              - cell "unattributable OUI evidence" [ref=e2772]:
+                - text: unattributable
+                - generic [ref=e2773]: OUI evidence
+              - cell "wifi" [ref=e2774]
+              - cell "No name observedNo network name" [ref=e2776]
+              - cell "8/29/2026, 8:17:27 PM" [ref=e2777]
+              - cell "8/29/2026, 8:17:27 PM" [ref=e2778]
+              - cell [ref=e2779]:
+                - button "Map sightings" [ref=e2780] [cursor=pointer]
+            - row [ref=e2781]:
+              - cell "c37807927a4562… site token" [ref=e2782]:
+                - button [ref=e2783] [cursor=pointer]:
+                  - code [ref=e2784]: c37807927a4562…
+                - generic [ref=e2785]: site token
+              - cell "bluetooth 57% confidence" [ref=e2786]:
+                - generic [ref=e2787]: bluetooth
+                - generic [ref=e2788]: 57% confidence
+              - cell "No role signal" [ref=e2789]
+              - cell "unattributable OUI evidence" [ref=e2791]:
+                - text: unattributable
+                - generic [ref=e2792]: OUI evidence
+              - cell "bluetooth" [ref=e2793]
+              - cell "No name observedNo network name" [ref=e2795]
+              - cell "8/29/2026, 8:17:27 PM" [ref=e2796]
+              - cell "8/29/2026, 8:17:27 PM" [ref=e2797]
+              - cell [ref=e2798]:
+                - button "Map sightings" [ref=e2799] [cursor=pointer]
+            - row [ref=e2800]:
+              - cell "97f7c87334171c… site token" [ref=e2801]:
+                - button [ref=e2802] [cursor=pointer]:
+                  - code [ref=e2803]: 97f7c87334171c…
+                - generic [ref=e2804]: site token
+              - cell "automotive 59% confidence" [ref=e2805]:
+                - generic [ref=e2806]: automotive
+                - generic [ref=e2807]: 59% confidence
+              - cell "No role signal" [ref=e2808]
+              - cell "unattributable OUI evidence" [ref=e2810]:
+                - text: unattributable
+                - generic [ref=e2811]: OUI evidence
+              - cell "wifi" [ref=e2812]
+              - cell "CHEVROLET3544SSID · CHEVROLET3544" [ref=e2814]
+              - cell "8/29/2026, 8:17:27 PM" [ref=e2815]
+              - cell "8/29/2026, 8:17:27 PM" [ref=e2816]
+              - cell [ref=e2817]:
+                - button "Map sightings" [ref=e2818] [cursor=pointer]
+            - row [ref=e2819]:
+              - cell "bf825a243a34f5… site token" [ref=e2820]:
+                - button [ref=e2821] [cursor=pointer]:
+                  - code [ref=e2822]: bf825a243a34f5…
+                - generic [ref=e2823]: site token
+              - cell "network 64% confidence" [ref=e2824]:
+                - generic [ref=e2825]: network
+                - generic [ref=e2826]: 64% confidence
+              - cell "No role signal" [ref=e2827]
+              - cell "Vantiva USA LLC OUI evidence" [ref=e2829]:
+                - text: Vantiva USA LLC
+                - generic [ref=e2830]: OUI evidence
+              - cell "wifi" [ref=e2831]
+              - cell "No name observedNo network name" [ref=e2833]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2834]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2835]
+              - cell [ref=e2836]:
+                - button "Map sightings" [ref=e2837] [cursor=pointer]
+            - row [ref=e2838]:
+              - cell "6b6b50abc99d33… site token" [ref=e2839]:
+                - button [ref=e2840] [cursor=pointer]:
+                  - code [ref=e2841]: 6b6b50abc99d33…
+                - generic [ref=e2842]: site token
+              - cell "network 64% confidence" [ref=e2843]:
+                - generic [ref=e2844]: network
+                - generic [ref=e2845]: 64% confidence
+              - cell "No role signal" [ref=e2846]
+              - cell "Vantiva USA LLC OUI evidence" [ref=e2848]:
+                - text: Vantiva USA LLC
+                - generic [ref=e2849]: OUI evidence
+              - cell "wifi" [ref=e2850]
+              - cell "No name observedNo network name" [ref=e2852]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2853]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2854]
+              - cell [ref=e2855]:
+                - button "Map sightings" [ref=e2856] [cursor=pointer]
+            - row [ref=e2857]:
+              - cell "8ea9b40f0258fe… site token" [ref=e2858]:
+                - button [ref=e2859] [cursor=pointer]:
+                  - code [ref=e2860]: 8ea9b40f0258fe…
+                - generic [ref=e2861]: site token
+              - cell "unknown No hypothesis" [ref=e2862]:
+                - generic [ref=e2863]: unknown
+                - generic [ref=e2864]: No hypothesis
+              - cell "No role signal" [ref=e2865]
+              - cell "unattributable OUI evidence" [ref=e2867]:
+                - text: unattributable
+                - generic [ref=e2868]: OUI evidence
+              - cell "wifi" [ref=e2869]
+              - cell "Unit209SSID · Unit209" [ref=e2871]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2872]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2873]
+              - cell [ref=e2874]:
+                - button "Map sightings" [ref=e2875] [cursor=pointer]
+            - row [ref=e2876]:
+              - cell "bdfabc1d9a12a6… site token" [ref=e2877]:
+                - button [ref=e2878] [cursor=pointer]:
+                  - code [ref=e2879]: bdfabc1d9a12a6…
+                - generic [ref=e2880]: site token
+              - cell "bluetooth 68% confidence" [ref=e2881]:
+                - generic [ref=e2882]: bluetooth
+                - generic [ref=e2883]: 68% confidence
+              - cell "No role signal" [ref=e2884]
+              - cell "unattributable OUI evidence" [ref=e2886]:
+                - text: unattributable
+                - generic [ref=e2887]: OUI evidence
+              - cell "bluetooth" [ref=e2888]
+              - cell "No name observedNo network name" [ref=e2890]
+              - cell "8/29/2026, 8:15:38 PM" [ref=e2891]
+              - cell "8/29/2026, 8:17:26 PM" [ref=e2892]
+              - cell [ref=e2893]:
+                - button "Map sightings" [ref=e2894] [cursor=pointer]
+            - row [ref=e2895]:
+              - cell "3f1faea3313d22… site token" [ref=e2896]:
+                - button [ref=e2897] [cursor=pointer]:
+                  - code [ref=e2898]: 3f1faea3313d22…
+                - generic [ref=e2899]: site token
+              - cell "unknown No hypothesis" [ref=e2900]:
+                - generic [ref=e2901]: unknown
+                - generic [ref=e2902]: No hypothesis
+              - cell "No role signal" [ref=e2903]
+              - cell "unattributable OUI evidence" [ref=e2905]:
+                - text: unattributable
+                - generic [ref=e2906]: OUI evidence
+              - cell "wifi" [ref=e2907]
+              - cell "No name observedNo network name" [ref=e2909]
+              - cell "8/29/2026, 8:17:25 PM" [ref=e2910]
+              - cell "8/29/2026, 8:17:25 PM" [ref=e2911]
+              - cell [ref=e2912]:
+                - button "Map sightings" [ref=e2913] [cursor=pointer]
+        - generic [ref=e2914]:
+          - button "Previous" [disabled] [ref=e2915]
+          - generic [ref=e2916]: Page 1 of 510
+          - button "Next" [ref=e2917] [cursor=pointer]
+      - generic [ref=e1909]:
+        - generic [ref=e1910]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e1911]: Workspace refreshed at 12:46 PM

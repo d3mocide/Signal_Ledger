@@ -131,7 +131,7 @@ def _review_groups(db, area_id=None, status="all"):
             group["representative"] = representative
     return list(groups.values())
 def _public_review_group(group):
-    return {"group_key": group["group_key"], "evidence_tier": group["evidence_tier"], "label": group["label"], "device_count": group["device_count"], "observation_count": group["observation_count"], "priority": group["priority"], "categories": dict(group["categories"]), "roles": dict(group["roles"]), "evidence": group["evidence"][:8], "representative": group["representative"]}
+    return {"group_key": group["group_key"], "device_ids": group["device_ids"], "evidence_tier": group["evidence_tier"], "label": group["label"], "device_count": group["device_count"], "observation_count": group["observation_count"], "priority": group["priority"], "categories": dict(group["categories"]), "roles": dict(group["roles"]), "evidence": group["evidence"][:8], "representative": group["representative"]}
 def _feedback_matcher(db, device):
     observations = list(db.scalars(select(Observation).where(Observation.device_id == device.id).order_by(Observation.captured_at.desc()).limit(32)).all())
     def common(values):
@@ -177,7 +177,7 @@ def _run_snapshot(db, run_id):
     return snapshot
 def _comparison_item(item, changed_fields=None):
     device = item["device"]
-    return {"device_id": device.id, "token_prefix": device.token[:14] + "…", "category": device.category, "category_confidence": device.category_confidence, "oui_organization": device.oui_organization, "roles": device.device_roles or [], "observation_count": item["observation_count"], "last_seen": item["last_seen"], "changed_fields": changed_fields or []}
+    return {"device_id": device.id, "token_prefix": device.token[:14] + "…", "category": device.category, "category_confidence": device.category_confidence, "oui_organization": device.oui_organization, "roles": device.device_roles or [], "observation_count": item["observation_count"], "last_seen": item["last_seen"], "facts": sorted(item["facts"]), "changed_fields": changed_fields or []}
 def filtered_observations(query, area_id=None, run_id=None, device_id=None, protocol=None, vendor=None, category=None, start=None, end=None, min_quality=None, min_rssi=None):
     """Apply the same bounded discovery filters to queries already joined to runs/devices."""
     if area_id: query = query.where(SurveyRun.survey_area_id == area_id)
@@ -259,10 +259,12 @@ class CategoryPatch(BaseModel):
 class DeviceReviewPatch(BaseModel):
     status: str
     disposition_note: str | None = Field(default=None, max_length=2000)
-    evidence_links: list[str] = Field(default_factory=list, max_length=8)
+    evidence_links: list[str] | None = Field(default=None, max_length=8)
 class DeviceReviewGroupPatch(DeviceReviewPatch):
     group_key: str = Field(min_length=8, max_length=64)
     area_id: int | None = None
+    review_status: str = "open"
+    device_ids: list[int] = Field(min_length=1, max_length=10000)
 class RuleProposalPatch(BaseModel):
     status: str
     review_note: str | None = Field(default=None, max_length=2000)
@@ -491,6 +493,14 @@ def create_run(body: RunInput, db: Session = Depends(db_session), principal: Pri
     run = SurveyRun(**body.model_dump()); db.add(run); db.flush(); audit(db, principal, "survey_run.created", "survey_run", run.id, {"area_id": run.survey_area_id}); db.commit(); db.refresh(run); return dump(run)
 @app.get("/v1/survey-runs")
 def list_runs(db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))): return [dump(x) for x in db.scalars(select(SurveyRun).order_by(SurveyRun.created_at.desc())).all()]
+@app.get("/v1/survey-runs/{run_id}/summary")
+def run_summary(run_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    run = db.get(SurveyRun, run_id)
+    if not run: raise HTTPException(404, "Import session not found")
+    job = db.scalar(select(IngestionJob).where(IngestionJob.survey_run_id == run.id).order_by(IngestionJob.created_at.desc()))
+    stats = db.execute(select(func.count(Observation.id), func.count(func.distinct(Observation.device_id)), func.min(Observation.captured_at), func.max(Observation.captured_at), func.count(Observation.id).filter(Observation.spatial_cell.is_not(None))).where(Observation.survey_run_id == run.id)).one()
+    area = db.get(SurveyArea, run.survey_area_id) if run.survey_area_id else None
+    return {"run": dump(run), "collection": dump(area) if area else None, "job": job_view(job) if job else None, "observations": stats[0], "devices": stats[1], "observed_start": stats[2], "observed_end": stats[3], "located_observations": stats[4], "location_completeness": round(stats[4] / stats[0], 3) if stats[0] else 0}
 @app.post("/v1/survey-runs/{run_id}/complete")
 def complete_run(run_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
     run = db.get(SurveyRun, run_id)
@@ -592,7 +602,7 @@ async def quick_import(source_format: str = Form(...), file: UploadFile = File(.
         db.add(area); db.flush(); audit(db, principal, "collection.created", "collection", area.id, {"name": collection})
     stem = Path(file.filename or "capture").stem.strip() or "capture"
     generated_name = f"{stem[:110]} · {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
-    run = SurveyRun(survey_area_id=area.id if area else None, name=(session_name or generated_name).strip()[:160] or generated_name, authorization_ref="operator-managed", collector_coverage=1, completed=True)
+    run = SurveyRun(survey_area_id=area.id if area else None, name=(session_name or generated_name).strip()[:160] or generated_name, authorization_ref="operator-managed", collector_coverage=1, completed=False)
     db.add(run); db.flush(); audit(db, principal, "import_session.created", "survey_run", run.id, {"collection": collection, "generated_name": not bool(session_name)})
     db.commit()
     return await ingest(run.id, source_format, file, db, principal)
@@ -719,34 +729,41 @@ def update_device_review(device_id: int, body: DeviceReviewPatch, db: Session = 
         review = DeviceReview(device_id=device_id)
         db.add(review)
     review.status = body.status
-    review.disposition_note = body.disposition_note
-    review.evidence_links = [link.strip() for link in body.evidence_links if link.strip()][:8]
+    if "disposition_note" in body.model_fields_set:
+        review.disposition_note = body.disposition_note
+    if "evidence_links" in body.model_fields_set:
+        review.evidence_links = [link.strip() for link in (body.evidence_links or []) if link.strip()][:8]
     review.reviewed_by = principal.actor
     review.reviewed_at = datetime.utcnow()
-    audit(db, principal, "device.review.disposition", "device", device_id, {"status": body.status, "evidence_links": len(review.evidence_links)})
+    audit(db, principal, "device.review.disposition", "device", device_id, {"status": body.status, "evidence_links": len(review.evidence_links), "context_changed": bool({"disposition_note", "evidence_links"} & body.model_fields_set)})
     db.commit()
     return device_review_view(device, review)
 @app.patch("/v1/device-review-groups")
 def update_device_review_group(body: DeviceReviewGroupPatch, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
     if body.status not in DEVICE_REVIEW_STATUSES: raise HTTPException(422, "Unknown device review status")
-    groups = _review_groups(db, body.area_id, "all")
+    if body.review_status != "all" and body.review_status not in DEVICE_REVIEW_STATUSES: raise HTTPException(422, "Unknown review status scope")
+    groups = _review_groups(db, body.area_id, body.review_status)
     group = next((item for item in groups if item["group_key"] == body.group_key), None)
     if not group: raise HTTPException(404, "Review group not found")
-    links = [link.strip() for link in body.evidence_links if link.strip()][:8]
+    if set(body.device_ids) != set(group["device_ids"]):
+        raise HTTPException(409, "Review group changed; reload before applying a disposition")
+    links = [link.strip() for link in (body.evidence_links or []) if link.strip()][:8]
     now = datetime.utcnow()
-    for device_id in group["device_ids"]:
+    for device_id in body.device_ids:
         review = db.scalar(select(DeviceReview).where(DeviceReview.device_id == device_id))
         if not review:
             review = DeviceReview(device_id=device_id)
             db.add(review)
         review.status = body.status
-        review.disposition_note = body.disposition_note
-        review.evidence_links = links
+        if "disposition_note" in body.model_fields_set:
+            review.disposition_note = body.disposition_note
+        if "evidence_links" in body.model_fields_set:
+            review.evidence_links = links
         review.reviewed_by = principal.actor
         review.reviewed_at = now
-    audit(db, principal, "device.review_group.disposition", "device_review_group", body.group_key, {"status": body.status, "devices": len(group["device_ids"]), "evidence_links": len(links)})
+    audit(db, principal, "device.review_group.disposition", "device_review_group", body.group_key, {"status": body.status, "devices": len(body.device_ids), "evidence_links": len(links), "review_status": body.review_status, "context_changed": bool({"disposition_note", "evidence_links"} & body.model_fields_set)})
     db.commit()
-    return {"group_key": body.group_key, "status": body.status, "devices_updated": len(group["device_ids"])}
+    return {"group_key": body.group_key, "status": body.status, "devices_updated": len(body.device_ids)}
 @app.post("/v1/devices/categories/rebuild")
 def rebuild_device_categories(limit: int = Query(50000, ge=1, le=50000), db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
     updated, overridden = rebuild_categories(db, limit)
@@ -846,14 +863,15 @@ def import_comparison(left_run_id: int, right_run_id: int, limit: int = Query(10
         if left[device_id]["device"].oui_organization != right[device_id]["device"].oui_organization: fields.append("vendor")
         if left[device_id]["device"].device_roles != right[device_id]["device"].device_roles: fields.append("role/context")
         if left[device_id]["facts"] != right[device_id]["facts"]: fields.append("observed facts")
-        if fields: changed.append(_comparison_item(right[device_id], fields))
-    return {"left": {"id": left_run.id, "name": left_run.name, "completed": left_run.completed}, "right": {"id": right_run.id, "name": right_run.name, "completed": right_run.completed}, "counts": {"new": len(new_ids), "returning": len(returning_ids), "disappeared": len(disappeared_ids), "changed": len(changed)}, "new": [_comparison_item(right[item]) for item in sorted(new_ids)[:limit_value]], "returning": [_comparison_item(right[item]) for item in sorted(returning_ids)[:limit_value]], "disappeared": [_comparison_item(left[item]) for item in sorted(disappeared_ids)[:limit_value]], "changed": changed[:limit_value], "truncated": any(len(group) > limit_value for group in (new_ids, returning_ids, disappeared_ids)) or len(changed) > limit_value}
+        if fields:
+            item = _comparison_item(right[device_id], fields); item["before_facts"] = sorted(left[device_id]["facts"]); item["after_facts"] = sorted(right[device_id]["facts"]); changed.append(item)
+    return {"left": {"id": left_run.id, "name": left_run.name, "completed": left_run.completed}, "right": {"id": right_run.id, "name": right_run.name, "completed": right_run.completed}, "comparability": {"same_collection": True, "left_coverage": left_run.collector_coverage, "right_coverage": right_run.collector_coverage}, "counts": {"new": len(new_ids), "returning": len(returning_ids), "disappeared": len(disappeared_ids), "changed": len(changed)}, "new": [_comparison_item(right[item]) for item in sorted(new_ids)[:limit_value]], "returning": [_comparison_item(right[item]) for item in sorted(returning_ids)[:limit_value]], "disappeared": [_comparison_item(left[item]) for item in sorted(disappeared_ids)[:limit_value]], "changed": changed[:limit_value], "truncated": any(len(group) > limit_value for group in (new_ids, returning_ids, disappeared_ids)) or len(changed) > limit_value}
 @app.get("/v1/exports/devices.csv")
-def export_devices_csv(area_id: int | None = None, vendor: str | None = None, category: str | None = None, role: str | None = None, attributed_only: bool = False, limit: int = Query(5000, ge=1, le=10000), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
-    result = devices(area_id=area_id, vendor=vendor, category=category, role=role, attributed_only=attributed_only, limit=limit, offset=0, db=db, principal=principal)
+def export_devices_csv(area_id: int | None = None, run_id: int | None = None, vendor: str | None = None, category: str | None = None, role: str | None = None, attributed_only: bool = False, sort: str = "last_seen", direction: str = "desc", limit: int = Query(5000, ge=1, le=10000), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    result = devices(area_id=area_id, run_id=run_id, vendor=vendor, category=category, role=role, attributed_only=attributed_only, sort=sort, direction=direction, limit=limit, offset=0, db=db, principal=principal)
     output = io.StringIO(); writer = csv.writer(output); writer.writerow(["site_token", "oui_organization", "category", "category_confidence", "roles", "first_seen", "last_seen"])
     for item in result["items"]: writer.writerow([item["token"], item["oui_organization"], item["category"], item["category_confidence"], ";".join(item.get("device_roles") or []), item["first_seen"], item["last_seen"]])
-    audit(db, principal, "device.exported", "device_inventory", None, {"count": len(result["items"]), "limit": limit, "area_id": area_id, "category": category, "role": role}); db.commit()
+    audit(db, principal, "device.exported", "device_inventory", None, {"count": len(result["items"]), "limit": limit, "area_id": area_id, "run_id": run_id, "category": category, "role": role, "sort": sort, "direction": direction}); db.commit()
     return StreamingResponse(iter([output.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=signal-ledger-devices.csv"})
 @app.post("/v1/devices/{device_id}/reveal-address")
 def reveal_device_address(device_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):

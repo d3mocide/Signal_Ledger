@@ -13,7 +13,7 @@ import app.main as main_module
 import app.tasks as tasks_module
 from app.crypto import decrypt_address
 from app.database import Base
-from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
+from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, export_devices_csv, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
 from app.models import Device, IngestionJob, Observation, SurveyArea, SurveyRun
 from app.security import Principal
 from app.tasks import process_ingestion
@@ -53,12 +53,29 @@ def test_inventory_detail_and_coarse_map_filters_work_together():
     orgs = [item["oui_organization"] for item in sorted_by_vendor["items"]]
     assert orgs == sorted(orgs, key=str.lower)
 
+    async def read_csv(response):
+        chunks = []
+        async for chunk in response.body_iterator:
+            chunks.append(chunk.encode() if isinstance(chunk, str) else chunk)
+        return b"".join(chunks).decode()
+
+    exported = export_devices_csv(area_id=area.id, sort="oui_organization", direction="desc", limit=100, db=db, principal=viewer)
+    rows = asyncio.run(read_csv(exported)).splitlines()
+    assert rows[1].split(",")[1] == "unattributable"
+    assert rows[2].split(",")[1] == "Example OUI"
+
     detail = device_detail(first_device.id, limit=100, db=db, principal=viewer)
     assert detail["summary"] == {"observations": 2, "runs": 2, "coarse_cells": 2}
     assert {item["run_name"] for item in detail["observations"]} == {"Morning", "Evening"}
 
     mapped = map_clusters(run_id=first_run.id, device_id=first_device.id, limit=1000, db=db, principal=viewer)
     assert mapped == [{"cell": "1.000,2.000", "count": 1, "avg_rssi": -50.0, "device_count": 1}]
+
+    summary = main_module.run_summary(first_run.id, db=db, principal=viewer)
+    assert summary["observations"] == 2
+    assert summary["devices"] == 2
+    assert summary["located_observations"] == 2
+    assert summary["observed_start"] == datetime(2026, 1, 1, 10)
 
 
 def test_map_clusters_excludes_stored_null_island_placeholder_coordinates():
@@ -178,7 +195,7 @@ def test_direct_import_creates_a_filename_named_session_and_default_collection(t
     run = db.scalar(select(SurveyRun))
     assert run.survey_area_id is None
     assert run.name.startswith("phone-capture · ")
-    assert run.completed
+    assert not run.completed
 
 
 def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
@@ -211,6 +228,8 @@ def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
     process_ingestion(job.id)
     db.expire_all()
 
+    assert db.get(SurveyRun, queued["capture_session_id"]).completed
+
     report = ingestion_report(job.id, db=db, principal=Principal(1, "viewer", "viewer"))
     assert "Status: complete" in report.body.decode()
     assert "accepted: 1" in report.body.decode()
@@ -219,6 +238,25 @@ def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
     assert inventory["items"][0]["category"] == "network"
     coverage = map_clusters(run_id=queued["capture_session_id"], limit=100, db=db, principal=Principal(1, "viewer", "viewer"))
     assert coverage == [{"cell": "37.775,-122.419", "count": 1, "avg_rssi": -41.0, "device_count": 1}]
+
+
+def test_failed_worker_keeps_capture_session_incomplete(tmp_path, monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    monkeypatch.setattr(tasks_module, "SessionLocal", Session)
+    db = Session()
+    run = SurveyRun(name="Broken import", authorization_ref="AUTH-FAIL", completed=False)
+    db.add(run); db.flush()
+    job = IngestionJob(survey_run_id=run.id, filename="missing.csv", source_format="wigle", file_hash="f" * 64, raw_path=str(tmp_path / "missing.csv"))
+    db.add(job); db.commit()
+
+    with pytest.raises(FileNotFoundError):
+        process_ingestion(job.id)
+
+    db.expire_all()
+    assert db.get(IngestionJob, job.id).status == "failed"
+    assert not db.get(SurveyRun, run.id).completed
 
 
 def test_retention_preview_is_non_destructive_and_confirmed_sweep_removes_evidence(tmp_path, monkeypatch):

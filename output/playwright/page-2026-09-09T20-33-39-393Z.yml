@@ -1,0 +1,13 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]: ◫
+    - paragraph [ref=e6]: SIGNAL LEDGER
+    - heading "Welcome back" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Sign in to your private observatory.
+    - generic [ref=e9]:
+      - text: Username
+      - textbox "Username" [ref=e10]
+    - generic [ref=e11]:
+      - text: Password
+      - textbox "Password" [ref=e12]
+    - button "Sign in" [ref=e13] [cursor=pointer]

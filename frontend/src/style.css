@@ -918,6 +918,16 @@ main:not(.auth) {
   color: var(--muted);
   font-size: 10px;
 }
+.latest-import-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+}
+.latest-import-panel h2 { margin: 2px 0 6px; }
+.latest-import-panel .review-actions { margin: 0; padding: 0; border: 0; flex-shrink: 0; }
+@media (max-width: 720px) { .latest-import-panel { align-items: flex-start; flex-direction: column; gap: 12px; } }
 .report-link {
   font-size: 11px;
   text-underline-offset: 4px;
@@ -1418,6 +1428,17 @@ input[type="file"]::file-selector-button {
   overflow-x: auto;
   width: 100%;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -1805,6 +1826,11 @@ footer {
   .brand {
     font-size: 16px;
   }
+  .inventory-table { min-width: 680px; }
+  .inventory-table th:nth-child(3), .inventory-table td:nth-child(3),
+  .inventory-table th:nth-child(5), .inventory-table td:nth-child(5),
+  .inventory-table th:nth-child(6), .inventory-table td:nth-child(6),
+  .inventory-table th:nth-child(7), .inventory-table td:nth-child(7) { display: none; }
 }
 @media (max-width: 900px) {
   .sidebar {
@@ -1852,6 +1878,8 @@ footer {
   .inventory-filter-actions {
     justify-content: flex-end;
   }
+  .inventory-table { min-width: 530px; }
+  .inventory-table th:nth-child(4), .inventory-table td:nth-child(4) { display: none; }
   .brand {
     font-size: 14px;
   }

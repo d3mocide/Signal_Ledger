@@ -186,12 +186,86 @@ turning inferred labels into identity or security verdicts.
 review queue, understand why each item was prioritized, record a disposition,
 compare it with prior runs, and export only policy-approved evidence.
 
+## Workflow reliability and command-center program
+
+This program follows the frontend/workflow review in
+[`FRONTEND_REVIEW_2026-09-09.md`](FRONTEND_REVIEW_2026-09-09.md). Each phase
+must be completed end to end: backend contract, frontend behavior, focused
+regression coverage, production build, and authenticated browser acceptance.
+Do not mark a phase complete from a visual review or a build alone.
+
+### Phase A — trustworthy import and review decisions
+
+- [x] A capture session becomes eligible for comparison/baselines only after
+  its ingestion job completes; queued, processing, failed, and duplicate
+  uploads remain visibly distinct in the import history.
+- [x] A group disposition applies only to the device membership returned for
+  the current review status and scope; audit detail reports that same count.
+- [x] Changing a review status without editing its note/references preserves
+  the existing context; clearing context is an explicit action.
+- [x] Import status, review mutation, and failure paths have focused tests and
+  authenticated browser acceptance.
+
+**Exit gate:** met in the test instance on 2026-09-09. A rebuilt-image suite
+ran 50 tests, including queued/complete/failed import transitions and review
+scope/context regressions. Authenticated browser acceptance signed in, opened
+the review queue, applied a bounded group disposition, and received its audited
+success state. A failed or pending import cannot appear imported; a review
+action cannot alter hidden members; a status-only change cannot erase context.
+
+### Phase B — continuous investigation context
+
+- [x] Applied collection/session/filter/sort/page state is encoded in a
+  bookmarkable route and restored on back, forward, refresh, and return from
+  device evidence.
+- [x] Inventory, review, coverage, saved views, counts, and exports use the
+  same applied query; bounded exports disclose their result count.
+- [x] Drilldowns retain the source collection and filter scope.
+
+**Exit gate:** an analyst can open evidence and return to the identical queue
+or inventory selection, and an export cannot silently differ from the table.
+Verified on the rebuilt local app: inventory category/page routing, review
+status/bucket routing, coverage device/protocol/RSSI routing, and an inventory
+device drilldown return. The export regression also asserts its requested
+sort/direction in the generated CSV.
+
+### Phase C — import-to-decision command center
+
+- [x] A completed import opens a session summary with parser outcome, source,
+  GPS completeness, observed period, and next actions.
+- [x] Compatible run comparison explains new, returning, changed, and
+  not-observed records with before/after retained evidence and collection
+  comparability context.
+- [x] Overview prioritizes the latest import outcome, limitations, and review
+  work; map and lifetime totals remain available as secondary context.
+- [x] Navigation is organized around Overview, Imports, Inventory, Coverage,
+  Compare, and Review while retaining deep links to advanced tools.
+
+**Exit gate:** a private operator can move from a completed import to a
+reviewable change or evidence record without reconstructing scope manually.
+Verified on the rebuilt local app: a completed WiGLE import opened its session
+summary, then entered inventory at the exact `run_id` and collection scope.
+
+### Phase D — efficient and accessible operations
+
+- [ ] Review prioritization states the retained evidence that makes an item
+  actionable and keeps no-signal material out of the primary queue.
+- [ ] Inventory and review layouts remain usable at narrow desktop widths and
+  200% zoom, with compact optional columns and clear mutation feedback.
+- [ ] Keyboard, focus, ARIA semantics, error/status announcements, and local
+  map fallback behavior pass browser acceptance.
+
+**Exit gate:** keyboard and assistive-technology users can operate the core
+import, investigate, review, and export loop without hidden state or traps.
+
 ## Immediate next build sequence
 
-1. Run end-to-end integration tests from upload through every finding type.
-2. Run realistic import/explorer load tests and the backup/restore and
+1. Complete Phase A end to end before changing navigation or visual hierarchy.
+2. Complete Phase B shared query/route state, then Phase C session-led flow.
+3. Complete Phase D accessibility/responsive acceptance alongside the changed
+   surfaces.
+4. Run realistic import/explorer load tests and the backup/restore and
    HMAC-rotation drills.
-3. Complete the accessibility/responsive and browser validation passes.
-4. Tune categorization thresholds from representative analyst feedback.
-5. Finish deployment monitoring, structured logs, upgrade procedure, and
+5. Tune categorization thresholds from representative analyst feedback and
+   finish deployment monitoring, structured logs, upgrade procedure, and
    policy-bounded evidence export review.

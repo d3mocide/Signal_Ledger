@@ -1,0 +1,698 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Command center" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [ref=e36] [cursor=pointer]
+      - button "Category view" [ref=e40] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e44] [cursor=pointer]
+      - button "Coverage explorer" [ref=e48] [cursor=pointer]
+      - generic [ref=e51]:
+        - paragraph [ref=e52]: ANALYSIS
+        - button "Finding queue" [ref=e53] [cursor=pointer]
+      - button "Evidence review" [active] [ref=e57] [cursor=pointer]
+      - button "Rule learning" [ref=e61] [cursor=pointer]
+      - button "Run comparison" [ref=e65] [cursor=pointer]
+      - button "Baselines" [ref=e69] [cursor=pointer]
+      - generic [ref=e72]:
+        - paragraph [ref=e73]: COLLECTION
+        - button "Capture imports" [ref=e74] [cursor=pointer]
+      - button "Collections" [ref=e78] [cursor=pointer]
+      - button "Administration" [ref=e82] [cursor=pointer]
+      - generic [ref=e85]:
+        - paragraph [ref=e86]: GOVERNANCE
+        - button "Audit log" [ref=e87] [cursor=pointer]
+    - generic [ref=e90]:
+      - generic [ref=e94]:
+        - text: Private by design
+        - generic [ref=e95]: Site-scoped tokens. Local maps.
+      - generic [ref=e96]:
+        - generic [ref=e97]: D3
+        - generic [ref=e98]:
+          - text: d3mo
+          - generic [ref=e99]: admin
+        - button "Sign out" [ref=e100] [cursor=pointer]
+  - generic [ref=e101]:
+    - banner [ref=e102]:
+      - generic [ref=e103]: Workspace/Evidence review
+      - generic [ref=e104]: Private instance
+    - main [ref=e106]:
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - paragraph [ref=e109]: SIGNAL LEDGER / REVIEWS
+          - heading "Evidence review" [level=1] [ref=e2918]
+          - paragraph [ref=e111]: Review uncertain device classifications and teach the evidence model.
+        - generic [ref=e112]:
+          - button "Refresh" [ref=e113] [cursor=pointer]
+          - button "Import data" [ref=e116] [cursor=pointer]
+      - generic [ref=e2919]:
+        - generic [ref=e2920]:
+          - generic [ref=e2921]:
+            - paragraph [ref=e2922]: EVIDENCE REVIEW
+            - heading "Classification triage" [level=2] [ref=e2923]
+            - paragraph [ref=e2924]: 4,431 groups · 5,604 devices · repeated evidence is grouped before review.
+          - generic [ref=e2925]:
+            - combobox "Survey area" [ref=e2926]:
+              - option "All areas" [selected]
+              - option "Test 1"
+            - combobox "Review status" [ref=e2927]:
+              - option "Open" [selected]
+              - option "Needs review"
+              - option "Confirmed"
+              - option "Dismissed"
+              - option "Insufficient evidence"
+              - option "All dispositions"
+        - tablist "Evidence quality" [ref=e2928]:
+          - button "4,431 actionable groups 5,604 devices" [ref=e2929] [cursor=pointer]:
+            - generic [ref=e2930]: 4,431
+            - generic [ref=e2931]: actionable groups
+            - generic [ref=e2932]: 5,604 devices
+          - button "1 no-signal groups 4,810 devices" [ref=e2933] [cursor=pointer]:
+            - generic [ref=e2934]: "1"
+            - generic [ref=e2935]: no-signal groups
+            - generic [ref=e2936]: 4,810 devices
+          - button "4,432 all groups 10,414 devices" [ref=e2937] [cursor=pointer]:
+            - generic [ref=e2938]: 4,432
+            - generic [ref=e2939]: all groups
+            - generic [ref=e2940]: 10,414 devices
+        - generic [ref=e2941]:
+          - generic [ref=e2942]:
+            - generic [ref=e2943]:
+              - generic [ref=e2944]:
+                - generic [ref=e2945]: BWW-Draft
+                - generic [ref=e2946]: 13 devices · 13 observations · priority 100
+              - generic [ref=e2947]: actionable
+            - generic [ref=e2948]:
+              - generic [ref=e2949]:
+                - generic [ref=e2950]: Category mix
+                - text: unknown (13)
+              - generic [ref=e2951]:
+                - generic [ref=e2952]: Role mix
+                - text: None
+              - generic [ref=e2953]:
+                - generic [ref=e2954]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e2955]:
+              - generic [ref=e2956]: Retained evidence
+              - generic [ref=e2957]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e2958] [cursor=pointer]
+            - generic [ref=e2959]:
+              - button "Open evidence" [ref=e2960] [cursor=pointer]
+              - button "Confirm group" [ref=e2961] [cursor=pointer]
+              - button "Dismiss group" [ref=e2962] [cursor=pointer]
+              - button "Needs review" [ref=e2963] [cursor=pointer]
+          - generic [ref=e2964]:
+            - generic [ref=e2965]:
+              - generic [ref=e2966]:
+                - generic [ref=e2967]: BWW-Internal
+                - generic [ref=e2968]: 13 devices · 14 observations · priority 100
+              - generic [ref=e2969]: actionable
+            - generic [ref=e2970]:
+              - generic [ref=e2971]:
+                - generic [ref=e2972]: Category mix
+                - text: unknown (13)
+              - generic [ref=e2973]:
+                - generic [ref=e2974]: Role mix
+                - text: None
+              - generic [ref=e2975]:
+                - generic [ref=e2976]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e2977]:
+              - generic [ref=e2978]: Retained evidence
+              - generic [ref=e2979]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e2980] [cursor=pointer]
+            - generic [ref=e2981]:
+              - button "Open evidence" [ref=e2982] [cursor=pointer]
+              - button "Confirm group" [ref=e2983] [cursor=pointer]
+              - button "Dismiss group" [ref=e2984] [cursor=pointer]
+              - button "Needs review" [ref=e2985] [cursor=pointer]
+          - generic [ref=e2986]:
+            - generic [ref=e2987]:
+              - generic [ref=e2988]:
+                - generic [ref=e2989]: ODHW_Guest · WatchGuard Technologies, Inc.
+                - generic [ref=e2990]: 9 devices · 9 observations · priority 100
+              - generic [ref=e2991]: actionable
+            - generic [ref=e2992]:
+              - generic [ref=e2993]:
+                - generic [ref=e2994]: Category mix
+                - text: unknown (9)
+              - generic [ref=e2995]:
+                - generic [ref=e2996]: Role mix
+                - text: guest network (9)
+              - generic [ref=e2997]:
+                - generic [ref=e2998]: Representative
+                - text: WatchGuard Technologies, Inc. · unknown protocol
+            - generic [ref=e2999]:
+              - generic [ref=e3000]: Retained evidence
+              - generic [ref=e3001]: "guest_network: SSID contains 'guest'"
+            - button "Add review context (optional)" [ref=e3002] [cursor=pointer]
+            - generic [ref=e3003]:
+              - button "Open evidence" [ref=e3004] [cursor=pointer]
+              - button "Confirm group" [ref=e3005] [cursor=pointer]
+              - button "Dismiss group" [ref=e3006] [cursor=pointer]
+              - button "Needs review" [ref=e3007] [cursor=pointer]
+          - generic [ref=e3008]:
+            - generic [ref=e3009]:
+              - generic [ref=e3010]:
+                - generic [ref=e3011]: ODHW_Staff
+                - generic [ref=e3012]: 9 devices · 9 observations · priority 100
+              - generic [ref=e3013]: actionable
+            - generic [ref=e3014]:
+              - generic [ref=e3015]:
+                - generic [ref=e3016]: Category mix
+                - text: unknown (9)
+              - generic [ref=e3017]:
+                - generic [ref=e3018]: Role mix
+                - text: None
+              - generic [ref=e3019]:
+                - generic [ref=e3020]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3021]:
+              - generic [ref=e3022]: Retained evidence
+              - generic [ref=e3023]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3024] [cursor=pointer]
+            - generic [ref=e3025]:
+              - button "Open evidence" [ref=e3026] [cursor=pointer]
+              - button "Confirm group" [ref=e3027] [cursor=pointer]
+              - button "Dismiss group" [ref=e3028] [cursor=pointer]
+              - button "Needs review" [ref=e3029] [cursor=pointer]
+          - generic [ref=e3030]:
+            - generic [ref=e3031]:
+              - generic [ref=e3032]:
+                - generic [ref=e3033]: phgstaff
+                - generic [ref=e3034]: 9 devices · 9 observations · priority 100
+              - generic [ref=e3035]: actionable
+            - generic [ref=e3036]:
+              - generic [ref=e3037]:
+                - generic [ref=e3038]: Category mix
+                - text: unknown (9)
+              - generic [ref=e3039]:
+                - generic [ref=e3040]: Role mix
+                - text: None
+              - generic [ref=e3041]:
+                - generic [ref=e3042]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3043]:
+              - generic [ref=e3044]: Retained evidence
+              - generic [ref=e3045]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3046] [cursor=pointer]
+            - generic [ref=e3047]:
+              - button "Open evidence" [ref=e3048] [cursor=pointer]
+              - button "Confirm group" [ref=e3049] [cursor=pointer]
+              - button "Dismiss group" [ref=e3050] [cursor=pointer]
+              - button "Needs review" [ref=e3051] [cursor=pointer]
+          - generic [ref=e3052]:
+            - generic [ref=e3053]:
+              - generic [ref=e3054]:
+                - generic [ref=e3055]: Aloha_POS136334 · WatchGuard Technologies, Inc.
+                - generic [ref=e3056]: 8 devices · 10 observations · priority 100
+              - generic [ref=e3057]: actionable
+            - generic [ref=e3058]:
+              - generic [ref=e3059]:
+                - generic [ref=e3060]: Category mix
+                - text: unknown (8)
+              - generic [ref=e3061]:
+                - generic [ref=e3062]: Role mix
+                - text: retail pos (8)
+              - generic [ref=e3063]:
+                - generic [ref=e3064]: Representative
+                - text: WatchGuard Technologies, Inc. · unknown protocol
+            - generic [ref=e3065]:
+              - generic [ref=e3066]: Retained evidence
+              - generic [ref=e3067]: "retail_pos: SSID contains 'pos'"
+            - button "Add review context (optional)" [ref=e3068] [cursor=pointer]
+            - generic [ref=e3069]:
+              - button "Open evidence" [ref=e3070] [cursor=pointer]
+              - button "Confirm group" [ref=e3071] [cursor=pointer]
+              - button "Dismiss group" [ref=e3072] [cursor=pointer]
+              - button "Needs review" [ref=e3073] [cursor=pointer]
+          - generic [ref=e3074]:
+            - generic [ref=e3075]:
+              - generic [ref=e3076]:
+                - generic [ref=e3077]: Peppertree Inn Guest
+                - generic [ref=e3078]: 8 devices · 8 observations · priority 100
+              - generic [ref=e3079]: actionable
+            - generic [ref=e3080]:
+              - generic [ref=e3081]:
+                - generic [ref=e3082]: Category mix
+                - text: unknown (8)
+              - generic [ref=e3083]:
+                - generic [ref=e3084]: Role mix
+                - text: guest network (8)
+              - generic [ref=e3085]:
+                - generic [ref=e3086]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3087]:
+              - generic [ref=e3088]: Retained evidence
+              - generic [ref=e3089]: "guest_network: SSID contains 'guest'"
+            - button "Add review context (optional)" [ref=e3090] [cursor=pointer]
+            - generic [ref=e3091]:
+              - button "Open evidence" [ref=e3092] [cursor=pointer]
+              - button "Confirm group" [ref=e3093] [cursor=pointer]
+              - button "Dismiss group" [ref=e3094] [cursor=pointer]
+              - button "Needs review" [ref=e3095] [cursor=pointer]
+          - generic [ref=e3096]:
+            - generic [ref=e3097]:
+              - generic [ref=e3098]:
+                - generic [ref=e3099]: BlueFish
+                - generic [ref=e3100]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3101]: actionable
+            - generic [ref=e3102]:
+              - generic [ref=e3103]:
+                - generic [ref=e3104]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3105]:
+                - generic [ref=e3106]: Role mix
+                - text: None
+              - generic [ref=e3107]:
+                - generic [ref=e3108]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3109]:
+              - generic [ref=e3110]: Retained evidence
+              - generic [ref=e3111]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3112] [cursor=pointer]
+            - generic [ref=e3113]:
+              - button "Open evidence" [ref=e3114] [cursor=pointer]
+              - button "Confirm group" [ref=e3115] [cursor=pointer]
+              - button "Dismiss group" [ref=e3116] [cursor=pointer]
+              - button "Needs review" [ref=e3117] [cursor=pointer]
+          - generic [ref=e3118]:
+            - generic [ref=e3119]:
+              - generic [ref=e3120]:
+                - generic [ref=e3121]: Brix Public
+                - generic [ref=e3122]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3123]: actionable
+            - generic [ref=e3124]:
+              - generic [ref=e3125]:
+                - generic [ref=e3126]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3127]:
+                - generic [ref=e3128]: Role mix
+                - text: guest network (7) · retail pos (7)
+              - generic [ref=e3129]:
+                - generic [ref=e3130]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3131]:
+              - generic [ref=e3132]: Retained evidence
+              - generic [ref=e3133]: "retail_pos: SSID contains 'brix' · guest_network: SSID contains 'public'"
+            - button "Add review context (optional)" [ref=e3134] [cursor=pointer]
+            - generic [ref=e3135]:
+              - button "Open evidence" [ref=e3136] [cursor=pointer]
+              - button "Confirm group" [ref=e3137] [cursor=pointer]
+              - button "Dismiss group" [ref=e3138] [cursor=pointer]
+              - button "Needs review" [ref=e3139] [cursor=pointer]
+          - generic [ref=e3140]:
+            - generic [ref=e3141]:
+              - generic [ref=e3142]:
+                - generic [ref=e3143]: Brix Tavern - Events
+                - generic [ref=e3144]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3145]: actionable
+            - generic [ref=e3146]:
+              - generic [ref=e3147]:
+                - generic [ref=e3148]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3149]:
+                - generic [ref=e3150]: Role mix
+                - text: retail pos (7)
+              - generic [ref=e3151]:
+                - generic [ref=e3152]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3153]:
+              - generic [ref=e3154]: Retained evidence
+              - generic [ref=e3155]: "retail_pos: SSID contains 'brix'"
+            - button "Add review context (optional)" [ref=e3156] [cursor=pointer]
+            - generic [ref=e3157]:
+              - button "Open evidence" [ref=e3158] [cursor=pointer]
+              - button "Confirm group" [ref=e3159] [cursor=pointer]
+              - button "Dismiss group" [ref=e3160] [cursor=pointer]
+              - button "Needs review" [ref=e3161] [cursor=pointer]
+          - generic [ref=e3162]:
+            - generic [ref=e3163]:
+              - generic [ref=e3164]:
+                - generic [ref=e3165]: Century Hotel
+                - generic [ref=e3166]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3167]: actionable
+            - generic [ref=e3168]:
+              - generic [ref=e3169]:
+                - generic [ref=e3170]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3171]:
+                - generic [ref=e3172]: Role mix
+                - text: None
+              - generic [ref=e3173]:
+                - generic [ref=e3174]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3175]:
+              - generic [ref=e3176]: Retained evidence
+              - generic [ref=e3177]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3178] [cursor=pointer]
+            - generic [ref=e3179]:
+              - button "Open evidence" [ref=e3180] [cursor=pointer]
+              - button "Confirm group" [ref=e3181] [cursor=pointer]
+              - button "Dismiss group" [ref=e3182] [cursor=pointer]
+              - button "Needs review" [ref=e3183] [cursor=pointer]
+          - generic [ref=e3184]:
+            - generic [ref=e3185]:
+              - generic [ref=e3186]:
+                - generic [ref=e3187]: Fron1
+                - generic [ref=e3188]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3189]: actionable
+            - generic [ref=e3190]:
+              - generic [ref=e3191]:
+                - generic [ref=e3192]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3193]:
+                - generic [ref=e3194]: Role mix
+                - text: None
+              - generic [ref=e3195]:
+                - generic [ref=e3196]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3197]:
+              - generic [ref=e3198]: Retained evidence
+              - generic [ref=e3199]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3200] [cursor=pointer]
+            - generic [ref=e3201]:
+              - button "Open evidence" [ref=e3202] [cursor=pointer]
+              - button "Confirm group" [ref=e3203] [cursor=pointer]
+              - button "Dismiss group" [ref=e3204] [cursor=pointer]
+              - button "Needs review" [ref=e3205] [cursor=pointer]
+          - generic [ref=e3206]:
+            - generic [ref=e3207]:
+              - generic [ref=e3208]:
+                - generic [ref=e3209]: LS-Guest
+                - generic [ref=e3210]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3211]: actionable
+            - generic [ref=e3212]:
+              - generic [ref=e3213]:
+                - generic [ref=e3214]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3215]:
+                - generic [ref=e3216]: Role mix
+                - text: guest network (7)
+              - generic [ref=e3217]:
+                - generic [ref=e3218]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3219]:
+              - generic [ref=e3220]: Retained evidence
+              - generic [ref=e3221]: "guest_network: SSID contains 'guest'"
+            - button "Add review context (optional)" [ref=e3222] [cursor=pointer]
+            - generic [ref=e3223]:
+              - button "Open evidence" [ref=e3224] [cursor=pointer]
+              - button "Confirm group" [ref=e3225] [cursor=pointer]
+              - button "Dismiss group" [ref=e3226] [cursor=pointer]
+              - button "Needs review" [ref=e3227] [cursor=pointer]
+          - generic [ref=e3228]:
+            - generic [ref=e3229]:
+              - generic [ref=e3230]:
+                - generic [ref=e3231]: SETUP
+                - generic [ref=e3232]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3233]: actionable
+            - generic [ref=e3234]:
+              - generic [ref=e3235]:
+                - generic [ref=e3236]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3237]:
+                - generic [ref=e3238]: Role mix
+                - text: None
+              - generic [ref=e3239]:
+                - generic [ref=e3240]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3241]:
+              - generic [ref=e3242]: Retained evidence
+              - generic [ref=e3243]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3244] [cursor=pointer]
+            - generic [ref=e3245]:
+              - button "Open evidence" [ref=e3246] [cursor=pointer]
+              - button "Confirm group" [ref=e3247] [cursor=pointer]
+              - button "Dismiss group" [ref=e3248] [cursor=pointer]
+              - button "Needs review" [ref=e3249] [cursor=pointer]
+          - generic [ref=e3250]:
+            - generic [ref=e3251]:
+              - generic [ref=e3252]:
+                - generic [ref=e3253]: notes
+                - generic [ref=e3254]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3255]: actionable
+            - generic [ref=e3256]:
+              - generic [ref=e3257]:
+                - generic [ref=e3258]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3259]:
+                - generic [ref=e3260]: Role mix
+                - text: None
+              - generic [ref=e3261]:
+                - generic [ref=e3262]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3263]:
+              - generic [ref=e3264]: Retained evidence
+              - generic [ref=e3265]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3266] [cursor=pointer]
+            - generic [ref=e3267]:
+              - button "Open evidence" [ref=e3268] [cursor=pointer]
+              - button "Confirm group" [ref=e3269] [cursor=pointer]
+              - button "Dismiss group" [ref=e3270] [cursor=pointer]
+              - button "Needs review" [ref=e3271] [cursor=pointer]
+          - generic [ref=e3272]:
+            - generic [ref=e3273]:
+              - generic [ref=e3274]:
+                - generic [ref=e3275]: sip
+                - generic [ref=e3276]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3277]: actionable
+            - generic [ref=e3278]:
+              - generic [ref=e3279]:
+                - generic [ref=e3280]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3281]:
+                - generic [ref=e3282]: Role mix
+                - text: None
+              - generic [ref=e3283]:
+                - generic [ref=e3284]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3285]:
+              - generic [ref=e3286]: Retained evidence
+              - generic [ref=e3287]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3288] [cursor=pointer]
+            - generic [ref=e3289]:
+              - button "Open evidence" [ref=e3290] [cursor=pointer]
+              - button "Confirm group" [ref=e3291] [cursor=pointer]
+              - button "Dismiss group" [ref=e3292] [cursor=pointer]
+              - button "Needs review" [ref=e3293] [cursor=pointer]
+          - generic [ref=e3294]:
+            - generic [ref=e3295]:
+              - generic [ref=e3296]:
+                - generic [ref=e3297]: smll
+                - generic [ref=e3298]: 7 devices · 7 observations · priority 100
+              - generic [ref=e3299]: actionable
+            - generic [ref=e3300]:
+              - generic [ref=e3301]:
+                - generic [ref=e3302]: Category mix
+                - text: unknown (7)
+              - generic [ref=e3303]:
+                - generic [ref=e3304]: Role mix
+                - text: None
+              - generic [ref=e3305]:
+                - generic [ref=e3306]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3307]:
+              - generic [ref=e3308]: Retained evidence
+              - generic [ref=e3309]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3310] [cursor=pointer]
+            - generic [ref=e3311]:
+              - button "Open evidence" [ref=e3312] [cursor=pointer]
+              - button "Confirm group" [ref=e3313] [cursor=pointer]
+              - button "Dismiss group" [ref=e3314] [cursor=pointer]
+              - button "Needs review" [ref=e3315] [cursor=pointer]
+          - generic [ref=e3316]:
+            - generic [ref=e3317]:
+              - generic [ref=e3318]:
+                - generic [ref=e3319]: Aloha_POS136337 · WatchGuard Technologies, Inc.
+                - generic [ref=e3320]: 6 devices · 6 observations · priority 100
+              - generic [ref=e3321]: actionable
+            - generic [ref=e3322]:
+              - generic [ref=e3323]:
+                - generic [ref=e3324]: Category mix
+                - text: unknown (6)
+              - generic [ref=e3325]:
+                - generic [ref=e3326]: Role mix
+                - text: retail pos (6)
+              - generic [ref=e3327]:
+                - generic [ref=e3328]: Representative
+                - text: WatchGuard Technologies, Inc. · unknown protocol
+            - generic [ref=e3329]:
+              - generic [ref=e3330]: Retained evidence
+              - generic [ref=e3331]: "retail_pos: SSID contains 'pos'"
+            - button "Add review context (optional)" [ref=e3332] [cursor=pointer]
+            - generic [ref=e3333]:
+              - button "Open evidence" [ref=e3334] [cursor=pointer]
+              - button "Confirm group" [ref=e3335] [cursor=pointer]
+              - button "Dismiss group" [ref=e3336] [cursor=pointer]
+              - button "Needs review" [ref=e3337] [cursor=pointer]
+          - generic [ref=e3338]:
+            - generic [ref=e3339]:
+              - generic [ref=e3340]:
+                - generic [ref=e3341]: Brix POS
+                - generic [ref=e3342]: 6 devices · 6 observations · priority 100
+              - generic [ref=e3343]: actionable
+            - generic [ref=e3344]:
+              - generic [ref=e3345]:
+                - generic [ref=e3346]: Category mix
+                - text: unknown (6)
+              - generic [ref=e3347]:
+                - generic [ref=e3348]: Role mix
+                - text: retail pos (6)
+              - generic [ref=e3349]:
+                - generic [ref=e3350]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3351]:
+              - generic [ref=e3352]: Retained evidence
+              - generic [ref=e3353]: "retail_pos: SSID contains 'pos'"
+            - button "Add review context (optional)" [ref=e3354] [cursor=pointer]
+            - generic [ref=e3355]:
+              - button "Open evidence" [ref=e3356] [cursor=pointer]
+              - button "Confirm group" [ref=e3357] [cursor=pointer]
+              - button "Dismiss group" [ref=e3358] [cursor=pointer]
+              - button "Needs review" [ref=e3359] [cursor=pointer]
+          - generic [ref=e3360]:
+            - generic [ref=e3361]:
+              - generic [ref=e3362]:
+                - generic [ref=e3363]: DMZ-1
+                - generic [ref=e3364]: 6 devices · 6 observations · priority 100
+              - generic [ref=e3365]: actionable
+            - generic [ref=e3366]:
+              - generic [ref=e3367]:
+                - generic [ref=e3368]: Category mix
+                - text: unknown (6)
+              - generic [ref=e3369]:
+                - generic [ref=e3370]: Role mix
+                - text: None
+              - generic [ref=e3371]:
+                - generic [ref=e3372]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3373]:
+              - generic [ref=e3374]: Retained evidence
+              - generic [ref=e3375]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3376] [cursor=pointer]
+            - generic [ref=e3377]:
+              - button "Open evidence" [ref=e3378] [cursor=pointer]
+              - button "Confirm group" [ref=e3379] [cursor=pointer]
+              - button "Dismiss group" [ref=e3380] [cursor=pointer]
+              - button "Needs review" [ref=e3381] [cursor=pointer]
+          - generic [ref=e3382]:
+            - generic [ref=e3383]:
+              - generic [ref=e3384]:
+                - generic [ref=e3385]: guest
+                - generic [ref=e3386]: 6 devices · 6 observations · priority 100
+              - generic [ref=e3387]: actionable
+            - generic [ref=e3388]:
+              - generic [ref=e3389]:
+                - generic [ref=e3390]: Category mix
+                - text: unknown (6)
+              - generic [ref=e3391]:
+                - generic [ref=e3392]: Role mix
+                - text: guest network (6)
+              - generic [ref=e3393]:
+                - generic [ref=e3394]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3395]:
+              - generic [ref=e3396]: Retained evidence
+              - generic [ref=e3397]: "guest_network: SSID contains 'guest'"
+            - button "Add review context (optional)" [ref=e3398] [cursor=pointer]
+            - generic [ref=e3399]:
+              - button "Open evidence" [ref=e3400] [cursor=pointer]
+              - button "Confirm group" [ref=e3401] [cursor=pointer]
+              - button "Dismiss group" [ref=e3402] [cursor=pointer]
+              - button "Needs review" [ref=e3403] [cursor=pointer]
+          - generic [ref=e3404]:
+            - generic [ref=e3405]:
+              - generic [ref=e3406]:
+                - generic [ref=e3407]: ASM · SAMSARA NETWORKS INC
+                - generic [ref=e3408]: 5 devices · 5 observations · priority 100
+              - generic [ref=e3409]: actionable
+            - generic [ref=e3410]:
+              - generic [ref=e3411]:
+                - generic [ref=e3412]: Category mix
+                - text: unknown (5)
+              - generic [ref=e3413]:
+                - generic [ref=e3414]: Role mix
+                - text: None
+              - generic [ref=e3415]:
+                - generic [ref=e3416]: Representative
+                - text: SAMSARA NETWORKS INC · unknown protocol
+            - generic [ref=e3417]:
+              - generic [ref=e3418]: Retained evidence
+              - generic [ref=e3419]: "industrial_ot: vendor contains 'samsara'"
+            - button "Add review context (optional)" [ref=e3420] [cursor=pointer]
+            - generic [ref=e3421]:
+              - button "Open evidence" [ref=e3422] [cursor=pointer]
+              - button "Confirm group" [ref=e3423] [cursor=pointer]
+              - button "Dismiss group" [ref=e3424] [cursor=pointer]
+              - button "Needs review" [ref=e3425] [cursor=pointer]
+          - generic [ref=e3426]:
+            - generic [ref=e3427]:
+              - generic [ref=e3428]:
+                - generic [ref=e3429]: Helium · Nova Labs
+                - generic [ref=e3430]: 5 devices · 5 observations · priority 100
+              - generic [ref=e3431]: actionable
+            - generic [ref=e3432]:
+              - generic [ref=e3433]:
+                - generic [ref=e3434]: Category mix
+                - text: unknown (5)
+              - generic [ref=e3435]:
+                - generic [ref=e3436]: Role mix
+                - text: None
+              - generic [ref=e3437]:
+                - generic [ref=e3438]: Representative
+                - text: Nova Labs · unknown protocol
+            - generic [ref=e3439]:
+              - generic [ref=e3440]: Retained evidence
+              - generic [ref=e3441]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3442] [cursor=pointer]
+            - generic [ref=e3443]:
+              - button "Open evidence" [ref=e3444] [cursor=pointer]
+              - button "Confirm group" [ref=e3445] [cursor=pointer]
+              - button "Dismiss group" [ref=e3446] [cursor=pointer]
+              - button "Needs review" [ref=e3447] [cursor=pointer]
+          - generic [ref=e3448]:
+            - generic [ref=e3449]:
+              - generic [ref=e3450]:
+                - generic [ref=e3451]: ORBI80
+                - generic [ref=e3452]: 5 devices · 5 observations · priority 100
+              - generic [ref=e3453]: actionable
+            - generic [ref=e3454]:
+              - generic [ref=e3455]:
+                - generic [ref=e3456]: Category mix
+                - text: unknown (5)
+              - generic [ref=e3457]:
+                - generic [ref=e3458]: Role mix
+                - text: None
+              - generic [ref=e3459]:
+                - generic [ref=e3460]: Representative
+                - text: unattributable · unknown protocol
+            - generic [ref=e3461]:
+              - generic [ref=e3462]: Retained evidence
+              - generic [ref=e3463]: No usable vendor, name, SSID, type, or rule evidence.
+            - button "Add review context (optional)" [ref=e3464] [cursor=pointer]
+            - generic [ref=e3465]:
+              - button "Open evidence" [ref=e3466] [cursor=pointer]
+              - button "Confirm group" [ref=e3467] [cursor=pointer]
+              - button "Dismiss group" [ref=e3468] [cursor=pointer]
+              - button "Needs review" [ref=e3469] [cursor=pointer]
+        - generic "Evidence review pages" [ref=e3470]:
+          - button "Previous" [disabled] [ref=e3471]
+          - generic [ref=e3472]: Page 1 of 185
+          - button "Next" [ref=e3473] [cursor=pointer]
+      - generic [ref=e1909]:
+        - generic [ref=e1910]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e1911]: Workspace refreshed at 12:46 PM

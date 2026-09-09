@@ -12,6 +12,7 @@ type Page =
   | "categories"
   | "vendors"
   | "coverage"
+  | "session"
   | "device"
   | "baselines"
   | "anomalies"
@@ -20,7 +21,7 @@ type Page =
   | "comparison"
   | "access"
   | "audit";
-const routePages = new Set<Page>(["overview", "surveys", "collections", "inventory", "categories", "vendors", "coverage", "device", "baselines", "anomalies", "reviews", "learning", "comparison", "access", "audit"]);
+const routePages = new Set<Page>(["overview", "surveys", "collections", "inventory", "categories", "vendors", "coverage", "session", "device", "baselines", "anomalies", "reviews", "learning", "comparison", "access", "audit"]);
 const pageFromHash = (): Page | null => {
   const value = window.location.hash.replace(/^#/, "").split("?")[0] as Page;
   return value && routePages.has(value) ? value : value ? null : "overview";
@@ -30,8 +31,13 @@ const deviceIdFromHash = (): number | null => {
   const value = query ? Number(new URLSearchParams(query).get("id")) : NaN;
   return Number.isInteger(value) && value > 0 ? value : null;
 };
+const routeParamsFromHash = (): Record<string, string> => {
+  const query = window.location.hash.split("?")[1] || "";
+  return Object.fromEntries(new URLSearchParams(query));
+};
 type Job = {
   id: number;
+  capture_session_id: number;
   filename: string;
   source_format: string;
   status: string;
@@ -135,7 +141,7 @@ function Auth({ done }: { done: () => void }) {
 const navItems: { page: Page; label: string; icon: string; group: string }[] = [
   {
     page: "overview",
-    label: "Command center",
+    label: "Overview",
     icon: "overview",
     group: "WORKSPACE",
   },
@@ -160,22 +166,22 @@ const navItems: { page: Page; label: string; icon: string; group: string }[] = [
   { page: "coverage", label: "Coverage explorer", icon: "coverage", group: "" },
   {
     page: "anomalies",
-    label: "Finding queue",
+    label: "Findings",
     icon: "anomalies",
     group: "ANALYSIS",
   },
   {
     page: "reviews",
-    label: "Evidence review",
+    label: "Review",
     icon: "anomalies",
     group: "",
   },
   { page: "learning", label: "Rule learning", icon: "categories", group: "" },
-  { page: "comparison", label: "Run comparison", icon: "baselines", group: "" },
+  { page: "comparison", label: "Compare", icon: "baselines", group: "" },
   { page: "baselines", label: "Baselines", icon: "baselines", group: "" },
   {
     page: "surveys",
-    label: "Capture imports",
+    label: "Imports",
     icon: "surveys",
     group: "COLLECTION",
   },
@@ -204,6 +210,7 @@ const descriptions: Record<Page, string> = {
   access: "Manage workspace access and local enrichment.",
   audit: "Review the operator actions recorded for this private workspace.",
   device: "Trace an observed device back to its source evidence.",
+  session: "Review the outcome and next actions for one imported capture.",
 };
 function Icon({ name }: { name: string }) {
   const paths: Record<string, string> = {
@@ -262,14 +269,12 @@ class WorkspaceBoundary extends Component<
 function App() {
   const [me, setMe] = useState<Me | null>(null),
     [page, setPage] = useState<Page>(() => pageFromHash() || "overview"),
+    [routeParams, setRouteParams] = useState<Record<string, string>>(() => routeParamsFromHash()),
     [o, setO] = useState<Overview | null>(null),
     [areas, setAreas] = useState<Area[]>([]),
     [runs, setRuns] = useState<Run[]>([]),
     [jobs, setJobs] = useState<Job[]>([]),
     [mapDevice, setMapDevice] = useState(""),
-    [vendorFilter, setVendorFilter] = useState(""),
-    [categoryFilter, setCategoryFilter] = useState(""),
-    [roleFilter, setRoleFilter] = useState(""),
     [deviceId, setDeviceId] = useState<number | null>(() => deviceIdFromHash()),
     [note, setNote] = useState(""),
     [loading, setLoading] = useState(true),
@@ -281,6 +286,7 @@ function App() {
     const hash = `#${next}${query ? "?" + query : ""}`;
     if (window.location.hash !== hash) window.history.pushState({}, "", hash);
     setPage(next);
+    setRouteParams(params);
   };
   const load = async () => {
     setLoading(true);
@@ -320,6 +326,7 @@ function App() {
       if (next) {
         setPage(next);
         setDeviceId(deviceIdFromHash());
+        setRouteParams(routeParamsFromHash());
       }
     };
     window.addEventListener("popstate", syncPage);
@@ -358,8 +365,7 @@ function App() {
       </>
     );
   const title =
-    page === "device"
-      ? "Device evidence"
+    page === "device" ? "Device evidence" : page === "session" ? "Import session"
       : navItems.find((x) => x.page === page)!.label;
   return (
     <div className="app-shell">
@@ -487,7 +493,7 @@ function App() {
             </div>
           </section>
           {note && (
-            <div className="notice" role="alert">
+            <div className="notice" role="status" aria-live="polite">
               {note}
               <button
                 className="quiet"
@@ -512,7 +518,7 @@ function App() {
               </div>
             </div>
           )}
-          <WorkspaceBoundary key={page + refresh}>
+          <WorkspaceBoundary key={page}>
             {page === "overview" && (
               <Dashboard overview={o} jobs={jobs} runs={runs} go={navigate} />
             )}{" "}
@@ -520,10 +526,12 @@ function App() {
               <Surveys
                 areas={areas}
                 runs={runs}
+                jobs={jobs}
                 reload={load}
                 say={setNote}
                 role={me.role}
                 setImporting={setImporting}
+                openSession={(id) => navigate("session", { id: String(id) })}
               />
             )}{" "}
             {page === "collections" && (
@@ -534,59 +542,73 @@ function App() {
                 areas={areas}
                 showDevice={(x) => {
                   setDeviceId(x);
-                  navigate("device", { id: String(x) });
+                  navigate("device", { id: String(x), return_to: "inventory", return_query: new URLSearchParams(routeParams).toString() });
                 }}
                 mapDevice={(x) => {
                   setMapDevice(String(x));
-                  navigate("coverage");
+                  navigate("coverage", { device_id: String(x) });
                 }}
-                initialVendor={vendorFilter}
-                initialCategory={categoryFilter}
-                initialRole={roleFilter}
+                routeParams={routeParams}
+                setRouteParams={(params) => navigate("inventory", params)}
               />
             )}{" "}
             {page === "categories" && (
               <CategoryOverview
                 areas={areas}
                 role={me.role}
-                showCategory={(category) => {
-                  setCategoryFilter(category);
-                  setVendorFilter("");
-                  setRoleFilter("");
-                  navigate("inventory");
+                initialArea={routeParams.area_id || ""}
+                setArea={(area_id) => navigate("categories", area_id ? { area_id } : {})}
+                showCategory={(category, area_id) => {
+                  navigate("inventory", { ...(area_id ? { area_id } : {}), category });
                 }}
-                showRole={(nextRole) => {
-                  setRoleFilter(nextRole);
-                  setCategoryFilter("");
-                  setVendorFilter("");
-                  navigate("inventory");
+                showRole={(role, area_id) => {
+                  navigate("inventory", { ...(area_id ? { area_id } : {}), role });
                 }}
               />
             )}{" "}
             {page === "vendors" && (
               <VendorBreakdown
                 areas={areas}
-                showVendor={(vendor) => {
-                  setVendorFilter(vendor);
-                  navigate("inventory");
+                initialArea={routeParams.area_id || ""}
+                setArea={(area_id) => navigate("vendors", area_id ? { area_id } : {})}
+                showVendor={(vendor, area_id) => {
+                  navigate("inventory", { ...(area_id ? { area_id } : {}), vendor });
                 }}
               />
             )}{" "}
             {page === "coverage" && (
               <Coverage
                 areas={areas}
-                initialDevice={mapDevice}
-                clearDevice={() => setMapDevice("")}
+                initialDevice={routeParams.device_id || mapDevice}
+                clearDevice={() => { setMapDevice(""); const { device_id, ...remaining } = routeParams; navigate("coverage", remaining); }}
                 mapTileKey={me.map_tile_key}
+                routeParams={routeParams}
+                setRouteParams={(params) => navigate("coverage", params)}
+              />
+            )}{" "}
+            {page === "session" && routeParams.id && (
+              <SessionSummary
+                id={Number(routeParams.id)}
+                go={(next, params = {}) => navigate(next, params)}
               />
             )}{" "}
             {page === "device" && deviceId && (
               <DeviceEvidence
                 id={deviceId}
-                back={() => navigate("inventory")}
+                backLabel={routeParams.return_to === "reviews" ? "Evidence review" : "Inventory"}
+                back={() => {
+                  const target = routeParams.return_to;
+                  if (target) {
+                    if (target === "inventory" || target === "reviews") {
+                      navigate(target, Object.fromEntries(new URLSearchParams(routeParams.return_query || "")));
+                      return;
+                    }
+                  }
+                  navigate("inventory");
+                }}
                 mapDevice={(x) => {
                   setMapDevice(String(x));
-                  navigate("coverage");
+                  navigate("coverage", { device_id: String(x) });
                 }}
                 role={me.role}
               />
@@ -599,12 +621,14 @@ function App() {
                 role={me.role}
                 showDevice={(x) => {
                   setDeviceId(x);
-                  navigate("device", { id: String(x) });
+                  navigate("device", { id: String(x), return_to: "reviews", return_query: new URLSearchParams(routeParams).toString() });
                 }}
+                routeParams={routeParams}
+                setRouteParams={(params) => navigate("reviews", params)}
               />
             )}{" "}
             {page === "learning" && <RuleLearning areas={areas} role={me.role} />}
-            {page === "comparison" && <RunComparison runs={runs} />}
+            {page === "comparison" && <RunComparison runs={runs} initialRight={routeParams.right_run_id || ""} setQuery={(params) => navigate("comparison", params)} />}
             {page === "access" && <Access me={me} />}
             {page === "audit" && <AuditEvents />}
           </WorkspaceBoundary>
@@ -639,7 +663,7 @@ function Dashboard({
   overview: Overview | null;
   jobs: Job[];
   runs: Run[];
-  go: (x: Page) => void;
+  go: (x: Page, params?: Record<string, string>) => void;
 }) {
   const [chosen, setChosen] = useState<Job | null>(jobs[0] || null),
     [analytics, setAnalytics] = useState<Analytics | null>(null),
@@ -662,6 +686,7 @@ function Dashboard({
       .finally(() => setReady(true));
   }, []);
   const j = chosen,
+    latest = jobs.find((job) => job.status === "complete") || jobs[0],
     r = j?.report || {},
     pending = findings.filter((x) =>
       ["open", "needs_review"].includes(x.status),
@@ -676,6 +701,22 @@ function Dashboard({
         <p className="notice" role="alert">
           Analytics could not be loaded: {error}
         </p>
+      )}
+      {latest && (
+        <section className="panel latest-import-panel">
+          <div>
+            <p className="eyebrow">LATEST IMPORT</p>
+            <h2>{latest.filename}</h2>
+            <p className="muted">
+              <span className={"status " + latest.status}>{latest.status}</span>{" "}
+              {count(latest.report.accepted).toLocaleString()} accepted · {Math.round(count(latest.report.location_completeness) * 100)}% GPS present · {latest.source_format}
+            </p>
+          </div>
+          <div className="review-actions">
+            <button onClick={() => go("session", { id: String(latest.capture_session_id) })}>Review import</button>
+            <button className="secondary" onClick={() => go("reviews")}>Open review</button>
+          </div>
+        </section>
       )}
       <div className="metrics">
         {[
@@ -964,20 +1005,40 @@ function Dashboard({
     </div>
   );
 }
+type SessionSummaryData = { run: Run; collection: Area | null; job: Job | null; observations: number; devices: number; observed_start: string | null; observed_end: string | null; located_observations: number; location_completeness: number };
+function SessionSummary({ id, go }: { id: number; go: (page: Page, params?: Record<string, string>) => void }) {
+  const [summary, setSummary] = useState<SessionSummaryData | null>(null), [error, setError] = useState("");
+  useEffect(() => { setSummary(null); setError(""); api<SessionSummaryData>("/v1/survey-runs/" + id + "/summary").then(setSummary).catch((x) => setError(msg(x))); }, [id]);
+  if (error) return <section className="panel"><p className="warning">{error}</p><button onClick={() => go("surveys")}>Back to imports</button></section>;
+  if (!summary) return <section className="panel">Loading import session…</section>;
+  const report = summary.job?.report || {}, complete = summary.job?.status === "complete" && summary.run.completed;
+  const scope = { run_id: String(summary.run.id), ...(summary.collection ? { area_id: String(summary.collection.id) } : {}) };
+  return <section className="panel session-summary">
+    <div className="panel-heading"><div><p className="eyebrow">IMPORT OUTCOME</p><h2>{summary.run.name}</h2><p className="muted">{summary.collection ? summary.collection.name + " · " : "Unfiled session · "}{summary.job?.source_format || "Source pending"} · {summary.job?.parser_version || "Parser pending"}</p></div><span className={"status " + (summary.job?.status || "queued")}>{summary.job?.status || "queued"}</span></div>
+    {!complete && <p className="warning">This session is not eligible for comparison or baselines until processing completes successfully.</p>}
+    <div className="import-stats">{[["Accepted", report.accepted ?? summary.observations], ["Devices", summary.devices], ["Duplicates", report.skipped_duplicates], ["Rejected", report.rejected], ["GPS present", Math.round(summary.location_completeness * 100) + "%"]].map(([label, value]) => <div key={String(label)}><b>{typeof value === "number" ? value.toLocaleString() : String(value)}</b><span>{String(label)}</span></div>)}</div>
+    <div className="session-facts"><p><b>Observed period</b><span>{summary.observed_start && summary.observed_end ? new Date(summary.observed_start).toLocaleString() + " – " + new Date(summary.observed_end).toLocaleString() : "No accepted observations"}</span></p><p><b>Location evidence</b><span>{summary.located_observations.toLocaleString()} of {summary.observations.toLocaleString()} retained observations have a coarse location cell.</span></p>{Object.keys((report.reasons || {}) as Record<string, number>).length > 0 && <p><b>Parser limitations</b><span>{Object.entries(report.reasons as Record<string, number>).map(([reason, total]) => reason + " (" + total + ")").join(", ")}</span></p>}</div>
+    <div className="review-actions"><button onClick={() => go("inventory", scope)}>Review devices</button><button className="secondary" onClick={() => go("coverage", scope)}>Explore coverage</button><button className="secondary" onClick={() => go("reviews", summary.collection ? { area_id: String(summary.collection.id) } : {})}>Open evidence review</button><button className="secondary" disabled={!complete} onClick={() => go("comparison", { right_run_id: String(summary.run.id) })}>Compare this run</button></div>
+  </section>;
+}
 function Surveys({
   areas,
   runs,
+  jobs,
   reload,
   say,
   role,
   setImporting,
+  openSession,
 }: {
   areas: Area[];
   runs: Run[];
+  jobs: Job[];
   reload: () => void;
   say: (x: string) => void;
   role: string;
   setImporting: (x: string | null) => void;
+  openSession: (id: number) => void;
 }) {
   const [busy, setBusy] = useState(false),
     [uploadTarget, setUploadTarget] = useState(""),
@@ -1006,17 +1067,25 @@ function Surveys({
       form.reset();
       setUploadTarget("");
       setUploadNewCollectionName("");
-      say("Import queued. The new session will be named from this file.");
+      if (job.idempotent) {
+        say("This file was already imported. Opening its import session.");
+        reload();
+        openSession(job.capture_session_id);
+        return;
+      }
+      say("Import queued. The session becomes available for comparison after processing completes.");
       for (let attempt = 0; attempt < 120; attempt++) {
         const status = await api<Job>("/v1/ingestions/" + job.id);
         if (!["queued", "processing"].includes(status.status)) {
           say("Import " + status.status + ": " + count(status.report.accepted).toLocaleString() + " accepted.");
           reload();
+          openSession(status.capture_session_id);
           return;
         }
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       reload();
+      say("Import is still processing. You can continue working; refresh this page for its latest status.");
     } catch (error) {
       say(msg(error));
     } finally {
@@ -1071,6 +1140,7 @@ function Surveys({
     }
   }
   const collectionNames = new Map(areas.map((area) => [area.id, area.name]));
+  const jobsByRun = new Map(jobs.map((job) => [job.capture_session_id, job]));
   async function deleteRun(run: Run) {
     if (
       !window.confirm(
@@ -1204,7 +1274,9 @@ function Surveys({
                 />
                 <b>{run.name}</b>
               </label>
-              <span>{collectionNames.get(run.collection_id) || "Unfiled"} · {run.completed ? "Imported" : "Processing"}</span>
+              <span>
+                {collectionNames.get(run.collection_id) || "Unfiled"} · {jobsByRun.get(run.id)?.status || (run.completed ? "complete" : "processing")}
+              </span>
               {role === "admin" && (
                 <button className="quiet" onClick={() => deleteRun(run)}>
                   Delete
@@ -1222,11 +1294,15 @@ type VendorRow = { oui_organization: string; device_count: number; share: number
 function VendorBreakdown({
   areas,
   showVendor,
+  initialArea,
+  setArea,
 }: {
   areas: Area[];
-  showVendor: (vendor: string) => void;
+  showVendor: (vendor: string, area_id: string) => void;
+  initialArea: string;
+  setArea: (area_id: string) => void;
 }) {
-  const [a, setA] = useState(""),
+  const [a, setA] = useState(initialArea),
     [rows, setRows] = useState<VendorRow[]>([]),
     [loading, setLoading] = useState(false);
   async function load(area = a) {
@@ -1241,9 +1317,7 @@ function VendorBreakdown({
       setLoading(false);
     }
   }
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { setA(initialArea); load(initialArea); }, [initialArea]);
   const totalDevices = rows.reduce((sum, x) => sum + x.device_count, 0),
     unattributable = rows.find((x) => x.oui_organization === "unattributable"),
     attributed = rows.filter((x) => x.oui_organization !== "unattributable"),
@@ -1274,6 +1348,7 @@ function VendorBreakdown({
           onChange={(x) => {
             setA(x.target.value);
             load(x.target.value);
+            setArea(x.target.value);
           }}
         >
           <option value="">All areas</option>
@@ -1291,7 +1366,7 @@ function VendorBreakdown({
               <button
                 className="bar-label"
                 title={x.oui_organization}
-                onClick={() => showVendor(x.oui_organization)}
+                onClick={() => showVendor(x.oui_organization, a)}
               >
                 {x.oui_organization}
               </button>
@@ -1337,7 +1412,7 @@ function VendorBreakdown({
                 <td>
                   <button
                     className="quiet map-action"
-                    onClick={() => showVendor(x.oui_organization)}
+                    onClick={() => showVendor(x.oui_organization, a)}
                   >
                     View devices
                   </button>
@@ -1362,8 +1437,8 @@ type CategoryRow = {
 };
 type RoleRow = { role: string; device_count: number; share: number; mean_score: number; top_evidence: string[] };
 type RoleSummary = { roles: RoleRow[]; total_devices: number; role_tagged_devices: number; role_assignments: number; overlap_devices: number };
-function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area[]; role: string; showCategory: (category: string) => void; showRole: (role: string) => void }) {
-  const [area, setArea] = useState(""), [rows, setRows] = useState<CategoryRow[]>([]), [roleRows, setRoleRows] = useState<RoleSummary>({ roles: [], total_devices: 0, role_tagged_devices: 0, role_assignments: 0, overlap_devices: 0 }), [loading, setLoading] = useState(false), [error, setError] = useState(""), [rebuilding, setRebuilding] = useState(false), [note, setNote] = useState("");
+function CategoryOverview({ areas, role, showCategory, showRole, initialArea, setArea: setRouteArea }: { areas: Area[]; role: string; showCategory: (category: string, area_id: string) => void; showRole: (role: string, area_id: string) => void; initialArea: string; setArea: (area_id: string) => void }) {
+  const [area, setArea] = useState(initialArea), [rows, setRows] = useState<CategoryRow[]>([]), [roleRows, setRoleRows] = useState<RoleSummary>({ roles: [], total_devices: 0, role_tagged_devices: 0, role_assignments: 0, overlap_devices: 0 }), [loading, setLoading] = useState(false), [error, setError] = useState(""), [rebuilding, setRebuilding] = useState(false), [note, setNote] = useState("");
   async function load(nextArea = area) {
     setLoading(true); setError("");
     try {
@@ -1374,7 +1449,7 @@ function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area
     } catch (x) { setError(msg(x)); }
     finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { setArea(initialArea); load(initialArea); }, [initialArea]);
   async function rebuild() {
     setRebuilding(true); setNote("");
     try {
@@ -1394,7 +1469,7 @@ function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area
           <h2>Category hypotheses</h2>
           <p className="muted">Rules combine vendor, SSID, and protocol evidence. These are review aids, not identity or security conclusions.</p>
         </div>
-        <select aria-label="Category collection" value={area} onChange={(event) => { setArea(event.target.value); load(event.target.value); }}>
+        <select aria-label="Category collection" value={area} onChange={(event) => { setArea(event.target.value); load(event.target.value); setRouteArea(event.target.value); }}>
           <option value="">All collections</option>
           {areas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
@@ -1419,7 +1494,7 @@ function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area
               <td>{(row.share * 100).toFixed(1)}%</td>
               <td>{Math.round(row.mean_confidence * 100)}%</td>
               <td>{row.override_count.toLocaleString()}</td>
-              <td><button className="quiet map-action" onClick={() => showCategory(row.category)}>View inventory</button></td>
+              <td><button className="quiet map-action" onClick={() => showCategory(row.category, area)}>View inventory</button></td>
             </tr>
           ))}</tbody>
         </table>
@@ -1435,7 +1510,7 @@ function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area
               <td>{(row.share * 100).toFixed(1)}%</td>
               <td>{row.mean_score.toFixed(2)}</td>
               <td className="taxonomy-evidence">{row.top_evidence.length ? row.top_evidence.join(" · ") : "—"}</td>
-              <td><button className="quiet map-action" onClick={() => showRole(row.role)}>View inventory</button></td>
+              <td><button className="quiet map-action" onClick={() => showRole(row.role, area)}>View inventory</button></td>
             </tr>
           ))}</tbody>
         </table>
@@ -1446,90 +1521,58 @@ function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area
     </section>
   );
 }
-function Inventory({
-  areas,
-  showDevice,
-  mapDevice,
-  initialVendor,
-  initialCategory,
-  initialRole,
-}: {
-  areas: Area[];
-  showDevice: (id: number) => void;
-  mapDevice: (id: number) => void;
-  initialVendor: string;
-  initialCategory: string;
-  initialRole: string;
-}) {
-  const [a, setA] = useState(""),
-    [v, setV] = useState(initialVendor),
-    [c, setC] = useState(initialCategory),
-    [role, setRole] = useState(initialRole),
-    [attributedOnly, setAttributedOnly] = useState(false),
-    [sort, setSort] = useState("last_seen"),
-    [direction, setDirection] = useState<"asc" | "desc">("desc"),
+type InventoryQuery = { area_id: string; run_id: string; vendor: string; category: string; role: string; attributed_only: boolean; sort: string; direction: "asc" | "desc"; offset: number };
+const inventoryQueryFromRoute = (params: Record<string, string>): InventoryQuery => ({
+  area_id: params.area_id || "",
+  run_id: params.run_id || "",
+  vendor: params.vendor || "",
+  category: params.category || "",
+  role: params.role || "",
+  attributed_only: params.attributed_only === "true",
+  sort: ["last_seen", "first_seen", "oui_organization", "category"].includes(params.sort || "") ? params.sort : "last_seen",
+  direction: params.direction === "asc" ? "asc" : "desc",
+  offset: Math.max(0, Number.parseInt(params.offset || "0", 10) || 0),
+});
+const inventoryRouteFromQuery = (query: InventoryQuery): Record<string, string> => {
+  const params: Record<string, string> = {};
+  if (query.area_id) params.area_id = query.area_id;
+  if (query.run_id) params.run_id = query.run_id;
+  if (query.vendor) params.vendor = query.vendor;
+  if (query.category) params.category = query.category;
+  if (query.role) params.role = query.role;
+  if (query.attributed_only) params.attributed_only = "true";
+  if (query.sort !== "last_seen") params.sort = query.sort;
+  if (query.direction !== "desc") params.direction = query.direction;
+  if (query.offset) params.offset = String(query.offset);
+  return params;
+};
+function Inventory({ areas, showDevice, mapDevice, routeParams, setRouteParams }: { areas: Area[]; showDevice: (id: number) => void; mapDevice: (id: number) => void; routeParams: Record<string, string>; setRouteParams: (params: Record<string, string>) => void }) {
+  const applied = inventoryQueryFromRoute(routeParams);
+  const appliedKey = JSON.stringify(applied);
+  const [draft, setDraft] = useState<InventoryQuery>(applied),
     [d, setD] = useState<Device[]>([]),
     [total, setTotal] = useState(0),
-    [offset, setOffset] = useState(0),
     [loading, setLoading] = useState(false),
     [vendorOptions, setVendorOptions] = useState<string[]>([]),
     [savedViews, setSavedViews] = useState<SavedFilter[]>([]),
-    [viewName, setViewName] = useState("");
+    [viewName, setViewName] = useState(""),
+    [saveError, setSaveError] = useState("");
   const limit = 50;
-  async function load(
-    next = offset,
-    nextSort = sort,
-    nextDirection = direction,
-    nextAttributedOnly = attributedOnly,
-    nextVendor = v,
-    nextCategory = c,
-    nextRole = role,
-    nextArea = a,
-  ) {
+  async function load(query: InventoryQuery) {
     setLoading(true);
     try {
-      const q = new URLSearchParams({
-        limit: String(limit),
-        offset: String(next),
-        vendor: nextVendor,
-        sort: nextSort,
-        direction: nextDirection,
-      });
-      if (nextArea) q.set("area_id", nextArea);
-      if (nextCategory) q.set("category", nextCategory);
-      if (nextRole) q.set("role", nextRole);
-      if (nextAttributedOnly) q.set("attributed_only", "true");
-      const x = await api<{ items: Device[]; total: number }>(
-        "/v1/devices?" + q,
-      );
-      setD(x.items);
-      setTotal(x.total);
-      setOffset(next);
-    } finally {
-      setLoading(false);
-    }
+      const q = new URLSearchParams({ limit: String(limit), offset: String(query.offset), vendor: query.vendor, sort: query.sort, direction: query.direction });
+      if (query.area_id) q.set("area_id", query.area_id);
+      if (query.run_id) q.set("run_id", query.run_id);
+      if (query.category) q.set("category", query.category);
+      if (query.role) q.set("role", query.role);
+      if (query.attributed_only) q.set("attributed_only", "true");
+      const result = await api<{ items: Device[]; total: number }>("/v1/devices?" + q);
+      setD(result.items);
+      setTotal(result.total);
+    } finally { setLoading(false); }
   }
-  useEffect(() => {
-    load(0);
-  }, []);
-  useEffect(() => {
-    if (initialVendor) {
-      setV(initialVendor);
-      load(0, sort, direction, attributedOnly, initialVendor);
-    }
-  }, [initialVendor]);
-  useEffect(() => {
-    if (initialCategory) {
-      setC(initialCategory);
-      load(0, sort, direction, attributedOnly, v, initialCategory);
-    }
-  }, [initialCategory]);
-  useEffect(() => {
-    if (initialRole) {
-      setRole(initialRole);
-      load(0, sort, direction, attributedOnly, v, c, initialRole);
-    }
-  }, [initialRole]);
+  useEffect(() => { setDraft(applied); load(applied); }, [appliedKey]);
   useEffect(() => {
     api<{ oui_organization: string }[]>("/v1/devices/vendors").then((rows) =>
       setVendorOptions(rows.map((x) => x.oui_organization)),
@@ -1541,34 +1584,31 @@ function Inventory({
   async function saveView() {
     if (!viewName.trim()) return;
     try {
-      const saved = await send<SavedFilter>("/v1/saved-filters", { name: viewName.trim(), resource: "inventory", filters: { area_id: a, vendor: v, category: c, role, attributed_only: String(attributedOnly), sort, direction } });
-      setSavedViews((items) => [saved, ...items]); setViewName("");
-    } catch { /* the inventory remains usable if saving is unavailable */ }
+      const saved = await send<SavedFilter>("/v1/saved-filters", { name: viewName.trim(), resource: "inventory", filters: { ...inventoryRouteFromQuery(applied), attributed_only: String(applied.attributed_only) } });
+      setSavedViews((items) => [saved, ...items]); setViewName(""); setSaveError("");
+    } catch (error) { setSaveError(msg(error)); }
   }
   function applySavedView(item: SavedFilter) {
     const filters = item.filters || {};
-    const nextArea = filters.area_id || "", nextVendor = filters.vendor || "", nextCategory = filters.category || "", nextRole = filters.role || "", nextAttributed = filters.attributed_only === "true";
-    setA(nextArea); setV(nextVendor); setC(nextCategory); setRole(nextRole); setAttributedOnly(nextAttributed); setSort(filters.sort || "last_seen"); setDirection((filters.direction as "asc" | "desc") || "desc");
-    load(0, filters.sort || "last_seen", (filters.direction as "asc" | "desc") || "desc", nextAttributed, nextVendor, nextCategory, nextRole, nextArea);
+    setRouteParams(inventoryRouteFromQuery(inventoryQueryFromRoute(filters)));
   }
-  const exportQuery = new URLSearchParams({ limit: "5000", vendor: v, category: c, role, attributed_only: String(attributedOnly) });
-  if (a) exportQuery.set("area_id", a);
+  const exportQuery = new URLSearchParams({ limit: "5000", vendor: applied.vendor, category: applied.category, role: applied.role, attributed_only: String(applied.attributed_only), sort: applied.sort, direction: applied.direction });
+  if (applied.area_id) exportQuery.set("area_id", applied.area_id);
+  if (applied.run_id) exportQuery.set("run_id", applied.run_id);
   const exportHref = "/v1/exports/devices.csv?" + exportQuery.toString();
   function toggleSort(column: string) {
     const nextDirection: "asc" | "desc" =
-      column === sort
-        ? direction === "asc"
+      column === applied.sort
+        ? applied.direction === "asc"
           ? "desc"
           : "asc"
         : column === "oui_organization" || column === "category"
           ? "asc"
           : "desc";
-    setSort(column);
-    setDirection(nextDirection);
-    load(0, column, nextDirection);
+    setRouteParams(inventoryRouteFromQuery({ ...applied, sort: column, direction: nextDirection, offset: 0 }));
   }
   const sortIndicator = (column: string) =>
-    sort === column ? (direction === "asc" ? " ▲" : " ▼") : "";
+    applied.sort === column ? (applied.direction === "asc" ? " ▲" : " ▼") : "";
   return (
     <section className="panel inventory-panel">
       <div className="inventory-header">
@@ -1583,8 +1623,8 @@ function Inventory({
           <span>Scope</span>
           <select
             aria-label="Survey area"
-            value={a}
-            onChange={(x) => setA(x.target.value)}
+            value={draft.area_id}
+            onChange={(x) => setDraft((current) => ({ ...current, area_id: x.target.value }))}
           >
             <option value="">All areas</option>
             {areas.map((x) => (
@@ -1599,14 +1639,14 @@ function Inventory({
         className="inventory-filters"
         onSubmit={(event) => {
           event.preventDefault();
-          load(0);
+          setRouteParams(inventoryRouteFromQuery({ ...draft, offset: 0 }));
         }}
       >
         <label className="inventory-field">
           <span>Vendor evidence</span>
           <input
-            value={v}
-            onChange={(x) => setV(x.target.value)}
+            value={draft.vendor}
+            onChange={(x) => setDraft((current) => ({ ...current, vendor: x.target.value }))}
             placeholder="Search OUI organization"
             list="inventory-vendor-options"
           />
@@ -1618,14 +1658,14 @@ function Inventory({
         </datalist>
         <label className="inventory-field">
           <span>Category hypothesis</span>
-          <select aria-label="Device category" value={c} onChange={(event) => setC(event.target.value)}>
+          <select aria-label="Device category" value={draft.category} onChange={(event) => setDraft((current) => ({ ...current, category: event.target.value }))}>
             <option value="">All categories</option>
             {['unknown', 'camera', 'printer', 'network', 'mobile', 'iot', 'bluetooth', 'workstation', 'audio', 'entertainment', 'wearable', 'automotive'].map((item) => <option key={item} value={item}>{item}</option>)}
           </select>
         </label>
         <label className="inventory-field">
           <span>Role or context</span>
-          <select aria-label="Device role or context" value={role} onChange={(event) => setRole(event.target.value)}>
+          <select aria-label="Device role or context" value={draft.role} onChange={(event) => setDraft((current) => ({ ...current, role: event.target.value }))}>
             <option value="">All roles</option>
             {['retail_pos', 'security_access', 'smart_home', 'industrial_ot', 'medical', 'guest_network'].map((item) => <option key={item} value={item}>{item.replaceAll('_', ' ')}</option>)}
           </select>
@@ -1633,10 +1673,8 @@ function Inventory({
         <label className="inventory-toggle">
           <input
             type="checkbox"
-            checked={attributedOnly}
-            onChange={(x) => {
-              setAttributedOnly(x.target.checked);
-            }}
+            checked={draft.attributed_only}
+            onChange={(x) => setDraft((current) => ({ ...current, attributed_only: x.target.checked }))}
           />
           <span>Attributed only</span>
         </label>
@@ -1646,32 +1684,31 @@ function Inventory({
             type="button"
             className="quiet"
             onClick={() => {
-              setV("");
-              setC("");
-              setRole("");
-              setAttributedOnly(false);
-              load(0, sort, direction, false, "", "", "");
+              const reset = inventoryQueryFromRoute({});
+              setDraft(reset);
+              setRouteParams(inventoryRouteFromQuery(reset));
             }}
           >
             Clear
           </button>
         </div>
       </form>
-      <div className="saved-filter-bar inventory-saved-views"><select aria-label="Saved inventory view" defaultValue="" onChange={(event) => { const item = savedViews.find((candidate) => String(candidate.id) === event.target.value); if (item) applySavedView(item); }}><option value="">Saved inventory views</option>{savedViews.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input aria-label="Saved inventory view name" value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name current view" /><button className="secondary" type="button" onClick={saveView} disabled={!viewName.trim()}>Save view</button><a className="secondary" href={exportHref}>Export CSV</a></div>
+      <div className="saved-filter-bar inventory-saved-views"><select aria-label="Saved inventory view" defaultValue="" onChange={(event) => { const item = savedViews.find((candidate) => String(candidate.id) === event.target.value); if (item) applySavedView(item); }}><option value="">Saved inventory views</option>{savedViews.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><input aria-label="Saved inventory view name" value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name current view" /><button className="secondary" type="button" onClick={saveView} disabled={!viewName.trim()}>Save view</button><a className="secondary" href={exportHref}>{total > 5000 ? "Export first 5,000 CSV" : "Export CSV"}</a></div>
+      {saveError && <p className="warning" role="alert">{saveError}</p>}
       <div className="inventory-summary">
         <p className="muted">
           {total.toLocaleString()} matching devices · showing{" "}
-          {total ? offset + 1 : 0}–{Math.min(offset + limit, total)}
+          {total ? applied.offset + 1 : 0}–{Math.min(applied.offset + limit, total)}
         </p>
         <span className="inventory-sort">
-          Sorted by {sort === "last_seen" ? "last seen" : sort.replaceAll("_", " ")} {direction === "desc" ? "newest first" : "oldest first"}
+          Sorted by {applied.sort === "last_seen" ? "last seen" : applied.sort.replaceAll("_", " ")} {applied.direction === "desc" ? "newest first" : "oldest first"}
         </span>
       </div>
       <div className="table-scroll">
         <table className="inventory-table">
           <thead>
             <tr>
-              <th>Device</th>
+              <th scope="col">Device</th>
               <th>
                 <button
                   className="sort-header"
@@ -1680,7 +1717,7 @@ function Inventory({
                   Category{sortIndicator("category")}
                 </button>
               </th>
-              <th>Role / context</th>
+              <th scope="col">Role / context</th>
               <th>
                 <button
                   className="sort-header"
@@ -1689,8 +1726,8 @@ function Inventory({
                   Vendor evidence{sortIndicator("oui_organization")}
                 </button>
               </th>
-              <th>Last radio</th>
-              <th>Last network</th>
+              <th scope="col">Last radio</th>
+              <th scope="col">Last network</th>
               <th>
                 <button
                   className="sort-header"
@@ -1707,7 +1744,7 @@ function Inventory({
                   Last seen{sortIndicator("last_seen")}
                 </button>
               </th>
-              <th></th>
+              <th scope="col"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -1756,18 +1793,18 @@ function Inventory({
       {!d.length && !loading && <p className="muted">No matching devices.</p>}
       <div className="pager">
         <button
-          disabled={offset === 0 || loading}
-          onClick={() => load(Math.max(0, offset - limit))}
+          disabled={applied.offset === 0 || loading}
+          onClick={() => setRouteParams(inventoryRouteFromQuery({ ...applied, offset: Math.max(0, applied.offset - limit) }))}
         >
           Previous
         </button>
         <span>
-          Page {Math.floor(offset / limit) + 1} of{" "}
+          Page {Math.floor(applied.offset / limit) + 1} of{" "}
           {Math.max(1, Math.ceil(total / limit))}
         </span>
         <button
-          disabled={offset + limit >= total || loading}
-          onClick={() => load(offset + limit)}
+          disabled={applied.offset + limit >= total || loading}
+          onClick={() => setRouteParams(inventoryRouteFromQuery({ ...applied, offset: applied.offset + limit }))}
         >
           Next
         </button>
@@ -1786,11 +1823,13 @@ type DeviceFingerprint = { summary: { fingerprint_version: string; fingerprint: 
 function DeviceEvidence({
   id,
   back,
+  backLabel,
   mapDevice,
   role,
 }: {
   id: number;
   back: () => void;
+  backLabel: string;
   mapDevice: (id: number) => void;
   role: string;
 }) {
@@ -1845,7 +1884,7 @@ function DeviceEvidence({
     return (
       <section className="panel">
         <button className="quiet" onClick={back}>
-          ← Inventory
+          ← {backLabel}
         </button>
         <p className="warning">{error}</p>
       </section>
@@ -1857,7 +1896,7 @@ function DeviceEvidence({
   return (
     <section className="panel">
       <button className="quiet" onClick={back}>
-        ← Inventory
+        ← {backLabel}
       </button>
       <p className="eyebrow">DEVICE EVIDENCE</p>
       <h2>
@@ -2157,25 +2196,39 @@ function LocalMap({
     </figure>
   );
 }
+type CoverageQuery = { area_id: string; run_id: string; device_id: string; protocol: string; vendor: string; min_rssi: string; start: string; end: string };
+const coverageQueryFromRoute = (params: Record<string, string>, initialDevice: string): CoverageQuery => ({
+  area_id: params.area_id || "", run_id: params.run_id || "", device_id: params.device_id || initialDevice,
+  protocol: params.protocol || "", vendor: params.vendor || "", min_rssi: params.min_rssi || "", start: params.start || "", end: params.end || "",
+});
+const coverageRouteFromQuery = (query: CoverageQuery) => Object.fromEntries(
+  Object.entries(query).filter(([, value]) => Boolean(value)),
+);
 function Coverage({
   areas,
   initialDevice,
   clearDevice,
   mapTileKey,
+  routeParams,
+  setRouteParams,
 }: {
   areas: Area[];
   initialDevice: string;
   clearDevice: () => void;
   mapTileKey: string | null;
+  routeParams: Record<string, string>;
+  setRouteParams: (params: Record<string, string>) => void;
 }) {
-  const [a, setA] = useState(""),
-    [r, setR] = useState(""),
-    [d, setD] = useState(initialDevice),
-    [protocol, setProtocol] = useState(""),
-    [vendor, setVendor] = useState(""),
-    [minRssi, setMinRssi] = useState(""),
-    [start, setStart] = useState(""),
-    [end, setEnd] = useState(""),
+  const applied = coverageQueryFromRoute(routeParams, initialDevice);
+  const appliedKey = JSON.stringify(applied);
+  const [a, setA] = useState(applied.area_id),
+    [r, setR] = useState(applied.run_id),
+    [d, setD] = useState(applied.device_id),
+    [protocol, setProtocol] = useState(applied.protocol),
+    [vendor, setVendor] = useState(applied.vendor),
+    [minRssi, setMinRssi] = useState(applied.min_rssi),
+    [start, setStart] = useState(applied.start),
+    [end, setEnd] = useState(applied.end),
     [c, setC] = useState<Cell[]>([]),
     [track, setTrack] = useState<Track>({ segments: [], truncated: false }),
     [geographic, setGeographic] = useState(false),
@@ -2219,7 +2272,6 @@ function Coverage({
     ]).then((x) => {
       setRuns(x[0]);
       setDevices(x[1].items);
-      load();
     });
   }, []);
   useEffect(() => {
@@ -2240,12 +2292,12 @@ function Coverage({
     const filters = item.filters || {};
     setA(filters.area_id || ""); setR(filters.run_id || ""); setD(filters.device_id || "");
     setProtocol(filters.protocol || ""); setVendor(filters.vendor || ""); setMinRssi(filters.minRssi || ""); setStart(filters.start || ""); setEnd(filters.end || "");
-    load(filters.area_id || "", filters.run_id || "", filters.device_id || "", filters);
+    setRouteParams(coverageRouteFromQuery({ area_id: filters.area_id || "", run_id: filters.run_id || "", device_id: filters.device_id || "", protocol: filters.protocol || "", vendor: filters.vendor || "", min_rssi: filters.minRssi || "", start: filters.start || "", end: filters.end || "" }));
   }
   useEffect(() => {
-    setD(initialDevice);
-    load(a, r, initialDevice);
-  }, [initialDevice]);
+    setA(applied.area_id); setR(applied.run_id); setD(applied.device_id); setProtocol(applied.protocol); setVendor(applied.vendor); setMinRssi(applied.min_rssi); setStart(applied.start); setEnd(applied.end);
+    load(applied.area_id, applied.run_id, applied.device_id, { protocol: applied.protocol, vendor: applied.vendor, minRssi: applied.min_rssi, start: applied.start, end: applied.end });
+  }, [appliedKey]);
   useEffect(() => {
     api<{ oui_organization: string }[]>("/v1/devices/vendors").then((rows) =>
       setVendorOptions(rows.map((x) => x.oui_organization)),
@@ -2361,14 +2413,13 @@ function Coverage({
           onChange={(x) => setEnd(x.target.value)}
           type="date"
         />
-        <button onClick={() => load()}>Apply filters</button>
+        <button onClick={() => setRouteParams(coverageRouteFromQuery({ area_id: a, run_id: r, device_id: d, protocol, vendor, min_rssi: minRssi, start, end }))}>Apply filters</button>
         {d && (
           <button
             className="quiet"
             onClick={() => {
               setD("");
               clearDevice();
-              load(a, r, "");
             }}
           >
             Clear device
@@ -2678,6 +2729,7 @@ function Anomalies({ areas }: { areas: Area[] }) {
 }
 type DeviceReviewItem = {
   group_key: string;
+  device_ids: number[];
   evidence_tier: "actionable" | "sparse" | "no_signal";
   label: string;
   device_count: number;
@@ -2689,11 +2741,25 @@ type DeviceReviewItem = {
   representative: { device: Device; review: { status: string; disposition_note: string | null; evidence_links: string[] }; priority: number; last_protocol?: string | null; last_ssid?: string | null; last_device_name?: string | null; last_device_type?: string | null; observation_count: number };
 };
 type ReviewCounts = Record<"actionable" | "sparse" | "no_signal", { groups: number; devices: number }>;
-function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: string; showDevice: (id: number) => void }) {
+type ReviewQuery = { area_id: string; status: string; bucket: "actionable" | "no_signal" | "all"; offset: number };
+const reviewQueryFromRoute = (params: Record<string, string>): ReviewQuery => ({
+  area_id: params.area_id || "", status: params.status || "open",
+  bucket: params.bucket === "no_signal" || params.bucket === "all" ? params.bucket : "actionable",
+  offset: Math.max(0, Number(params.offset || 0) || 0),
+});
+const reviewRouteFromQuery = (query: ReviewQuery) => ({
+  ...(query.area_id ? { area_id: query.area_id } : {}),
+  ...(query.status !== "open" ? { status: query.status } : {}),
+  ...(query.bucket !== "actionable" ? { bucket: query.bucket } : {}),
+  ...(query.offset ? { offset: String(query.offset) } : {}),
+});
+function DeviceReviews({ areas, role, showDevice, routeParams, setRouteParams }: { areas: Area[]; role: string; showDevice: (id: number) => void; routeParams: Record<string, string>; setRouteParams: (params: Record<string, string>) => void }) {
   const pageSize = 24;
-  const [area, setArea] = useState(""),
-    [status, setStatus] = useState("open"),
-    [bucket, setBucket] = useState<"actionable" | "no_signal" | "all">("actionable"),
+  const applied = reviewQueryFromRoute(routeParams);
+  const appliedKey = JSON.stringify(applied);
+  const [area, setArea] = useState(applied.area_id),
+    [status, setStatus] = useState(applied.status),
+    [bucket, setBucket] = useState<"actionable" | "no_signal" | "all">(applied.bucket),
     [items, setItems] = useState<DeviceReviewItem[]>([]),
     [total, setTotal] = useState(0),
     [deviceTotal, setDeviceTotal] = useState(0),
@@ -2702,7 +2768,7 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
     [links, setLinks] = useState<Record<string, string>>({}),
     [contextOpen, setContextOpen] = useState<Record<string, boolean>>({}),
     [overrideCategories, setOverrideCategories] = useState<Record<string, string>>({}),
-    [offset, setOffset] = useState(0),
+    [offset, setOffset] = useState(applied.offset),
     [note, setNote] = useState("");
   async function load(nextArea = area, nextStatus = status, nextBucket = bucket, nextOffset = offset) {
     const query = new URLSearchParams({ status: nextStatus, bucket: nextBucket, limit: String(pageSize), offset: String(nextOffset) });
@@ -2719,19 +2785,28 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
     }
   }
   useEffect(() => {
-    load();
-  }, []);
-  async function disposition(groupKey: string, nextStatus: string) {
+    setArea(applied.area_id); setStatus(applied.status); setBucket(applied.bucket); setOffset(applied.offset);
+    load(applied.area_id, applied.status, applied.bucket, applied.offset);
+  }, [appliedKey]);
+  async function disposition(item: DeviceReviewItem, nextStatus: string) {
+    const groupKey = item.group_key;
+    const patch: Record<string, unknown> = {
+      group_key: groupKey,
+      status: nextStatus,
+      area_id: area ? Number(area) : null,
+      review_status: status,
+      device_ids: item.device_ids,
+    };
+    if (Object.prototype.hasOwnProperty.call(drafts, groupKey)) {
+      patch.disposition_note = drafts[groupKey] || null;
+    }
+    if (Object.prototype.hasOwnProperty.call(links, groupKey)) {
+      patch.evidence_links = (links[groupKey] || "").split("\n").map((value) => value.trim()).filter(Boolean);
+    }
     try {
       await api("/v1/device-review-groups", {
         method: "PATCH",
-        body: JSON.stringify({
-          group_key: groupKey,
-          status: nextStatus,
-          area_id: area ? Number(area) : null,
-          disposition_note: drafts[groupKey] || null,
-          evidence_links: (links[groupKey] || "").split("\n").map((item) => item.trim()).filter(Boolean),
-        }),
+        body: JSON.stringify(patch),
         headers: { "Content-Type": "application/json" },
       });
       setNote("Group disposition saved and audited.");
@@ -2763,12 +2838,12 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
           <p className="muted">{total.toLocaleString()} groups · {deviceTotal.toLocaleString()} devices · repeated evidence is grouped before review.</p>
         </div>
         <div className="toolbar-controls review-controls">
-          <select aria-label="Survey area" value={area} onChange={(event) => { setArea(event.target.value); load(event.target.value, status, bucket, 0); }}>
+          <select aria-label="Survey area" value={area} onChange={(event) => setRouteParams(reviewRouteFromQuery({ area_id: event.target.value, status, bucket, offset: 0 }))}>
             <option value="">All areas</option>
             {areas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
-          <select aria-label="Review status" value={status} onChange={(event) => { setStatus(event.target.value); load(area, event.target.value, bucket, 0); }}>
-            <option value="open">Open</option>
+          <select aria-label="Review status" value={status} onChange={(event) => setRouteParams(reviewRouteFromQuery({ area_id: area, status: event.target.value, bucket, offset: 0 }))}>
+            <option value="open">Open / needs review</option>
             <option value="needs_review">Needs review</option>
             <option value="confirmed">Confirmed</option>
             <option value="dismissed">Dismissed</option>
@@ -2778,9 +2853,9 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
         </div>
       </div>
       <div className="review-buckets" role="tablist" aria-label="Evidence quality">
-        <button className={bucket === "actionable" ? "active" : ""} onClick={() => { setBucket("actionable"); load(area, status, "actionable", 0); }}><b>{counts.actionable.groups.toLocaleString()}</b><span>actionable groups</span><small>{counts.actionable.devices.toLocaleString()} devices</small></button>
-        <button className={bucket === "no_signal" ? "active" : ""} onClick={() => { setBucket("no_signal"); load(area, status, "no_signal", 0); }}><b>{counts.no_signal.groups.toLocaleString()}</b><span>no-signal groups</span><small>{counts.no_signal.devices.toLocaleString()} devices</small></button>
-        <button className={bucket === "all" ? "active" : ""} onClick={() => { setBucket("all"); load(area, status, "all", 0); }}><b>{(counts.actionable.groups + counts.no_signal.groups).toLocaleString()}</b><span>all groups</span><small>{(counts.actionable.devices + counts.no_signal.devices).toLocaleString()} devices</small></button>
+        <button className={bucket === "actionable" ? "active" : ""} onClick={() => setRouteParams(reviewRouteFromQuery({ area_id: area, status, bucket: "actionable", offset: 0 }))}><b>{counts.actionable.groups.toLocaleString()}</b><span>actionable groups</span><small>{counts.actionable.devices.toLocaleString()} devices</small></button>
+        <button className={bucket === "no_signal" ? "active" : ""} onClick={() => setRouteParams(reviewRouteFromQuery({ area_id: area, status, bucket: "no_signal", offset: 0 }))}><b>{counts.no_signal.groups.toLocaleString()}</b><span>no-signal groups</span><small>{counts.no_signal.devices.toLocaleString()} devices</small></button>
+        <button className={bucket === "all" ? "active" : ""} onClick={() => setRouteParams(reviewRouteFromQuery({ area_id: area, status, bucket: "all", offset: 0 }))}><b>{(counts.actionable.groups + counts.no_signal.groups).toLocaleString()}</b><span>all groups</span><small>{(counts.actionable.devices + counts.no_signal.devices).toLocaleString()} devices</small></button>
       </div>
       {note && <p className="notice">{note}</p>}
       <div className="list review-list">
@@ -2810,7 +2885,7 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
               {(contextOpen[key] || drafts[key] || links[key]) && <div className="review-fields"><label className="field-label compact-field">Review note<input value={drafts[key] ?? item.representative.review.disposition_note ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [key]: event.target.value }))} placeholder="Optional handoff context" /></label><label className="field-label compact-field">Evidence references<textarea rows={2} value={links[key] ?? (item.representative.review.evidence_links || []).join("\n")} onChange={(event) => setLinks((current) => ({ ...current, [key]: event.target.value }))} placeholder="ticket-123 or one local reference per line" /></label></div>}
               <div className="review-actions">
                 <button className="quiet" onClick={() => showDevice(x.id)}>Open evidence</button>
-                {(role === "analyst" || role === "admin") && <><button className="quiet" onClick={() => disposition(key, "confirmed")}>Confirm group</button><button className="quiet" onClick={() => disposition(key, item.evidence_tier === "no_signal" ? "insufficient_evidence" : "dismissed")}>{item.evidence_tier === "no_signal" ? "Mark insufficient evidence" : "Dismiss group"}</button><button className="quiet" onClick={() => disposition(key, "needs_review")}>Needs review</button></>}
+              {(role === "analyst" || role === "admin") && <><button className="quiet" onClick={() => disposition(item, "confirmed")}>Confirm group</button><button className="quiet" onClick={() => disposition(item, item.evidence_tier === "no_signal" ? "insufficient_evidence" : "dismissed")}>{item.evidence_tier === "no_signal" ? "Mark insufficient evidence" : "Dismiss group"}</button><button className="quiet" onClick={() => disposition(item, "needs_review")}>Needs review</button></>}
               </div>
             </div>
           );
@@ -2818,9 +2893,9 @@ function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: strin
         {!items.length && <p>No classification reviews for this selection.</p>}
       </div>
       {total > 0 && <div className="pager review-pager" aria-label="Evidence review pages">
-        <button className="quiet" disabled={offset === 0} onClick={() => load(area, status, bucket, Math.max(0, offset - pageSize))}>Previous</button>
+        <button className="quiet" disabled={offset === 0} onClick={() => setRouteParams(reviewRouteFromQuery({ area_id: area, status, bucket, offset: Math.max(0, offset - pageSize) }))}>Previous</button>
         <span>Page {Math.floor(offset / pageSize) + 1} of {Math.ceil(total / pageSize).toLocaleString()}</span>
-        <button className="quiet" disabled={offset + pageSize >= total} onClick={() => load(area, status, bucket, offset + pageSize)}>Next</button>
+        <button className="quiet" disabled={offset + pageSize >= total} onClick={() => setRouteParams(reviewRouteFromQuery({ area_id: area, status, bucket, offset: offset + pageSize }))}>Next</button>
       </div>}
     </section>
   );
@@ -2854,14 +2929,14 @@ function RuleLearning({ areas, role }: { areas: Area[]; role: string }) {
     <div className="taxonomy-subhead"><div><p className="eyebrow">FALSE-POSITIVE SIGNALS</p><h3>What the selected scope is teaching us</h3></div></div><div className="table-scroll"><table><thead><tr><th>Current category</th><th>Reviewed devices</th></tr></thead><tbody>{summary?.by_category.map((item) => <tr key={item.category}><td><span className="category-chip">{item.category}</span></td><td>{item.count.toLocaleString()}</td></tr>)}</tbody></table></div>
   </section>;
 }
-type ComparisonItem = { device_id: number; token_prefix: string; category: string; category_confidence: number; oui_organization: string; roles: string[]; observation_count: number; changed_fields: string[] };
-type ComparisonResult = { left: { id: number; name: string }; right: { id: number; name: string }; counts: Record<string, number>; new: ComparisonItem[]; returning: ComparisonItem[]; disappeared: ComparisonItem[]; changed: ComparisonItem[]; truncated: boolean };
-function RunComparison({ runs }: { runs: Run[] }) {
+type ComparisonItem = { device_id: number; token_prefix: string; category: string; category_confidence: number; oui_organization: string; roles: string[]; observation_count: number; changed_fields: string[]; facts: string[]; before_facts?: string[]; after_facts?: string[] };
+type ComparisonResult = { left: { id: number; name: string }; right: { id: number; name: string }; comparability: { same_collection: boolean; left_coverage: number; right_coverage: number }; counts: Record<string, number>; new: ComparisonItem[]; returning: ComparisonItem[]; disappeared: ComparisonItem[]; changed: ComparisonItem[]; truncated: boolean };
+function RunComparison({ runs, initialRight, setQuery }: { runs: Run[]; initialRight: string; setQuery: (params: Record<string, string>) => void }) {
   const completedRuns = runs.filter((run) => run.completed);
   const [left, setLeft] = useState(""), [right, setRight] = useState(""), [result, setResult] = useState<ComparisonResult | null>(null), [note, setNote] = useState("");
-  useEffect(() => { if (completedRuns.length > 1) { setLeft(String(completedRuns[completedRuns.length - 1].id)); setRight(String(completedRuns[0].id)); } }, [runs]);
+  useEffect(() => { if (completedRuns.length > 1) { setLeft(String(completedRuns.find((run) => String(run.id) !== initialRight)?.id || completedRuns[0].id)); setRight(initialRight || String(completedRuns[0].id)); } }, [runs, initialRight]);
   async function compare() { if (!left || !right || left === right) { setNote("Choose two different capture runs."); return; } try { setNote(""); setResult(await api<ComparisonResult>(`/v1/import-comparison?left_run_id=${left}&right_run_id=${right}&limit=100`)); } catch (error) { setNote(msg(error)); } }
-  const rows = (items: ComparisonItem[]) => <div className="table-scroll"><table><thead><tr><th>Site token</th><th>Category</th><th>Vendor</th><th>Observations</th><th>Changed fields</th></tr></thead><tbody>{items.map((item) => <tr key={item.device_id}><td><code>{item.token_prefix}</code></td><td>{item.category}</td><td>{item.oui_organization}</td><td>{item.observation_count}</td><td>{item.changed_fields.join(", ") || "—"}</td></tr>)}</tbody></table></div>;
+  const rows = (items: ComparisonItem[]) => <div className="table-scroll"><table><thead><tr><th>Site token</th><th>Category</th><th>Vendor</th><th>Retained facts</th><th>Changed fields</th></tr></thead><tbody>{items.map((item) => <tr key={item.device_id}><td><code>{item.token_prefix}</code></td><td>{item.category}</td><td>{item.oui_organization}</td><td>{item.before_facts ? <>{item.before_facts.join(" · ") || "—"}<br/>→ {item.after_facts?.join(" · ") || "—"}</> : item.facts.join(" · ") || "—"}</td><td>{item.changed_fields.join(", ") || "—"}</td></tr>)}</tbody></table></div>;
   return <section className="panel"><div className="toolbar"><div><p className="eyebrow">IMPORT COMPARISON</p><h2>Run-to-run change</h2><p className="muted">Compare pseudonymous device presence and retained facts. Raw addresses are never included.</p></div><div className="toolbar-controls comparison-controls"><select aria-label="Earlier capture run" value={left} onChange={(event) => setLeft(event.target.value)}><option value="">Earlier run</option>{completedRuns.map((run) => <option key={run.id} value={run.id}>{run.name}</option>)}</select><select aria-label="Later capture run" value={right} onChange={(event) => setRight(event.target.value)}><option value="">Later run</option>{completedRuns.map((run) => <option key={run.id} value={run.id}>{run.name}</option>)}</select><button onClick={compare} disabled={completedRuns.length < 2}>Compare</button></div></div>{note && <p className="warning">{note}</p>}{!completedRuns.length && <p className="muted">Complete at least two capture runs to compare them.</p>}{result && <><div className="category-summary taxonomy-summary">{["new", "returning", "changed", "disappeared"].map((key) => <div key={key}><b>{(result.counts[key] || 0).toLocaleString()}</b><span>{key} devices</span></div>)}</div>{result.truncated && <p className="muted">Some lists are capped at 100 devices; counts are complete.</p>}<div className="taxonomy-subhead"><div><p className="eyebrow">NEW</p><h3>New in {result.right.name}</h3></div></div>{rows(result.new)}<div className="taxonomy-subhead"><div><p className="eyebrow">RETURNING</p><h3>Present in both runs</h3></div></div>{rows(result.returning)}<div className="taxonomy-subhead"><div><p className="eyebrow">CHANGED</p><h3>Changed retained facts</h3></div></div>{rows(result.changed)}<div className="taxonomy-subhead"><div><p className="eyebrow">DISAPPEARED</p><h3>Only in {result.left.name}</h3></div></div>{rows(result.disappeared)}</>}</section>;
 }
 function OUIImportPanel() {

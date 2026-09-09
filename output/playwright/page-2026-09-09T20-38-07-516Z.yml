@@ -1,0 +1,94 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Command center" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [ref=e35] [cursor=pointer]
+      - button "Category view" [ref=e39] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e43] [cursor=pointer]
+      - button "Coverage explorer" [ref=e47] [cursor=pointer]
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: ANALYSIS
+        - button "Finding queue" [ref=e52] [cursor=pointer]
+      - button "Evidence review" [ref=e56] [cursor=pointer]
+      - button "Rule learning" [ref=e60] [cursor=pointer]
+      - button "Run comparison" [ref=e64] [cursor=pointer]
+      - button "Baselines" [ref=e68] [cursor=pointer]
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: COLLECTION
+        - button "Capture imports" [ref=e73] [cursor=pointer]
+      - button "Collections" [ref=e77] [cursor=pointer]
+      - button "Administration" [ref=e81] [cursor=pointer]
+      - generic [ref=e84]:
+        - paragraph [ref=e85]: GOVERNANCE
+        - button "Audit log" [ref=e86] [cursor=pointer]
+    - generic [ref=e89]:
+      - generic [ref=e93]:
+        - text: Private by design
+        - generic [ref=e94]: Site-scoped tokens. Local maps.
+      - generic [ref=e95]:
+        - generic [ref=e96]: D3
+        - generic [ref=e97]:
+          - text: d3mo
+          - generic [ref=e98]: admin
+        - button "Sign out" [ref=e99] [cursor=pointer]
+  - generic [ref=e100]:
+    - banner [ref=e101]:
+      - generic [ref=e102]: Workspace/Evidence review
+      - generic [ref=e103]: Private instance
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - paragraph [ref=e108]: SIGNAL LEDGER / REVIEWS
+          - heading "Evidence review" [level=1] [ref=e1432]
+          - paragraph [ref=e110]: Review uncertain device classifications and teach the evidence model.
+        - generic [ref=e111]:
+          - button "Refresh" [ref=e112] [cursor=pointer]
+          - button "Import data" [ref=e115] [cursor=pointer]
+      - generic [ref=e1433]:
+        - generic [ref=e1434]:
+          - generic [ref=e1435]:
+            - paragraph [ref=e1436]: EVIDENCE REVIEW
+            - heading "Classification triage" [level=2] [ref=e1437]
+            - paragraph [ref=e1438]: 0 groups · 0 devices · repeated evidence is grouped before review.
+          - generic [ref=e1439]:
+            - combobox "Survey area" [ref=e1440]:
+              - option "All areas" [selected]
+              - option "Test 1"
+            - combobox "Review status" [ref=e1441]:
+              - option "Open / needs review"
+              - option "Needs review"
+              - option "Confirmed" [selected]
+              - option "Dismissed"
+              - option "Insufficient evidence"
+              - option "All dispositions"
+        - tablist "Evidence quality" [ref=e1442]:
+          - button "0 actionable groups 0 devices" [ref=e1443] [cursor=pointer]:
+            - generic [ref=e1444]: "0"
+            - generic [ref=e1445]: actionable groups
+            - generic [ref=e1446]: 0 devices
+          - button "0 no-signal groups 0 devices" [ref=e1447] [cursor=pointer]:
+            - generic [ref=e1448]: "0"
+            - generic [ref=e1449]: no-signal groups
+            - generic [ref=e1450]: 0 devices
+          - button "0 all groups 0 devices" [ref=e1451] [cursor=pointer]:
+            - generic [ref=e1452]: "0"
+            - generic [ref=e1453]: all groups
+            - generic [ref=e1454]: 0 devices
+        - paragraph [ref=e1456]: No classification reviews for this selection.
+      - generic [ref=e189]:
+        - generic [ref=e190]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e191]: Workspace refreshed at 01:33 PM

@@ -12,6 +12,7 @@ from app.main import (
     AnomalyPatch,
     CategoryPatch,
     DeviceReviewGroupPatch,
+    DeviceReviewPatch,
     RuleProposalPatch,
     PasswordChangeInput,
     RetentionSettingsInput,
@@ -141,10 +142,43 @@ def test_device_review_queue_prioritizes_uncertain_devices_and_persists_disposit
     no_signal = list_device_reviews(bucket="no_signal", db=db, principal=viewer)
     assert no_signal["total"] == 1
     assert no_signal["items"][0]["representative"]["device"]["id"] == unknown.id
-    updated = update_device_review_group(DeviceReviewGroupPatch(group_key=no_signal["items"][0]["group_key"], status="insufficient_evidence", disposition_note=None, evidence_links=[]), db=db, principal=Principal(1, "analyst", "analyst"))
+    updated = update_device_review_group(DeviceReviewGroupPatch(group_key=no_signal["items"][0]["group_key"], status="insufficient_evidence", review_status="open", device_ids=no_signal["items"][0]["device_ids"]), db=db, principal=Principal(1, "analyst", "analyst"))
     assert updated["devices_updated"] == 1
     assert db.scalar(select(DeviceReview).where(DeviceReview.device_id == unknown.id)).reviewed_by == "analyst"
     assert list_device_reviews(status="open", bucket="no_signal", db=db, principal=viewer)["total"] == 0
+
+
+def test_group_review_is_status_scoped_and_preserves_untouched_context():
+    db = make_db()
+    open_device = Device(token="o" * 64, category="unknown", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    dismissed_device = Device(token="x" * 64, category="unknown", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add_all([open_device, dismissed_device]); db.flush()
+    db.add(DeviceReview(device_id=dismissed_device.id, status="dismissed", disposition_note="keep this note", evidence_links=["ticket-9"]))
+    db.commit()
+    viewer = Principal(1, "viewer", "viewer")
+    group = list_device_reviews(status="open", bucket="no_signal", db=db, principal=viewer)["items"][0]
+    assert group["device_ids"] == [open_device.id]
+
+    update_device_review_group(
+        DeviceReviewGroupPatch(group_key=group["group_key"], status="needs_review", review_status="open", device_ids=group["device_ids"]),
+        db=db,
+        principal=Principal(1, "analyst", "analyst"),
+    )
+    assert db.scalar(select(DeviceReview).where(DeviceReview.device_id == open_device.id)).status == "needs_review"
+    unchanged = db.scalar(select(DeviceReview).where(DeviceReview.device_id == dismissed_device.id))
+    assert (unchanged.status, unchanged.disposition_note, unchanged.evidence_links) == ("dismissed", "keep this note", ["ticket-9"])
+
+
+def test_single_review_status_change_preserves_existing_context():
+    db = make_db()
+    device = Device(token="s" * 64, category="unknown", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add(device); db.flush()
+    db.add(DeviceReview(device_id=device.id, status="open", disposition_note="keep this note", evidence_links=["ticket-10"]))
+    db.commit()
+
+    update_device_review(device.id, DeviceReviewPatch(status="confirmed"), db=db, principal=Principal(1, "analyst", "analyst"))
+    review = db.scalar(select(DeviceReview).where(DeviceReview.device_id == device.id))
+    assert (review.status, review.disposition_note, review.evidence_links) == ("confirmed", "keep this note", ["ticket-10"])
 
 
 def test_mac_scope_is_privacy_safe_and_downweights_local_vendor_evidence():
