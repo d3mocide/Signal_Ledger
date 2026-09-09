@@ -9,12 +9,25 @@ type Page =
   | "surveys"
   | "collections"
   | "inventory"
+  | "categories"
   | "vendors"
   | "coverage"
   | "device"
   | "baselines"
   | "anomalies"
-  | "access";
+  | "reviews"
+  | "access"
+  | "audit";
+const routePages = new Set<Page>(["overview", "surveys", "collections", "inventory", "categories", "vendors", "coverage", "device", "baselines", "anomalies", "reviews", "access", "audit"]);
+const pageFromHash = (): Page | null => {
+  const value = window.location.hash.replace(/^#/, "").split("?")[0] as Page;
+  return value && routePages.has(value) ? value : value ? null : "overview";
+};
+const deviceIdFromHash = (): number | null => {
+  const query = window.location.hash.split("?")[1];
+  const value = query ? Number(new URLSearchParams(query).get("id")) : NaN;
+  return Number.isInteger(value) && value > 0 ? value : null;
+};
 type Job = {
   id: number;
   filename: string;
@@ -29,10 +42,21 @@ type Device = {
   token: string;
   oui_organization: string;
   category: string;
+  category_confidence?: number;
+  category_evidence?: string[];
+  category_scores?: Record<string, number>;
+  category_rule_version?: string;
+  category_overridden?: boolean;
+  device_roles?: string[];
+  role_scores?: Record<string, number>;
+  role_evidence?: string[];
+  role_rule_version?: string;
   first_seen: string;
   last_seen: string;
   last_protocol?: string | null;
   last_ssid?: string | null;
+  last_device_name?: string | null;
+  last_device_type?: string | null;
   has_stored_address?: boolean;
 };
 type DeviceDetail = {
@@ -120,6 +144,12 @@ const navItems: { page: Page; label: string; icon: string; group: string }[] = [
     group: "",
   },
   {
+    page: "categories",
+    label: "Category view",
+    icon: "categories",
+    group: "",
+  },
+  {
     page: "vendors",
     label: "Vendor breakdown",
     icon: "vendors",
@@ -128,9 +158,15 @@ const navItems: { page: Page; label: string; icon: string; group: string }[] = [
   { page: "coverage", label: "Coverage explorer", icon: "coverage", group: "" },
   {
     page: "anomalies",
-    label: "Review queue",
+    label: "Finding queue",
     icon: "anomalies",
     group: "ANALYSIS",
+  },
+  {
+    page: "reviews",
+    label: "Evidence review",
+    icon: "anomalies",
+    group: "",
   },
   { page: "baselines", label: "Baselines", icon: "baselines", group: "" },
   {
@@ -146,23 +182,28 @@ const navItems: { page: Page; label: string; icon: string; group: string }[] = [
     group: "",
   },
   { page: "access", label: "Administration", icon: "access", group: "" },
+  { page: "audit", label: "Audit log", icon: "audit", group: "GOVERNANCE" },
 ];
 const descriptions: Record<Page, string> = {
   overview: "Your discovery landscape, at a glance.",
   inventory: "Explore site-scoped devices and the evidence behind them.",
+  categories: "See transparent device-category hypotheses and review coverage.",
   vendors: "See your device inventory grouped and ranked by OUI manufacturer.",
   coverage: "Understand where your collection has observed signals.",
   anomalies: "Review changes against your established baselines.",
+  reviews: "Review uncertain device classifications and teach the evidence model.",
   baselines: "Define expected behavior from completed survey runs.",
   surveys: "Drop a capture to create an import session, or organize sessions when useful.",
   collections: "Create, rename, and review the collections used to group captures.",
   access: "Manage workspace access and local enrichment.",
+  audit: "Review the operator actions recorded for this private workspace.",
   device: "Trace an observed device back to its source evidence.",
 };
 function Icon({ name }: { name: string }) {
   const paths: Record<string, string> = {
     overview: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
     inventory: "M4 5h16v14H4z M8 9h8 M8 13h5",
+    categories: "M4 5h6v6H4z M14 5h6v6h-6z M4 15h6v4H4z M14 15h6v4h-6z",
     vendors: "M4 6h13 M4 12h17 M4 18h9",
     collections: "M3 7h6l2 2h10v10H3z",
     coverage:
@@ -171,6 +212,7 @@ function Icon({ name }: { name: string }) {
     baselines: "M3 17h18 M5 13V8 M10 13V4 M15 13v-3 M20 13V6",
     surveys: "M12 16V3 M7 8l5-5 5 5 M4 14v6h16v-6",
     access: "M12 3 3 7v5c0 5 9 9 9 9s9-4 9-9V7l-9-4z M8 12l3 3 5-6",
+    audit: "M5 4h14v16H5z M8 8h8 M8 12h8 M8 16h5",
     arrow: "M5 12h14 M14 7l5 5-5 5",
     refresh: "M20 8a8 8 0 1 0 0 8 M20 3v5h-5",
   };
@@ -213,19 +255,27 @@ class WorkspaceBoundary extends Component<
 }
 function App() {
   const [me, setMe] = useState<Me | null>(null),
-    [page, setPage] = useState<Page>("overview"),
+    [page, setPage] = useState<Page>(() => pageFromHash() || "overview"),
     [o, setO] = useState<Overview | null>(null),
     [areas, setAreas] = useState<Area[]>([]),
     [runs, setRuns] = useState<Run[]>([]),
     [jobs, setJobs] = useState<Job[]>([]),
     [mapDevice, setMapDevice] = useState(""),
     [vendorFilter, setVendorFilter] = useState(""),
-    [deviceId, setDeviceId] = useState<number | null>(null),
+    [categoryFilter, setCategoryFilter] = useState(""),
+    [roleFilter, setRoleFilter] = useState(""),
+    [deviceId, setDeviceId] = useState<number | null>(() => deviceIdFromHash()),
     [note, setNote] = useState(""),
     [loading, setLoading] = useState(true),
     [refresh, setRefresh] = useState(0),
     [updated, setUpdated] = useState(""),
     [importing, setImporting] = useState<string | null>(null);
+  const navigate = (next: Page, params: Record<string, string> = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const hash = `#${next}${query ? "?" + query : ""}`;
+    if (window.location.hash !== hash) window.history.pushState({}, "", hash);
+    setPage(next);
+  };
   const load = async () => {
     setLoading(true);
     try {
@@ -257,6 +307,21 @@ function App() {
   };
   useEffect(() => {
     load();
+  }, []);
+  useEffect(() => {
+    const syncPage = () => {
+      const next = pageFromHash();
+      if (next) {
+        setPage(next);
+        setDeviceId(deviceIdFromHash());
+      }
+    };
+    window.addEventListener("popstate", syncPage);
+    window.addEventListener("hashchange", syncPage);
+    return () => {
+      window.removeEventListener("popstate", syncPage);
+      window.removeEventListener("hashchange", syncPage);
+    };
   }, []);
   useEffect(() => {
     const handle = (e: PromiseRejectionEvent) => {
@@ -298,10 +363,10 @@ function App() {
       <aside className="sidebar">
         <a
           className="brand"
-          href="#"
+          href="#overview"
           onClick={(e) => {
             e.preventDefault();
-            setPage("overview");
+            navigate("overview");
           }}
         >
           <span className="brand-mark">
@@ -320,7 +385,13 @@ function App() {
         </div>
         <nav aria-label="Main navigation">
           {navItems
-            .filter((x) => x.page !== "access" || me.role === "admin")
+            .filter((x) =>
+              x.page === "access"
+                ? true
+                : x.page === "audit"
+                  ? ["auditor", "analyst", "admin"].includes(me.role)
+                  : true,
+            )
             .map((x) => (
               <div key={x.page}>
                 {x.group && <p className="nav-group">{x.group}</p>}
@@ -333,7 +404,7 @@ function App() {
                       : ""
                   }
                   onClick={() => {
-                    setPage(x.page);
+                    navigate(x.page);
                     setNote("");
                   }}
                 >
@@ -402,7 +473,7 @@ function App() {
                 {loading ? "Refreshing…" : "Refresh"}
               </button>
               {["admin", "analyst"].includes(me.role) && page !== "surveys" && (
-                <button onClick={() => setPage("surveys")}>
+              <button onClick={() => navigate("surveys")}>
                   <Icon name="surveys" />
                   Import data
                 </button>
@@ -437,7 +508,7 @@ function App() {
           )}
           <WorkspaceBoundary key={page + refresh}>
             {page === "overview" && (
-              <Dashboard overview={o} jobs={jobs} runs={runs} go={setPage} />
+              <Dashboard overview={o} jobs={jobs} runs={runs} go={navigate} />
             )}{" "}
             {page === "surveys" && (
               <Surveys
@@ -457,13 +528,33 @@ function App() {
                 areas={areas}
                 showDevice={(x) => {
                   setDeviceId(x);
-                  setPage("device");
+                  navigate("device", { id: String(x) });
                 }}
                 mapDevice={(x) => {
                   setMapDevice(String(x));
-                  setPage("coverage");
+                  navigate("coverage");
                 }}
                 initialVendor={vendorFilter}
+                initialCategory={categoryFilter}
+                initialRole={roleFilter}
+              />
+            )}{" "}
+            {page === "categories" && (
+              <CategoryOverview
+                areas={areas}
+                role={me.role}
+                showCategory={(category) => {
+                  setCategoryFilter(category);
+                  setVendorFilter("");
+                  setRoleFilter("");
+                  navigate("inventory");
+                }}
+                showRole={(nextRole) => {
+                  setRoleFilter(nextRole);
+                  setCategoryFilter("");
+                  setVendorFilter("");
+                  navigate("inventory");
+                }}
               />
             )}{" "}
             {page === "vendors" && (
@@ -471,7 +562,7 @@ function App() {
                 areas={areas}
                 showVendor={(vendor) => {
                   setVendorFilter(vendor);
-                  setPage("inventory");
+                  navigate("inventory");
                 }}
               />
             )}{" "}
@@ -486,17 +577,28 @@ function App() {
             {page === "device" && deviceId && (
               <DeviceEvidence
                 id={deviceId}
-                back={() => setPage("inventory")}
+                back={() => navigate("inventory")}
                 mapDevice={(x) => {
                   setMapDevice(String(x));
-                  setPage("coverage");
+                  navigate("coverage");
                 }}
                 role={me.role}
               />
             )}{" "}
             {page === "baselines" && <Baselines areas={areas} runs={runs} />}{" "}
             {page === "anomalies" && <Anomalies areas={areas} />}{" "}
+            {page === "reviews" && (
+              <DeviceReviews
+                areas={areas}
+                role={me.role}
+                showDevice={(x) => {
+                  setDeviceId(x);
+                  navigate("device", { id: String(x) });
+                }}
+              />
+            )}{" "}
             {page === "access" && <Access me={me} />}
+            {page === "audit" && <AuditEvents />}
           </WorkspaceBoundary>
           <footer>
             <span>
@@ -1243,19 +1345,118 @@ function VendorBreakdown({
     </section>
   );
 }
+type CategoryRow = {
+  category: string;
+  device_count: number;
+  share: number;
+  mean_confidence: number;
+  override_count: number;
+};
+type RoleRow = { role: string; device_count: number; share: number; mean_score: number; top_evidence: string[] };
+type RoleSummary = { roles: RoleRow[]; total_devices: number; role_tagged_devices: number; role_assignments: number; overlap_devices: number };
+function CategoryOverview({ areas, role, showCategory, showRole }: { areas: Area[]; role: string; showCategory: (category: string) => void; showRole: (role: string) => void }) {
+  const [area, setArea] = useState(""), [rows, setRows] = useState<CategoryRow[]>([]), [roleRows, setRoleRows] = useState<RoleSummary>({ roles: [], total_devices: 0, role_tagged_devices: 0, role_assignments: 0, overlap_devices: 0 }), [loading, setLoading] = useState(false), [error, setError] = useState(""), [rebuilding, setRebuilding] = useState(false), [note, setNote] = useState("");
+  async function load(nextArea = area) {
+    setLoading(true); setError("");
+    try {
+      const suffix = nextArea ? "?area_id=" + nextArea : "";
+      const [categories, roles] = await Promise.all([api<CategoryRow[]>("/v1/devices/categories" + suffix), api<RoleSummary>("/v1/devices/roles" + suffix)]);
+      setRows(categories);
+      setRoleRows(roles);
+    } catch (x) { setError(msg(x)); }
+    finally { setLoading(false); }
+  }
+  useEffect(() => { load(); }, []);
+  async function rebuild() {
+    setRebuilding(true); setNote("");
+    try {
+      const result = await api<{ updated: number; overridden_skipped: number; rule_version: string }>("/v1/devices/categories/rebuild", { method: "POST" });
+      setNote("Rebuilt " + result.updated.toLocaleString() + " device hypotheses with " + result.rule_version + "; skipped " + result.overridden_skipped.toLocaleString() + " analyst override(s).");
+      load();
+    } catch (x) { setError(msg(x)); }
+    finally { setRebuilding(false); }
+  }
+  const total = rows.reduce((sum, row) => sum + row.device_count, 0);
+  const known = rows.filter((row) => row.category !== "unknown").reduce((sum, row) => sum + row.device_count, 0);
+  return (
+    <section className="panel">
+      <div className="toolbar">
+        <div>
+          <p className="eyebrow">DEVICE TAXONOMY</p>
+          <h2>Category hypotheses</h2>
+          <p className="muted">Rules combine vendor, SSID, and protocol evidence. These are review aids, not identity or security conclusions.</p>
+        </div>
+        <select aria-label="Category collection" value={area} onChange={(event) => { setArea(event.target.value); load(event.target.value); }}>
+          <option value="">All collections</option>
+          {areas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+        {(role === "analyst" || role === "admin") && <button className="secondary" onClick={rebuild} disabled={rebuilding}>{rebuilding ? "Rebuilding…" : "Rebuild hypotheses"}</button>}
+      </div>
+      {error && <p className="warning" role="alert">{error}</p>}
+      {note && <p className="notice" role="status">{note}</p>}
+      <div className="category-summary taxonomy-summary">
+        <div><b>{total.toLocaleString()}</b><span>devices in scope</span></div>
+        <div><b>{known.toLocaleString()}</b><span>with a rule match</span></div>
+        <div><b>{total ? Math.round((known / total) * 100) : 0}%</b><span>categorized coverage</span></div>
+        <div><b>{roleRows.role_tagged_devices.toLocaleString()}</b><span>with a role/context tag</span></div>
+        <div><b>{roleRows.overlap_devices.toLocaleString()}</b><span>role overlaps to review</span></div>
+      </div>
+      <div className="table-scroll">
+        <table>
+          <thead><tr><th>Category</th><th>Devices</th><th>Share</th><th>Mean confidence</th><th>Overrides</th><th></th></tr></thead>
+          <tbody>{rows.map((row) => (
+            <tr key={row.category}>
+              <td><span className="category-chip">{row.category}</span></td>
+              <td>{row.device_count.toLocaleString()}</td>
+              <td>{(row.share * 100).toFixed(1)}%</td>
+              <td>{Math.round(row.mean_confidence * 100)}%</td>
+              <td>{row.override_count.toLocaleString()}</td>
+              <td><button className="quiet map-action" onClick={() => showCategory(row.category)}>View inventory</button></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <div className="taxonomy-subhead"><div><p className="eyebrow">OPERATIONAL CONTEXT</p><h3>Roles and context</h3><p className="muted">Role assignments can overlap; shares are measured against devices in scope.</p></div><span className="muted">{roleRows.role_assignments.toLocaleString()} assignments · {roleRows.role_tagged_devices.toLocaleString()} devices</span></div>
+      <div className="table-scroll">
+        <table>
+          <thead><tr><th>Role / context</th><th>Devices</th><th>Share of scope</th><th>Mean evidence score</th><th>Top evidence</th><th></th></tr></thead>
+          <tbody>{roleRows.roles.map((row) => (
+            <tr key={row.role}>
+              <td><span className="role-chip">{row.role.replaceAll("_", " ")}</span></td>
+              <td>{row.device_count.toLocaleString()}</td>
+              <td>{(row.share * 100).toFixed(1)}%</td>
+              <td>{row.mean_score.toFixed(2)}</td>
+              <td className="taxonomy-evidence">{row.top_evidence.length ? row.top_evidence.join(" · ") : "—"}</td>
+              <td><button className="quiet map-action" onClick={() => showRole(row.role)}>View inventory</button></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      {!roleRows.roles.length && !loading && <p className="muted">No role/context signals have been retained yet.</p>}
+      {!rows.length && !loading && <p className="muted">No devices have been imported yet.</p>}
+      <p className="muted category-footnote">Rule set: rules-v6. Unknown means no configured signal cleared the evidence threshold. Open a device record to inspect evidence or apply an audited analyst override.</p>
+    </section>
+  );
+}
 function Inventory({
   areas,
   showDevice,
   mapDevice,
   initialVendor,
+  initialCategory,
+  initialRole,
 }: {
   areas: Area[];
   showDevice: (id: number) => void;
   mapDevice: (id: number) => void;
   initialVendor: string;
+  initialCategory: string;
+  initialRole: string;
 }) {
   const [a, setA] = useState(""),
     [v, setV] = useState(initialVendor),
+    [c, setC] = useState(initialCategory),
+    [role, setRole] = useState(initialRole),
     [attributedOnly, setAttributedOnly] = useState(false),
     [sort, setSort] = useState("last_seen"),
     [direction, setDirection] = useState<"asc" | "desc">("desc"),
@@ -1271,6 +1472,8 @@ function Inventory({
     nextDirection = direction,
     nextAttributedOnly = attributedOnly,
     nextVendor = v,
+    nextCategory = c,
+    nextRole = role,
   ) {
     setLoading(true);
     try {
@@ -1282,6 +1485,8 @@ function Inventory({
         direction: nextDirection,
       });
       if (a) q.set("area_id", a);
+      if (nextCategory) q.set("category", nextCategory);
+      if (nextRole) q.set("role", nextRole);
       if (nextAttributedOnly) q.set("attributed_only", "true");
       const x = await api<{ items: Device[]; total: number }>(
         "/v1/devices?" + q,
@@ -1303,6 +1508,18 @@ function Inventory({
     }
   }, [initialVendor]);
   useEffect(() => {
+    if (initialCategory) {
+      setC(initialCategory);
+      load(0, sort, direction, attributedOnly, v, initialCategory);
+    }
+  }, [initialCategory]);
+  useEffect(() => {
+    if (initialRole) {
+      setRole(initialRole);
+      load(0, sort, direction, attributedOnly, v, c, initialRole);
+    }
+  }, [initialRole]);
+  useEffect(() => {
     api<{ oui_organization: string }[]>("/v1/devices/vendors").then((rows) =>
       setVendorOptions(rows.map((x) => x.oui_organization)),
     );
@@ -1323,69 +1540,107 @@ function Inventory({
   const sortIndicator = (column: string) =>
     sort === column ? (direction === "asc" ? " ▲" : " ▼") : "";
   return (
-    <section className="panel">
-      <div className="toolbar">
+    <section className="panel inventory-panel">
+      <div className="inventory-header">
         <div>
           <p className="eyebrow">PSEUDONYMOUS INVENTORY</p>
           <h2>Devices from imported runs</h2>
+          <p className="muted inventory-description">
+            Review device hypotheses and the latest observed network evidence.
+          </p>
         </div>
-        <select
-          aria-label="Survey area"
-          value={a}
-          onChange={(x) => setA(x.target.value)}
-        >
-          <option value="">All areas</option>
-          {areas.map((x) => (
-            <option key={x.id} value={x.id}>
-              {x.name}
-            </option>
-          ))}
-        </select>
+        <label className="inventory-scope">
+          <span>Scope</span>
+          <select
+            aria-label="Survey area"
+            value={a}
+            onChange={(x) => setA(x.target.value)}
+          >
+            <option value="">All areas</option>
+            {areas.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
-      <div className="toolbar filters">
-        <input
-          value={v}
-          onChange={(x) => setV(x.target.value)}
-          placeholder="OUI organization"
-          list="inventory-vendor-options"
-        />
+      <form
+        className="inventory-filters"
+        onSubmit={(event) => {
+          event.preventDefault();
+          load(0);
+        }}
+      >
+        <label className="inventory-field">
+          <span>Vendor evidence</span>
+          <input
+            value={v}
+            onChange={(x) => setV(x.target.value)}
+            placeholder="Search OUI organization"
+            list="inventory-vendor-options"
+          />
+        </label>
         <datalist id="inventory-vendor-options">
           {vendorOptions.map((x) => (
             <option key={x} value={x} />
           ))}
         </datalist>
-        <label className="check">
+        <label className="inventory-field">
+          <span>Category hypothesis</span>
+          <select aria-label="Device category" value={c} onChange={(event) => setC(event.target.value)}>
+            <option value="">All categories</option>
+            {['unknown', 'camera', 'printer', 'network', 'mobile', 'iot', 'bluetooth', 'workstation', 'audio', 'entertainment', 'wearable', 'automotive'].map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="inventory-field">
+          <span>Role or context</span>
+          <select aria-label="Device role or context" value={role} onChange={(event) => setRole(event.target.value)}>
+            <option value="">All roles</option>
+            {['retail_pos', 'security_access', 'smart_home', 'industrial_ot', 'medical', 'guest_network'].map((item) => <option key={item} value={item}>{item.replaceAll('_', ' ')}</option>)}
+          </select>
+        </label>
+        <label className="inventory-toggle">
           <input
             type="checkbox"
             checked={attributedOnly}
             onChange={(x) => {
               setAttributedOnly(x.target.checked);
-              load(0, sort, direction, x.target.checked);
             }}
           />
-          Attributed only
+          <span>Attributed only</span>
         </label>
-        <button onClick={() => load(0)}>Apply</button>
+        <div className="inventory-filter-actions">
+          <button type="submit">Apply filters</button>
+          <button
+            type="button"
+            className="quiet"
+            onClick={() => {
+              setV("");
+              setC("");
+              setRole("");
+              setAttributedOnly(false);
+              load(0, sort, direction, false, "", "", "");
+            }}
+          >
+            Clear
+          </button>
+        </div>
+      </form>
+      <div className="inventory-summary">
+        <p className="muted">
+          {total.toLocaleString()} matching devices · showing{" "}
+          {total ? offset + 1 : 0}–{Math.min(offset + limit, total)}
+        </p>
+        <span className="inventory-sort">
+          Sorted by {sort === "last_seen" ? "last seen" : sort.replaceAll("_", " ")} {direction === "desc" ? "newest first" : "oldest first"}
+        </span>
       </div>
-      <p className="muted">
-        {total.toLocaleString()} matching devices · showing{" "}
-        {total ? offset + 1 : 0}–{Math.min(offset + limit, total)}
-      </p>
       <div className="table-scroll">
-        <table>
+        <table className="inventory-table">
           <thead>
             <tr>
-              <th>Site token</th>
-              <th>
-                <button
-                  className="sort-header"
-                  onClick={() => toggleSort("oui_organization")}
-                >
-                  OUI organization{sortIndicator("oui_organization")}
-                </button>
-              </th>
-              <th>Radio</th>
-              <th>Last network</th>
+              <th>Device</th>
               <th>
                 <button
                   className="sort-header"
@@ -1394,6 +1649,17 @@ function Inventory({
                   Category{sortIndicator("category")}
                 </button>
               </th>
+              <th>Role / context</th>
+              <th>
+                <button
+                  className="sort-header"
+                  onClick={() => toggleSort("oui_organization")}
+                >
+                  Vendor evidence{sortIndicator("oui_organization")}
+                </button>
+              </th>
+              <th>Last radio</th>
+              <th>Last network</th>
               <th>
                 <button
                   className="sort-header"
@@ -1416,18 +1682,31 @@ function Inventory({
           <tbody>
             {d.map((x) => (
               <tr key={x.id}>
-                <td>
+                <td className="device-identity">
                   <button
                     className="token-button"
                     onClick={() => showDevice(x.id)}
                   >
                     <code>{x.token.slice(0, 14)}…</code>
                   </button>
+                  <small>site token</small>
                 </td>
-                <td>{x.oui_organization}</td>
-                <td>{x.last_protocol || "—"}</td>
-                <td>{x.last_ssid || "—"}</td>
-                <td>{x.category}</td>
+                <td className="category-cell">
+                  <span className="category-chip">{x.category}</span>
+                  <small>{x.category_confidence ? `${Math.round(x.category_confidence * 100)}% confidence` : "No hypothesis"}</small>
+                </td>
+                <td className="role-cell">
+                  {x.device_roles?.length ? x.device_roles.map((item) => <span className="role-chip" key={item}>{item.replaceAll("_", " ")}</span>) : <small>No role signal</small>}
+                </td>
+                <td className="vendor-cell">
+                  <span>{x.oui_organization}</span>
+                  <small>OUI evidence</small>
+                </td>
+                <td>{x.last_protocol ? <span className="protocol-pill">{x.last_protocol}</span> : "—"}</td>
+                <td className="network-cell">
+                  <span>{x.last_device_name || x.last_ssid || "No name observed"}</span>
+                  <small>{x.last_ssid ? `SSID · ${x.last_ssid}` : x.last_device_type || "No network name"}</small>
+                </td>
                 <td>{new Date(x.first_seen).toLocaleString()}</td>
                 <td>{new Date(x.last_seen).toLocaleString()}</td>
                 <td>
@@ -1471,6 +1750,7 @@ type Cell = {
   avg_rssi: number | null;
   device_count: number;
 };
+type SavedFilter = { id: number; name: string; resource: string; filters: Record<string, string> };
 function DeviceEvidence({
   id,
   back,
@@ -1486,7 +1766,9 @@ function DeviceEvidence({
     [error, setError] = useState(""),
     [address, setAddress] = useState(""),
     [revealing, setRevealing] = useState(false),
-    [revealError, setRevealError] = useState("");
+    [revealError, setRevealError] = useState(""),
+    [category, setCategory] = useState(""),
+    [categoryNote, setCategoryNote] = useState("");
   useEffect(() => {
     setD(null);
     setAddress("");
@@ -1510,6 +1792,18 @@ function DeviceEvidence({
       setRevealing(false);
     }
   }
+  async function overrideCategory() {
+    try {
+      const updated = await api<Device>("/v1/devices/" + id + "/category", {
+        method: "PATCH",
+        body: JSON.stringify({ category }),
+      });
+      setD((current) => (current ? { ...current, device: updated } : current));
+      setCategoryNote("Category override saved and audited.");
+    } catch (x) {
+      setCategoryNote(msg(x));
+    }
+  }
   if (error)
     return (
       <section className="panel">
@@ -1521,6 +1815,7 @@ function DeviceEvidence({
     );
   if (!d) return <section className="panel">Loading device evidence…</section>;
   const x = d.device;
+  const currentCategory = category || x.category;
   const collectionName = d.collections.length ? d.collections.join(", ") : "Unfiled";
   return (
     <section className="panel">
@@ -1533,8 +1828,40 @@ function DeviceEvidence({
       </h2>
       <p className="muted">
         OUI organization: {x.oui_organization} · Category hypothesis:{" "}
-        {x.category}
+        {x.category} · {Math.round((x.category_confidence || 0) * 100)}% confidence
+        {x.category_overridden ? " · analyst override" : ""}
       </p>
+      <p className="muted device-roles-line">
+        Roles / context: {x.device_roles?.length ? x.device_roles.map((item) => item.replaceAll("_", " ")).join(", ") : "No role signal"}
+      </p>
+      <div className="category-review">
+        <label className="field-label">
+          Review category
+          <select value={currentCategory} onChange={(event) => setCategory(event.target.value)}>
+            {['unknown', 'camera', 'printer', 'network', 'mobile', 'iot', 'bluetooth', 'workstation', 'audio', 'entertainment', 'wearable', 'automotive'].map((item) => (
+              <option key={item} value={item}>{item}</option>
+            ))}
+          </select>
+        </label>
+        {(role === "analyst" || role === "admin") && (
+          <button className="secondary" onClick={overrideCategory}>Save category override</button>
+        )}
+        {categoryNote && <span className="muted">{categoryNote}</span>}
+      </div>
+      {!!x.category_evidence?.length && (
+        <div className="category-evidence">
+          <p className="muted">Rule set: {x.category_rule_version || "rules-v1"} · Evidence is derived from retained vendor, SSID, and protocol facts.</p>
+          <p className="muted">Rule evidence: {x.category_evidence.join(" · ")}</p>
+          {!!x.category_scores && <div className="score-list">{Object.entries(x.category_scores).sort(([, left], [, right]) => right - left).slice(0, 5).map(([name, score]) => <span key={name}>{name} <b>{score.toFixed(2)}</b></span>)}</div>}
+        </div>
+      )}
+      {!!x.role_evidence?.length && (
+        <div className="category-evidence">
+          <p className="muted">Role rules: {x.role_rule_version || "roles-v1"} · Role evidence is derived from retained vendor, SSID, and device name/type facts.</p>
+          <p className="muted">Role evidence: {x.role_evidence.join(" · ")}</p>
+          {!!x.role_scores && <div className="score-list">{Object.entries(x.role_scores).sort(([, left], [, right]) => right - left).slice(0, 6).map(([name, score]) => <span key={name}>{name.replaceAll("_", " ")} <b>{score.toFixed(2)}</b></span>)}</div>}
+        </div>
+      )}
       <p className="muted">
         First seen: {new Date(x.first_seen).toLocaleString()} · Last seen:{" "}
         {new Date(x.last_seen).toLocaleString()} · Collection:{" "}
@@ -1818,21 +2145,23 @@ function Coverage({
     [mix, setMix] = useState<Record<string, number>>({}),
     [runs, setRuns] = useState<Run[]>([]),
     [devices, setDevices] = useState<Device[]>([]),
-    [vendorOptions, setVendorOptions] = useState<string[]>([]);
-  function params(area = a, run = r, device = d) {
+    [vendorOptions, setVendorOptions] = useState<string[]>([]),
+    [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]),
+    [filterName, setFilterName] = useState("");
+  function params(area = a, run = r, device = d, override: Record<string, string> = {}) {
     const q = new URLSearchParams();
     if (area) q.set("area_id", area);
     if (run) q.set("run_id", run);
     if (device) q.set("device_id", device);
-    if (protocol) q.set("protocol", protocol);
-    if (vendor) q.set("vendor", vendor);
-    if (minRssi) q.set("min_rssi", minRssi);
-    if (start) q.set("start", start + "T00:00:00");
-    if (end) q.set("end", end + "T23:59:59");
+    if (override.protocol ?? protocol) q.set("protocol", override.protocol ?? protocol);
+    if (override.vendor ?? vendor) q.set("vendor", override.vendor ?? vendor);
+    if (override.minRssi ?? minRssi) q.set("min_rssi", override.minRssi ?? minRssi);
+    if (override.start ?? start) q.set("start", (override.start ?? start) + "T00:00:00");
+    if (override.end ?? end) q.set("end", (override.end ?? end) + "T23:59:59");
     return q;
   }
-  async function load(area = a, run = r, device = d) {
-    const q = params(area, run, device),
+  async function load(area = a, run = r, device = d, override: Record<string, string> = {}) {
+    const q = params(area, run, device, override),
       t = q.toString() ? "?" + q : "",
       x = await Promise.all([
         api<Cell[]>("/v1/map/clusters" + t),
@@ -1855,6 +2184,26 @@ function Coverage({
       load();
     });
   }, []);
+  useEffect(() => {
+    api<SavedFilter[]>("/v1/saved-filters").then(setSavedFilters).catch(() => undefined);
+  }, []);
+  async function saveCurrentFilter() {
+    if (!filterName.trim()) return;
+    const filters = { area_id: a, run_id: r, device_id: d, protocol, vendor, minRssi, start, end };
+    try {
+      const saved = await send<SavedFilter>("/v1/saved-filters", { name: filterName.trim(), resource: "coverage", filters });
+      setSavedFilters((items) => [saved, ...items]);
+      setFilterName("");
+    } catch (x) {
+      setTileNotice(true);
+    }
+  }
+  function applySavedFilter(item: SavedFilter) {
+    const filters = item.filters || {};
+    setA(filters.area_id || ""); setR(filters.run_id || ""); setD(filters.device_id || "");
+    setProtocol(filters.protocol || ""); setVendor(filters.vendor || ""); setMinRssi(filters.minRssi || ""); setStart(filters.start || ""); setEnd(filters.end || "");
+    load(filters.area_id || "", filters.run_id || "", filters.device_id || "", filters);
+  }
   useEffect(() => {
     setD(initialDevice);
     load(a, r, initialDevice);
@@ -1988,6 +2337,17 @@ function Coverage({
           </button>
         )}
       </div>
+      <div className="saved-filter-bar">
+        <select aria-label="Saved coverage filter" defaultValue="" onChange={(event) => {
+          const item = savedFilters.find((candidate) => String(candidate.id) === event.target.value);
+          if (item) applySavedFilter(item);
+        }}>
+          <option value="">Saved filters</option>
+          {savedFilters.filter((item) => item.resource === "coverage").map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+        <input aria-label="Saved filter name" value={filterName} onChange={(event) => setFilterName(event.target.value)} placeholder="Name current filter" />
+        <button className="secondary" onClick={saveCurrentFilter} disabled={!filterName.trim()}>Save filter</button>
+      </div>
       {geographic && mapTileKey && tileNotice && (
         <div className="notice" role="alert">
           This basemap sends the visible map area to CARTO's tile servers to
@@ -2045,6 +2405,7 @@ type Finding = {
   explanation: string;
   status: string;
   disposition_note: string | null;
+  evidence_links: string[];
   created_at: string;
 };
 function Baselines({ areas, runs }: { areas: Area[]; runs: Run[] }) {
@@ -2165,7 +2526,8 @@ function Anomalies({ areas }: { areas: Area[] }) {
   const [a, setA] = useState(""),
     [items, setItems] = useState<Finding[]>([]),
     [note, setNote] = useState(""),
-    [drafts, setDrafts] = useState<Record<number, string>>({});
+    [drafts, setDrafts] = useState<Record<number, string>>({}),
+    [links, setLinks] = useState<Record<number, string>>({});
   async function load(area = a) {
     setItems(
       await api<Finding[]>("/v1/anomalies" + (area ? "?area_id=" + area : "")),
@@ -2178,7 +2540,11 @@ function Anomalies({ areas }: { areas: Area[] }) {
     try {
       await api("/v1/anomalies/" + id, {
         method: "PATCH",
-        body: JSON.stringify({ status, disposition_note: drafts[id] || null }),
+        body: JSON.stringify({
+          status,
+          disposition_note: drafts[id] || null,
+          evidence_links: (links[id] || "").split("\n").map((item) => item.trim()).filter(Boolean),
+        }),
         headers: { "Content-Type": "application/json" },
       });
       setNote("Finding updated.");
@@ -2236,6 +2602,17 @@ function Anomalies({ areas }: { areas: Area[] }) {
                 placeholder="Optional analyst context"
               />
             </label>
+            <label className="field-label compact-field">
+              Evidence links or local references (one per line)
+              <textarea
+                value={links[x.id] ?? (x.evidence_links || []).join("\n")}
+                onChange={(event) =>
+                  setLinks((current) => ({ ...current, [x.id]: event.target.value }))
+                }
+                placeholder="ticket-123 or https://approved.local/evidence"
+                rows={2}
+              />
+            </label>
             <button
               className="quiet"
               onClick={() => disposition(x.id, "confirmed")}
@@ -2258,6 +2635,155 @@ function Anomalies({ areas }: { areas: Area[] }) {
         ))}
         {!items.length && <p>No findings for this selection.</p>}
       </div>
+    </section>
+  );
+}
+type DeviceReviewItem = {
+  group_key: string;
+  evidence_tier: "actionable" | "sparse" | "no_signal";
+  label: string;
+  device_count: number;
+  observation_count: number;
+  priority: number;
+  categories: Record<string, number>;
+  roles: Record<string, number>;
+  evidence: string[];
+  representative: { device: Device; review: { status: string; disposition_note: string | null; evidence_links: string[] }; priority: number; last_protocol?: string | null; last_ssid?: string | null; last_device_name?: string | null; last_device_type?: string | null; observation_count: number };
+};
+type ReviewCounts = Record<"actionable" | "sparse" | "no_signal", { groups: number; devices: number }>;
+function DeviceReviews({ areas, role, showDevice }: { areas: Area[]; role: string; showDevice: (id: number) => void }) {
+  const pageSize = 24;
+  const [area, setArea] = useState(""),
+    [status, setStatus] = useState("open"),
+    [bucket, setBucket] = useState<"actionable" | "no_signal" | "all">("actionable"),
+    [items, setItems] = useState<DeviceReviewItem[]>([]),
+    [total, setTotal] = useState(0),
+    [deviceTotal, setDeviceTotal] = useState(0),
+    [counts, setCounts] = useState<ReviewCounts>({ actionable: { groups: 0, devices: 0 }, sparse: { groups: 0, devices: 0 }, no_signal: { groups: 0, devices: 0 } }),
+    [drafts, setDrafts] = useState<Record<string, string>>({}),
+    [links, setLinks] = useState<Record<string, string>>({}),
+    [contextOpen, setContextOpen] = useState<Record<string, boolean>>({}),
+    [overrideCategories, setOverrideCategories] = useState<Record<string, string>>({}),
+    [offset, setOffset] = useState(0),
+    [note, setNote] = useState("");
+  async function load(nextArea = area, nextStatus = status, nextBucket = bucket, nextOffset = offset) {
+    const query = new URLSearchParams({ status: nextStatus, bucket: nextBucket, limit: String(pageSize), offset: String(nextOffset) });
+    if (nextArea) query.set("area_id", nextArea);
+    try {
+      const result = await api<{ items: DeviceReviewItem[]; total: number; device_total: number; counts: ReviewCounts }>("/v1/device-reviews?" + query);
+      setItems(result.items);
+      setTotal(result.total);
+      setDeviceTotal(result.device_total);
+      setCounts(result.counts);
+      setOffset(nextOffset);
+    } catch (error) {
+      setNote(msg(error));
+    }
+  }
+  useEffect(() => {
+    load();
+  }, []);
+  async function disposition(groupKey: string, nextStatus: string) {
+    try {
+      await api("/v1/device-review-groups", {
+        method: "PATCH",
+        body: JSON.stringify({
+          group_key: groupKey,
+          status: nextStatus,
+          area_id: area ? Number(area) : null,
+          disposition_note: drafts[groupKey] || null,
+          evidence_links: (links[groupKey] || "").split("\n").map((item) => item.trim()).filter(Boolean),
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+      setNote("Group disposition saved and audited.");
+      load();
+    } catch (error) {
+      setNote(msg(error));
+    }
+  }
+  async function overrideCategory(item: DeviceReviewItem) {
+    const category = overrideCategories[item.group_key] || item.representative.device.category;
+    try {
+      await api("/v1/devices/" + item.representative.device.id + "/category", {
+        method: "PATCH",
+        body: JSON.stringify({ category }),
+        headers: { "Content-Type": "application/json" },
+      });
+      setNote("Category override saved and audited. Review disposition remains separate.");
+      load();
+    } catch (error) {
+      setNote(msg(error));
+    }
+  }
+  return (
+    <section className="panel">
+      <div className="toolbar">
+        <div>
+          <p className="eyebrow">EVIDENCE REVIEW</p>
+          <h2>Classification triage</h2>
+          <p className="muted">{total.toLocaleString()} groups · {deviceTotal.toLocaleString()} devices · repeated evidence is grouped before review.</p>
+        </div>
+        <div className="toolbar-controls">
+          <select aria-label="Survey area" value={area} onChange={(event) => { setArea(event.target.value); load(event.target.value, status, bucket, 0); }}>
+            <option value="">All areas</option>
+            {areas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+          <select aria-label="Review status" value={status} onChange={(event) => { setStatus(event.target.value); load(area, event.target.value, bucket, 0); }}>
+            <option value="open">Open</option>
+            <option value="needs_review">Needs review</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="dismissed">Dismissed</option>
+            <option value="insufficient_evidence">Insufficient evidence</option>
+            <option value="all">All dispositions</option>
+          </select>
+        </div>
+      </div>
+      <div className="review-buckets" role="tablist" aria-label="Evidence quality">
+        <button className={bucket === "actionable" ? "active" : ""} onClick={() => { setBucket("actionable"); load(area, status, "actionable", 0); }}><b>{counts.actionable.groups.toLocaleString()}</b><span>actionable groups</span><small>{counts.actionable.devices.toLocaleString()} devices</small></button>
+        <button className={bucket === "no_signal" ? "active" : ""} onClick={() => { setBucket("no_signal"); load(area, status, "no_signal", 0); }}><b>{counts.no_signal.groups.toLocaleString()}</b><span>no-signal groups</span><small>{counts.no_signal.devices.toLocaleString()} devices</small></button>
+        <button className={bucket === "all" ? "active" : ""} onClick={() => { setBucket("all"); load(area, status, "all", 0); }}><b>{(counts.actionable.groups + counts.no_signal.groups).toLocaleString()}</b><span>all groups</span><small>{(counts.actionable.devices + counts.no_signal.devices).toLocaleString()} devices</small></button>
+      </div>
+      {note && <p className="notice">{note}</p>}
+      <div className="list review-list">
+        {items.map((item) => {
+          const x = item.representative.device;
+          const key = item.group_key;
+          return (
+            <div key={key} className="review-card">
+              <div className="review-card-header">
+                <div>
+                  <b>{item.label}</b>
+                  <span>{item.device_count.toLocaleString()} devices · {item.observation_count.toLocaleString()} observations · priority {Math.round(item.priority * 100)}</span>
+                </div>
+                <span className={item.evidence_tier === "no_signal" ? "category-chip review-tier-none" : "category-chip"}>{item.evidence_tier.replaceAll("_", " ")}</span>
+              </div>
+              <div className="review-meta">
+                <span><small>Category mix</small>{Object.entries(item.categories).map(([name, count]) => `${name} (${count})`).join(" · ")}</span>
+                <span><small>Role mix</small>{Object.entries(item.roles).map(([name, count]) => `${name.replaceAll("_", " ")} (${count})`).join(" · ") || "None"}</span>
+                <span><small>Representative</small>{x.last_device_name || x.last_ssid || x.last_device_type || x.oui_organization} · {x.last_protocol || "unknown protocol"}</span>
+              </div>
+              <div className="review-evidence-block">
+                <small>Retained evidence</small>
+                <span>{item.evidence.length ? item.evidence.join(" · ") : "No usable vendor, name, SSID, type, or rule evidence."}</span>
+              </div>
+              {item.device_count === 1 && (role === "analyst" || role === "admin") && <div className="review-override"><label className="field-label">Override category<select aria-label="Override category" value={overrideCategories[key] || x.category} onChange={(event) => setOverrideCategories((current) => ({ ...current, [key]: event.target.value }))}>{['unknown', 'camera', 'printer', 'network', 'mobile', 'iot', 'bluetooth', 'workstation', 'audio', 'entertainment', 'wearable', 'automotive'].map((category) => <option key={category} value={category}>{category}</option>)}</select></label><button className="quiet" onClick={() => overrideCategory(item)}>Apply override</button></div>}
+              <button className="review-context-toggle" onClick={() => setContextOpen((current) => ({ ...current, [key]: !current[key] }))}>{contextOpen[key] || drafts[key] || links[key] ? "Hide review context" : "Add review context (optional)"}</button>
+              {(contextOpen[key] || drafts[key] || links[key]) && <div className="review-fields"><label className="field-label compact-field">Review note<input value={drafts[key] ?? item.representative.review.disposition_note ?? ""} onChange={(event) => setDrafts((current) => ({ ...current, [key]: event.target.value }))} placeholder="Optional handoff context" /></label><label className="field-label compact-field">Evidence references<textarea rows={2} value={links[key] ?? (item.representative.review.evidence_links || []).join("\n")} onChange={(event) => setLinks((current) => ({ ...current, [key]: event.target.value }))} placeholder="ticket-123 or one local reference per line" /></label></div>}
+              <div className="review-actions">
+                <button className="quiet" onClick={() => showDevice(x.id)}>Open evidence</button>
+                {(role === "analyst" || role === "admin") && <><button className="quiet" onClick={() => disposition(key, "confirmed")}>Confirm group</button><button className="quiet" onClick={() => disposition(key, item.evidence_tier === "no_signal" ? "insufficient_evidence" : "dismissed")}>{item.evidence_tier === "no_signal" ? "Mark insufficient evidence" : "Dismiss group"}</button><button className="quiet" onClick={() => disposition(key, "needs_review")}>Needs review</button></>}
+              </div>
+            </div>
+          );
+        })}
+        {!items.length && <p>No classification reviews for this selection.</p>}
+      </div>
+      {total > 0 && <div className="pager review-pager" aria-label="Evidence review pages">
+        <button className="quiet" disabled={offset === 0} onClick={() => load(area, status, bucket, Math.max(0, offset - pageSize))}>Previous</button>
+        <span>Page {Math.floor(offset / pageSize) + 1} of {Math.ceil(total / pageSize).toLocaleString()}</span>
+        <button className="quiet" disabled={offset + pageSize >= total} onClick={() => load(area, status, bucket, offset + pageSize)}>Next</button>
+      </div>}
     </section>
   );
 }
@@ -2356,9 +2882,42 @@ function RetentionPanel() {
       normalized_retention_days: number;
       raw_uploads: { id: number; filename: string }[];
       survey_runs: { id: number; name: string }[];
-    } | null>(null),
+  } | null>(null),
     [confirm, setConfirm] = useState(""),
-    [note, setNote] = useState("");
+    [note, setNote] = useState(""),
+    [rawDays, setRawDays] = useState("30"),
+    [normalizedDays, setNormalizedDays] = useState("365"),
+    [preset, setPreset] = useState("custom");
+  useEffect(() => {
+    api<{ raw_retention_days: number; normalized_retention_days: number }>("/v1/retention/settings")
+      .then((x) => {
+        setRawDays(String(x.raw_retention_days));
+        setNormalizedDays(String(x.normalized_retention_days));
+      })
+      .catch((x) => setNote(msg(x)));
+  }, []);
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      const x = await api<{ raw_retention_days: number; normalized_retention_days: number }>("/v1/retention/settings", {
+        method: "PATCH",
+        body: JSON.stringify({ raw_retention_days: Number(rawDays), normalized_retention_days: Number(normalizedDays) }),
+      });
+      setRawDays(String(x.raw_retention_days));
+      setNormalizedDays(String(x.normalized_retention_days));
+      setNote("Retention settings saved and audited.");
+      if (p) preview();
+    } catch (x) {
+      setNote(msg(x));
+    }
+  }
+  function choosePreset(value: string) {
+    setPreset(value);
+    if (value !== "custom") {
+      setRawDays(value);
+      setNormalizedDays(value);
+    }
+  }
   async function preview() {
     try {
       setP(await api("/v1/retention/preview"));
@@ -2398,6 +2957,12 @@ function RetentionPanel() {
         {p?.normalized_retention_days ?? "…"} days. This never runs
         automatically.
       </p>
+      <form className="retention-settings" onSubmit={saveSettings}>
+        <label className="field-label">Preset<select value={preset} onChange={(event) => choosePreset(event.target.value)}><option value="custom">Custom</option><option value="30">30 days</option><option value="90">90 days</option><option value="180">180 days</option></select></label>
+        <label className="field-label">Raw upload days<input type="number" min="1" max="3650" value={rawDays} onChange={(event) => setRawDays(event.target.value)} /></label>
+        <label className="field-label">Normalized evidence days<input type="number" min="1" max="3650" value={normalizedDays} onChange={(event) => setNormalizedDays(event.target.value)} /></label>
+        <button className="secondary">Save retention windows</button>
+      </form>
       <button className="quiet" onClick={preview}>
         Preview candidates
       </button>
@@ -2458,10 +3023,16 @@ function CollectionsPage({
     const form = e.currentTarget,
       f = new FormData(form);
     try {
+      const polygonText = String(f.get("polygon_json") || "").trim();
+      let polygon: unknown = undefined;
+      if (polygonText) {
+        try { polygon = JSON.parse(polygonText); } catch { throw new Error("Polygon must be valid JSON"); }
+      }
       await send("/v1/survey-areas", {
         name: f.get("name"),
         authorization_ref: f.get("authorization_ref"),
         precision: f.get("precision"),
+        polygon,
       });
       form.reset();
       say("Collection created.");
@@ -2530,6 +3101,10 @@ function CollectionsPage({
               <option value="coarse">Coarse cells (recommended)</option>
               <option value="exact">Exact, policy-approved</option>
             </select>
+            <label className="field-label">
+              Optional approved boundary (GeoJSON Polygon)
+              <textarea name="polygon_json" rows={3} placeholder={'{"type":"Polygon","coordinates":[[[-122.7,45.4],[-122.6,45.4],[-122.6,45.5],[-122.7,45.4]]]}'} />
+            </label>
             <button>Create collection</button>
           </form>
         </section>
@@ -2582,7 +3157,9 @@ function CollectionsPage({
 }
 function Access({ me }: { me: Me }) {
   const [u, setU] = useState<Account[]>([]),
-    [note, setNote] = useState("");
+    [note, setNote] = useState(""),
+    [currentPassword, setCurrentPassword] = useState(""),
+    [newPassword, setNewPassword] = useState("");
   async function load() {
     setU(await api<Account[]>("/v1/users"));
   }
@@ -2592,8 +3169,14 @@ function Access({ me }: { me: Me }) {
   if (me.role !== "admin")
     return (
       <section className="panel">
-        <h2>Access</h2>
-        <p>Only administrators manage users.</p>
+        <p className="eyebrow">YOUR CREDENTIALS</p>
+        <h2>Change password</h2>
+        <form onSubmit={changeOwnPassword}>
+          <label className="field-label">Current password<input type="password" minLength={1} value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
+          <label className="field-label">New password<input type="password" minLength={10} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
+          <button>Change password</button>
+        </form>
+        {note && <p className="notice">{note}</p>}
       </section>
     );
   async function add(e: FormEvent<HTMLFormElement>) {
@@ -2645,6 +3228,33 @@ function Access({ me }: { me: Me }) {
       setNote(msg(x));
     }
   }
+  async function changeOwnPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      await api("/v1/auth/password", {
+        method: "POST",
+        body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setNote("Your password changed; other sessions were revoked.");
+    } catch (x) {
+      setNote(msg(x));
+    }
+  }
+  async function resetPassword(account: Account) {
+    const next = window.prompt("New password for " + account.username + " (10+ characters):");
+    if (!next) return;
+    try {
+      await api("/v1/users/" + account.id + "/password", {
+        method: "POST",
+        body: JSON.stringify({ new_password: next }),
+      });
+      setNote("Password reset for " + account.username + "; their sessions were revoked.");
+    } catch (x) {
+      setNote(msg(x));
+    }
+  }
   return (
     <div className="split">
       <section className="panel">
@@ -2676,6 +3286,15 @@ function Access({ me }: { me: Me }) {
         {note && <p className="notice">{note}</p>}
       </section>
       <section className="panel">
+        <p className="eyebrow">YOUR CREDENTIALS</p>
+        <h2>Change password</h2>
+        <form onSubmit={changeOwnPassword}>
+          <label className="field-label">Current password<input type="password" minLength={1} value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required /></label>
+          <label className="field-label">New password<input type="password" minLength={10} value={newPassword} onChange={(event) => setNewPassword(event.target.value)} required /></label>
+          <button>Change password</button>
+        </form>
+      </section>
+      <section className="panel">
         <p className="eyebrow">CURRENT ACCESS</p>
         <h2>Accounts</h2>
         <div className="list">
@@ -2691,6 +3310,9 @@ function Access({ me }: { me: Me }) {
               <button className="quiet" onClick={() => revoke(x)}>
                 Revoke sessions
               </button>
+              <button className="quiet" onClick={() => resetPassword(x)}>
+                Reset password
+              </button>
             </div>
           ))}
           {!u.length && <p>Nothing yet.</p>}
@@ -2699,6 +3321,47 @@ function Access({ me }: { me: Me }) {
       <OUIImportPanel />
       <RetentionPanel />
     </div>
+  );
+}
+type AuditItem = {
+  id: number;
+  actor: string;
+  role: string;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
+};
+function AuditEvents() {
+  const [items, setItems] = useState<AuditItem[]>([]), [error, setError] = useState("");
+  useEffect(() => {
+    api<AuditItem[]>("/v1/audit-events?limit=200").then(setItems).catch((x) => setError(msg(x)));
+  }, []);
+  return (
+    <section className="panel">
+      <div className="panel-heading">
+        <div><p className="eyebrow">GOVERNANCE</p><h2>Audit log</h2></div>
+        <span className="tag">{items.length} recent events</span>
+      </div>
+      <p className="muted">Authentication, imports, policy changes, review decisions, and destructive actions are recorded without secrets or raw device addresses.</p>
+      {error && <p className="warning">{error}</p>}
+      <div className="table-scroll">
+        <table>
+          <thead><tr><th>When</th><th>Actor</th><th>Action</th><th>Resource</th><th>Details</th></tr></thead>
+          <tbody>{items.map((item) => (
+            <tr key={item.id}>
+              <td>{new Date(item.created_at).toLocaleString()}</td>
+              <td>{item.actor} · {item.role}</td>
+              <td>{item.action}</td>
+              <td>{item.resource_type}{item.resource_id ? " #" + item.resource_id : ""}</td>
+              <td><code>{JSON.stringify(item.detail)}</code></td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      {!items.length && !error && <p className="muted">No audit events yet.</p>}
+    </section>
   );
 }
 createRoot(document.getElementById("root")!).render(<App />);

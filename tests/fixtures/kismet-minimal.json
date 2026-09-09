@@ -1,0 +1,9 @@
+[
+  {
+    "mac": "00:11:22:33:44:77",
+    "timestamp": "2026-09-08T12:00:00Z",
+    "protocol": "wifi",
+    "rssi": -41,
+    "ssid": "Authorized-AP"
+  }
+]

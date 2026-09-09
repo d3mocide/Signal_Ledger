@@ -33,6 +33,7 @@ class IngestionJob(Base):
     source_format: Mapped[str] = mapped_column(String(32))
     file_hash: Mapped[str] = mapped_column(String(64), unique=True)
     raw_path: Mapped[str] = mapped_column(String(400))
+    raw_encrypted: Mapped[bool] = mapped_column(Boolean, default=False)
     status: Mapped[str] = mapped_column(String(24), default="queued", index=True)
     parser_version: Mapped[str] = mapped_column(String(32), default="v1")
     report: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -48,10 +49,30 @@ class Device(Base):
     oui_organization: Mapped[str] = mapped_column(String(160), default="unattributable")
     category: Mapped[str] = mapped_column(String(48), default="unknown")
     category_confidence: Mapped[float] = mapped_column(Float, default=0)
+    category_evidence: Mapped[list] = mapped_column(JSON, default=list)
+    category_scores: Mapped[dict] = mapped_column(JSON, default=dict)
+    category_rule_version: Mapped[str] = mapped_column(String(32), default="rules-v6")
+    category_overridden: Mapped[bool] = mapped_column(Boolean, default=False)
+    device_roles: Mapped[list] = mapped_column(JSON, default=list)
+    role_scores: Mapped[dict] = mapped_column(JSON, default=dict)
+    role_evidence: Mapped[list] = mapped_column(JSON, default=list)
+    role_rule_version: Mapped[str] = mapped_column(String(32), default="roles-v1")
+    address_scope: Mapped[str] = mapped_column(String(32), default="unknown")
     first_seen: Mapped[datetime] = mapped_column(DateTime)
     last_seen: Mapped[datetime] = mapped_column(DateTime)
     encrypted_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     __table_args__ = (UniqueConstraint("token", name="uq_device_token"),)
+
+class DeviceReview(Base):
+    __tablename__ = "device_reviews"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    device_id: Mapped[int] = mapped_column(ForeignKey("devices.id"), unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(24), default="open", index=True)
+    disposition_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_links: Mapped[list] = mapped_column(JSON, default=list)
+    reviewed_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 class OUIImport(Base):
     __tablename__ = "oui_imports"
@@ -78,6 +99,8 @@ class Observation(Base):
     captured_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     protocol: Mapped[str] = mapped_column(String(16), index=True)
     ssid: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    device_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    device_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
     security: Mapped[str | None] = mapped_column(String(80), nullable=True)
     rssi: Mapped[float | None] = mapped_column(Float, nullable=True)
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -109,6 +132,7 @@ class Anomaly(Base):
     explanation: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(24), default="open")
     disposition_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    evidence_links: Mapped[list] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 class SavedFilter(Base):
@@ -147,6 +171,14 @@ class LoginSession(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+class WorkspaceSetting(Base):
+    __tablename__ = "workspace_settings"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    raw_retention_days: Mapped[int] = mapped_column(Integer, default=30)
+    normalized_retention_days: Mapped[int] = mapped_column(Integer, default=365)
+    updated_by: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 # Public domain names. Compatibility aliases will be removed after endpoint cleanup.
 SurveyArea = Collection

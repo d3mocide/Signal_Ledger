@@ -13,7 +13,7 @@ import app.main as main_module
 import app.tasks as tasks_module
 from app.crypto import decrypt_address
 from app.database import Base
-from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, import_oui, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
+from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
 from app.models import Device, IngestionJob, Observation, SurveyArea, SurveyRun
 from app.security import Principal
 from app.tasks import process_ingestion
@@ -179,6 +179,46 @@ def test_direct_import_creates_a_filename_named_session_and_default_collection(t
     assert run.survey_area_id is None
     assert run.name.startswith("phone-capture · ")
     assert run.completed
+
+
+def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, class_=_PostgisAgnosticSession)
+    monkeypatch.setattr(main_module, "RAW", tmp_path)
+    monkeypatch.setattr(main_module.queue, "enqueue", lambda *args, **kwargs: None)
+    monkeypatch.setattr(tasks_module, "SessionLocal", Session)
+    db = Session()
+    upload = UploadFile(
+        filename="authorized-capture.csv",
+        file=BytesIO(
+            b"MAC,FirstTime,SSID,CurrentLatitude,CurrentLongitude,RSSI\n"
+            b"00:11:22:33:44:55,2026-09-08T12:00:00Z,office-router,37.7749,-122.4194,-41\n"
+        ),
+    )
+    queued = asyncio.run(
+        quick_import(
+            source_format="wigle",
+            file=upload,
+            session_name="E2E import",
+            collection_name="Authorized E2E area",
+            db=db,
+            principal=Principal(1, "analyst", "analyst"),
+        )
+    )
+    assert queued["status"] == "queued"
+    job = db.get(IngestionJob, queued["id"])
+    process_ingestion(job.id)
+    db.expire_all()
+
+    report = ingestion_report(job.id, db=db, principal=Principal(1, "viewer", "viewer"))
+    assert "Status: complete" in report.body.decode()
+    assert "accepted: 1" in report.body.decode()
+    inventory = devices(limit=100, offset=0, db=db, principal=Principal(1, "viewer", "viewer"))
+    assert inventory["total"] == 1
+    assert inventory["items"][0]["category"] == "network"
+    coverage = map_clusters(run_id=queued["capture_session_id"], limit=100, db=db, principal=Principal(1, "viewer", "viewer"))
+    assert coverage == [{"cell": "37.775,-122.419", "count": 1, "avg_rssi": -41.0, "device_count": 1}]
 
 
 def test_retention_preview_is_non_destructive_and_confirmed_sweep_removes_evidence(tmp_path, monkeypatch):

@@ -1,4 +1,4 @@
-import csv, hashlib, io, os, time
+import csv, hashlib, io, os, re, time
 import urllib.error, urllib.request
 from collections import Counter, defaultdict
 from contextlib import asynccontextmanager
@@ -10,15 +10,19 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from redis import Redis
 from rq import Queue
-from sqlalchemy import delete, func, select
+from sqlalchemy import Text, and_, case, cast, delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .crypto import decrypt_address
+from .categorization import rebuild_categories
 from .database import SessionLocal
 from .migrations import upgrade
-from .models import Anomaly, AuditEvent, Baseline, Device, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, SavedFilter, SurveyArea, SurveyRun, User
+from .models import Anomaly, AuditEvent, Baseline, Device, DeviceReview, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, SavedFilter, SurveyArea, SurveyRun, User, WorkspaceSetting
+from .policies import DEVICE_ROLE_NAMES, ROLE_RULE_VERSION, validate_polygon
+from .raw_storage import write_raw
 from .security import Principal, ROLE_ORDER, ROLES, SESSION_COOKIE, authenticate, expires_at, password_hash, password_valid, session_token, token_hash
 from .tasks import process_ingestion
+from .upload_security import validate_upload
 
 CARTO_API_KEY = os.getenv("CARTO_API_KEY") or None
 IEEE_OUI_URL = "https://standards-oui.ieee.org/oui/oui.csv"
@@ -67,6 +71,66 @@ def device_view(device):
     data = dump(device)
     data["has_stored_address"] = data.pop("encrypted_address") is not None
     return data
+def device_review_view(device, review):
+    confidence = device.category_confidence or 0
+    priority = 1.0 if device.category == "unknown" else max(0.1, round(1 - confidence, 3))
+    if device.role_evidence: priority = min(1.0, round(priority + .1, 3))
+    return {"device": device_view(device), "review": dump(review) if review else {"status": "open", "disposition_note": None, "evidence_links": [], "reviewed_by": None, "reviewed_at": None}, "priority": priority}
+def _review_text(value):
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", (value or "").lower()).split())
+def _review_candidate_rows(db, area_id=None, status="all"):
+    low_confidence = and_(Device.category != "unknown", Device.category != "bluetooth", Device.category_confidence < .55)
+    candidate = or_(Device.category == "unknown", low_confidence, cast(Device.role_evidence, Text) != "[]")
+    query = select(Device, DeviceReview).outerjoin(DeviceReview, DeviceReview.device_id == Device.id).where(candidate)
+    if area_id:
+        query = query.where(Device.id.in_(select(Observation.device_id).join(SurveyRun).where(SurveyRun.survey_area_id == area_id)))
+    if status == "open": query = query.where(or_(DeviceReview.id.is_(None), DeviceReview.status.in_(("open", "needs_review"))))
+    elif status != "all": query = query.where(DeviceReview.status == status)
+    return db.execute(query).all()
+def _review_groups(db, area_id=None, status="all"):
+    rows = _review_candidate_rows(db, area_id, status)
+    device_ids = [device.id for device, _ in rows]
+    facts = {}
+    counts = {}
+    if device_ids:
+        for device_id, protocol, ssid, device_name, device_type in db.execute(select(Observation.device_id, Observation.protocol, Observation.ssid, Observation.device_name, Observation.device_type).where(Observation.device_id.in_(device_ids)).order_by(Observation.captured_at.desc())).all():
+            facts.setdefault(device_id, {"last_protocol": protocol, "last_ssid": ssid, "last_device_name": device_name, "last_device_type": device_type})
+        counts = {device_id: count for device_id, count in db.execute(select(Observation.device_id, func.count(Observation.id)).where(Observation.device_id.in_(device_ids)).group_by(Observation.device_id)).all()}
+    groups = {}
+    for device, review in rows:
+        fact = facts.get(device.id, {})
+        vendor = "" if device.oui_organization == "unattributable" else _review_text(device.oui_organization)
+        signal_parts = [vendor, _review_text(fact.get("last_device_name")), _review_text(fact.get("last_ssid")), _review_text(fact.get("last_device_type")), _review_text(fact.get("last_protocol"))]
+        evidence_marker = _review_text("|".join((device.category_evidence or []) + (device.role_evidence or [])))
+        signature = "|".join(signal_parts + ([evidence_marker] if evidence_marker else [])) or "no-signal"
+        group_key = hashlib.sha256(signature.encode()).hexdigest()[:16]
+        has_text = any(signal_parts[1:4])
+        has_rule_evidence = any(item and not item.startswith("unknown:") for item in (device.category_evidence or [])) or bool(device.role_evidence)
+        if has_text or has_rule_evidence:
+            tier = "actionable"
+        elif vendor:
+            tier = "sparse"
+        else:
+            tier = "no_signal"
+        group = groups.setdefault(group_key, {"group_key": group_key, "evidence_tier": tier, "label": None, "device_ids": [], "device_count": 0, "observation_count": 0, "priority": 0, "categories": Counter(), "roles": Counter(), "evidence": [], "representative": None})
+        group["device_ids"].append(device.id)
+        group["device_count"] += 1
+        group["observation_count"] += counts.get(device.id, 0)
+        group["priority"] = max(group["priority"], device_review_view(device, review)["priority"])
+        group["categories"][device.category] += 1
+        for role in device.device_roles or []: group["roles"][role] += 1
+        for item in (device.category_evidence or []) + (device.role_evidence or []):
+            if item not in group["evidence"] and not item.startswith("unknown:"): group["evidence"].append(item)
+        if group["label"] is None:
+            label_parts = [fact.get("last_device_name"), fact.get("last_ssid"), fact.get("last_device_type"), device.oui_organization if device.oui_organization != "unattributable" else None]
+            group["label"] = " · ".join(str(item) for item in label_parts if item) or "No usable identifiers"
+            representative = device_review_view(device, review)
+            representative.update(fact)
+            representative["observation_count"] = counts.get(device.id, 0)
+            group["representative"] = representative
+    return list(groups.values())
+def _public_review_group(group):
+    return {"group_key": group["group_key"], "evidence_tier": group["evidence_tier"], "label": group["label"], "device_count": group["device_count"], "observation_count": group["observation_count"], "priority": group["priority"], "categories": dict(group["categories"]), "roles": dict(group["roles"]), "evidence": group["evidence"][:8], "representative": group["representative"]}
 def filtered_observations(query, area_id=None, run_id=None, device_id=None, protocol=None, vendor=None, category=None, start=None, end=None, min_quality=None, min_rssi=None):
     """Apply the same bounded discovery filters to queries already joined to runs/devices."""
     if area_id: query = query.where(SurveyRun.survey_area_id == area_id)
@@ -130,10 +194,31 @@ class BaselineInput(BaseModel):
 class AnomalyPatch(BaseModel):
     status: str
     disposition_note: str | None = Field(default=None, max_length=2000)
+    evidence_links: list[str] = Field(default_factory=list, max_length=8)
 class RetentionSweepInput(BaseModel):
     confirm: str = Field(max_length=32)
 class CollectionAssignment(BaseModel):
     name: str = Field(min_length=1, max_length=160)
+class PasswordChangeInput(BaseModel):
+    current_password: str = Field(min_length=1, max_length=256)
+    new_password: str = Field(min_length=10, max_length=256)
+class AdminPasswordInput(BaseModel):
+    new_password: str = Field(min_length=10, max_length=256)
+class RetentionSettingsInput(BaseModel):
+    raw_retention_days: int = Field(ge=1, le=3650)
+    normalized_retention_days: int = Field(ge=1, le=3650)
+class CategoryPatch(BaseModel):
+    category: str = Field(min_length=1, max_length=48)
+class DeviceReviewPatch(BaseModel):
+    status: str
+    disposition_note: str | None = Field(default=None, max_length=2000)
+    evidence_links: list[str] = Field(default_factory=list, max_length=8)
+class DeviceReviewGroupPatch(DeviceReviewPatch):
+    group_key: str = Field(min_length=8, max_length=64)
+    area_id: int | None = None
+
+ALLOWED_CATEGORIES = {"unknown", "camera", "printer", "network", "mobile", "iot", "bluetooth", "workstation", "audio", "entertainment", "wearable", "automotive"}
+DEVICE_REVIEW_STATUSES = {"open", "confirmed", "dismissed", "needs_review", "insufficient_evidence"}
 
 def baseline_expectations(db, area_id, run_ids):
     # run_ids are already validated (in create_baseline) to belong to area_id,
@@ -179,6 +264,13 @@ def establish_session(response, user, db):
     db.add(LoginSession(user_id=user.id, token_hash=token_hash(token), expires_at=expires_at()))
     response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="strict", secure=os.getenv("COOKIE_SECURE", "false").lower() == "true", max_age=int(os.getenv("SESSION_DAYS", "7")) * 86400)
 
+def workspace_settings(db):
+    settings = db.get(WorkspaceSetting, 1)
+    if not settings:
+        settings = WorkspaceSetting(id=1, raw_retention_days=max(1, int(os.getenv("RAW_RETENTION_DAYS", "30"))), normalized_retention_days=max(1, int(os.getenv("NORMALIZED_RETENTION_DAYS", "365"))))
+        db.add(settings); db.flush()
+    return settings
+
 @app.get("/")
 def home(): return FileResponse("app/static/index.html")
 @app.get("/health")
@@ -201,6 +293,16 @@ def login(body: Credentials, response: Response, db: Session = Depends(db_sessio
     if user.disabled: raise HTTPException(403, "User account is disabled")
     establish_session(response, user, db); audit(db, Principal(user.id, user.username, user.role), "auth.login", "user", user.id); db.commit()
     return {"username": user.username, "role": user.role}
+@app.post("/v1/auth/password")
+def change_password(body: PasswordChangeInput, response: Response, db: Session = Depends(db_session), principal: Principal = Depends(authenticate)):
+    user = db.get(User, principal.user_id)
+    if not user or not password_valid(body.current_password, user.password_hash): raise HTTPException(403, "Current password is incorrect")
+    if body.current_password == body.new_password: raise HTTPException(422, "New password must differ from the current password")
+    user.password_hash = password_hash(body.new_password)
+    db.execute(delete(LoginSession).where(LoginSession.user_id == user.id))
+    audit(db, principal, "auth.password_changed", "user", user.id)
+    establish_session(response, user, db); db.commit()
+    return {"status": "password_changed"}
 @app.post("/v1/auth/logout")
 def logout(request: Request, response: Response, db: Session = Depends(db_session), principal: Principal = Depends(authenticate)):
     token = request.cookies.get(SESSION_COOKIE)
@@ -236,6 +338,14 @@ def revoke_user_sessions(user_id: int, db: Session = Depends(db_session), princi
     removed = db.execute(delete(LoginSession).where(LoginSession.user_id == user_id)).rowcount
     audit(db, principal, "user.sessions_revoked", "user", user_id, {"sessions": removed}); db.commit()
     return {"revoked": removed}
+@app.post("/v1/users/{user_id}/password")
+def reset_user_password(user_id: int, body: AdminPasswordInput, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
+    user = db.get(User, user_id)
+    if not user: raise HTTPException(404, "User not found")
+    user.password_hash = password_hash(body.new_password)
+    removed = db.execute(delete(LoginSession).where(LoginSession.user_id == user.id)).rowcount
+    audit(db, principal, "user.password_reset", "user", user.id, {"sessions_revoked": removed}); db.commit()
+    return {"status": "password_reset", "user_id": user.id}
 @app.get("/v1/oui/status")
 def oui_status(db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     latest = db.scalar(select(OUIImport).order_by(OUIImport.created_at.desc()))
@@ -284,6 +394,8 @@ def create_area(body: AreaInput, db: Session = Depends(db_session), principal: P
     if not name: raise HTTPException(422, "name must not be empty")
     if db.scalar(select(SurveyArea).where(SurveyArea.name == name)): raise HTTPException(409, "A collection with that name already exists")
     data = body.model_dump(); data["name"] = name; data["authorization_ref"] = data["authorization_ref"].strip()
+    try: data["polygon"] = validate_polygon(body.polygon)
+    except ValueError as error: raise HTTPException(422, str(error))
     area = SurveyArea(**data); db.add(area)
     try:
         db.flush(); audit(db, principal, "survey_area.created", "survey_area", area.id, {"precision": area.precision}); db.commit()
@@ -346,13 +458,28 @@ def delete_run(run_id: int, db: Session = Depends(db_session), principal: Princi
     return {"status": "deleted", "run_id": run_id}
 
 def retention_preview(db):
-    raw_days = max(1, int(os.getenv("RAW_RETENTION_DAYS", "30")))
-    normalized_days = max(1, int(os.getenv("NORMALIZED_RETENTION_DAYS", "365")))
+    settings = workspace_settings(db)
+    raw_days, normalized_days = settings.raw_retention_days, settings.normalized_retention_days
     now = datetime.utcnow()
     raw_cutoff, normalized_cutoff = now - timedelta(days=raw_days), now - timedelta(days=normalized_days)
     raw_jobs = list(db.scalars(select(IngestionJob).where(IngestionJob.created_at < raw_cutoff, IngestionJob.raw_path != "expired").order_by(IngestionJob.created_at)).all())
     runs = list(db.scalars(select(SurveyRun).where(SurveyRun.created_at < normalized_cutoff).order_by(SurveyRun.created_at)).all())
     return {"raw_retention_days": raw_days, "normalized_retention_days": normalized_days, "raw_uploads": [{"id": job.id, "filename": job.filename, "created_at": job.created_at} for job in raw_jobs], "survey_runs": [{"id": run.id, "name": run.name, "created_at": run.created_at} for run in runs]}
+
+@app.get("/v1/retention/settings")
+def get_retention_settings(db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
+    return dump(workspace_settings(db))
+
+@app.patch("/v1/retention/settings")
+def update_retention_settings(body: RetentionSettingsInput, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
+    settings = workspace_settings(db)
+    settings.raw_retention_days = body.raw_retention_days
+    settings.normalized_retention_days = body.normalized_retention_days
+    settings.updated_by = principal.actor
+    settings.updated_at = datetime.utcnow()
+    audit(db, principal, "retention.settings_updated", "retention", settings.id, {"raw_retention_days": body.raw_retention_days, "normalized_retention_days": body.normalized_retention_days})
+    db.commit(); db.refresh(settings)
+    return dump(settings)
 
 @app.get("/v1/retention/preview")
 def get_retention_preview(db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
@@ -388,10 +515,14 @@ async def ingest(survey_run_id: int, source_format: str, file: UploadFile = File
     if Path(filename).suffix.lower() not in ALLOWED_SUFFIXES: raise HTTPException(415, "Only CSV, JSON, NDJSON, and native Kismet uploads are allowed")
     blob = await file.read()
     if not blob or len(blob) > MAX_UPLOAD: raise HTTPException(413, "Upload must be 1 byte to 100 MB")
+    try:
+        validate_upload(filename, source_format, blob)
+    except ValueError as error:
+        raise HTTPException(415, str(error)) from error
     digest = hashlib.sha256(blob).hexdigest(); old = db.scalar(select(IngestionJob).where(IngestionJob.file_hash == digest))
     if old: return {**dump(old), "idempotent": True}
-    path = RAW / digest; path.write_bytes(blob)
-    job = IngestionJob(survey_run_id=survey_run_id, filename=filename, source_format=source_format, file_hash=digest, raw_path=str(path))
+    path = RAW / digest; raw_encrypted = write_raw(path, blob)
+    job = IngestionJob(survey_run_id=survey_run_id, filename=filename, source_format=source_format, file_hash=digest, raw_path=str(path), raw_encrypted=raw_encrypted)
     db.add(job); db.flush(); audit(db, principal, "ingestion.queued", "ingestion_job", job.id, {"source": source_format, "bytes": len(blob)}); db.commit(); db.refresh(job); queue.enqueue(process_ingestion, job.id, job_timeout=600); return job_view(job)
 
 @app.post("/v1/imports")
@@ -455,12 +586,14 @@ def retry_ingestion(job_id: int, db: Session = Depends(db_session), principal: P
     return job_view(job)
 DEVICE_SORT_COLUMNS = {"last_seen": Device.last_seen, "first_seen": Device.first_seen, "oui_organization": Device.oui_organization, "category": Device.category}
 @app.get("/v1/devices")
-def devices(area_id: int | None = None, run_id: int | None = None, vendor: str | None = None, category: str | None = None, protocol: str | None = None, attributed_only: bool = False, sort: str = "last_seen", direction: str = "desc", start: datetime | None = None, end: datetime | None = None, min_quality: float | None = None, min_rssi: float | None = None, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+def devices(area_id: int | None = None, run_id: int | None = None, vendor: str | None = None, category: str | None = None, role: str | None = None, protocol: str | None = None, attributed_only: bool = False, sort: str = "last_seen", direction: str = "desc", start: datetime | None = None, end: datetime | None = None, min_quality: float | None = None, min_rssi: float | None = None, limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     if sort not in DEVICE_SORT_COLUMNS: raise HTTPException(422, "Unknown sort column")
     if direction not in {"asc", "desc"}: raise HTTPException(422, "direction must be asc or desc")
+    if role and role not in DEVICE_ROLE_NAMES: raise HTTPException(422, "Unknown device role")
     query = select(Device)
     if vendor: query = query.where(Device.oui_organization.ilike(f"%{vendor}%"))
     if category: query = query.where(Device.category == category)
+    if role: query = query.where(cast(Device.device_roles, Text).like(f'%"{role}"%'))
     if attributed_only: query = query.where(Device.oui_organization != "unattributable")
     observation_match = filtered_observations(select(Observation.id).join(SurveyRun).join(Device), area_id, run_id, protocol=protocol, start=start, end=end, min_quality=min_quality, min_rssi=min_rssi).where(Observation.device_id == Device.id)
     if any(value is not None for value in (area_id, run_id, protocol, start, end, min_quality, min_rssi)): query = query.where(observation_match.exists())
@@ -470,9 +603,9 @@ def devices(area_id: int | None = None, run_id: int | None = None, vendor: str |
     device_ids = [item.id for item in items]
     last_seen_facts = {}
     if device_ids:
-        for device_id, seen_protocol, ssid in db.execute(select(Observation.device_id, Observation.protocol, Observation.ssid).where(Observation.device_id.in_(device_ids)).order_by(Observation.captured_at.desc())):
-            last_seen_facts.setdefault(device_id, {"last_protocol": seen_protocol, "last_ssid": ssid})
-    return {"items": [{**device_view(x), **last_seen_facts.get(x.id, {"last_protocol": None, "last_ssid": None})} for x in items], "total": total, "limit": limit, "offset": offset}
+        for device_id, seen_protocol, ssid, device_name, device_type in db.execute(select(Observation.device_id, Observation.protocol, Observation.ssid, Observation.device_name, Observation.device_type).where(Observation.device_id.in_(device_ids)).order_by(Observation.captured_at.desc())):
+            last_seen_facts.setdefault(device_id, {"last_protocol": seen_protocol, "last_ssid": ssid, "last_device_name": device_name, "last_device_type": device_type})
+    return {"items": [{**device_view(x), **last_seen_facts.get(x.id, {"last_protocol": None, "last_ssid": None, "last_device_name": None, "last_device_type": None})} for x in items], "total": total, "limit": limit, "offset": offset}
 @app.get("/v1/devices/vendors")
 def device_vendor_summary(area_id: int | None = None, db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     query = select(Device.oui_organization, func.count(Device.id)).group_by(Device.oui_organization)
@@ -480,6 +613,95 @@ def device_vendor_summary(area_id: int | None = None, db: Session = Depends(db_s
     rows = db.execute(query.order_by(func.count(Device.id).desc())).all()
     total = sum(count for _, count in rows) or 1
     return [{"oui_organization": name, "device_count": count, "share": round(count / total, 4)} for name, count in rows]
+@app.get("/v1/devices/categories")
+def device_category_summary(area_id: int | None = None, db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    query = select(Device.category, func.count(Device.id), func.avg(Device.category_confidence), func.sum(case((Device.category_overridden == True, 1), else_=0))).group_by(Device.category)
+    if area_id:
+        query = query.where(Device.id.in_(select(Observation.device_id).join(SurveyRun).where(SurveyRun.survey_area_id == area_id)))
+    rows = db.execute(query.order_by(func.count(Device.id).desc(), Device.category.asc())).all()
+    total = sum(count for _, count, _, _ in rows) or 1
+    return [{"category": category or "unknown", "device_count": count, "share": round(count / total, 4), "mean_confidence": round(confidence or 0, 3), "override_count": overrides or 0} for category, count, confidence, overrides in rows]
+@app.get("/v1/devices/roles")
+def device_role_summary(area_id: int | None = None, db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    query = select(Device.id, Device.device_roles, Device.role_scores, Device.role_evidence).where(Device.device_roles.is_not(None))
+    total_query = select(func.count(Device.id))
+    if area_id:
+        query = query.where(Device.id.in_(select(Observation.device_id).join(SurveyRun).where(SurveyRun.survey_area_id == area_id)))
+        total_query = total_query.where(Device.id.in_(select(Observation.device_id).join(SurveyRun).where(SurveyRun.survey_area_id == area_id)))
+    counts = {role: 0 for role in DEVICE_ROLE_NAMES}
+    score_totals = {role: 0.0 for role in DEVICE_ROLE_NAMES}
+    evidence_counts = {role: Counter() for role in DEVICE_ROLE_NAMES}
+    tagged_devices = set()
+    for device_id, roles, scores, evidence in db.execute(query).all():
+        for role in roles or []:
+            if role in counts:
+                counts[role] += 1
+                tagged_devices.add(device_id)
+                score_totals[role] += float((scores or {}).get(role, 0))
+                evidence_counts[role].update(item for item in (evidence or []) if item.startswith(role + ":"))
+    total = db.scalar(total_query) or 1
+    assignments = sum(counts.values())
+    return {"roles": [{"role": role, "device_count": counts[role], "share": round(counts[role] / total, 4), "mean_score": round(score_totals[role] / counts[role], 3) if counts[role] else 0, "top_evidence": [item for item, _ in evidence_counts[role].most_common(3)]} for role in DEVICE_ROLE_NAMES if counts[role]], "total_devices": total, "role_tagged_devices": len(tagged_devices), "role_assignments": assignments, "overlap_devices": max(0, assignments - len(tagged_devices))}
+@app.get("/v1/device-reviews")
+def list_device_reviews(area_id: int | None = None, status: str = "open", bucket: str = "actionable", limit: int = Query(100, ge=1, le=500), offset: int = Query(0, ge=0), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
+    if status != "all" and status not in DEVICE_REVIEW_STATUSES: raise HTTPException(422, "Unknown device review status")
+    if bucket not in {"actionable", "no_signal", "all"}: raise HTTPException(422, "Unknown device review bucket")
+    limit_value = limit if isinstance(limit, int) else 100
+    offset_value = offset if isinstance(offset, int) else 0
+    groups = _review_groups(db, area_id, status)
+    raw_counts = {name: {"groups": sum(1 for group in groups if group["evidence_tier"] == name), "devices": sum(group["device_count"] for group in groups if group["evidence_tier"] == name)} for name in ("actionable", "sparse", "no_signal")}
+    counts = {"actionable": {"groups": raw_counts["actionable"]["groups"] + raw_counts["sparse"]["groups"], "devices": raw_counts["actionable"]["devices"] + raw_counts["sparse"]["devices"]}, "sparse": raw_counts["sparse"], "no_signal": raw_counts["no_signal"]}
+    if bucket == "actionable": groups = [group for group in groups if group["evidence_tier"] != "no_signal"]
+    elif bucket == "no_signal": groups = [group for group in groups if group["evidence_tier"] == "no_signal"]
+    tier_order = {"actionable": 0, "sparse": 1, "no_signal": 2}
+    groups.sort(key=lambda group: (tier_order[group["evidence_tier"]], -group["priority"], -group["device_count"], group["label"]))
+    total = len(groups)
+    device_total = sum(group["device_count"] for group in groups)
+    return {"items": [_public_review_group(group) for group in groups[offset_value:offset_value + limit_value]], "total": total, "device_total": device_total, "counts": counts, "limit": limit_value, "offset": offset_value, "bucket": bucket}
+@app.patch("/v1/device-reviews/{device_id}")
+def update_device_review(device_id: int, body: DeviceReviewPatch, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
+    if body.status not in DEVICE_REVIEW_STATUSES: raise HTTPException(422, "Unknown device review status")
+    device = db.get(Device, device_id)
+    if not device: raise HTTPException(404, "Device not found")
+    review = db.scalar(select(DeviceReview).where(DeviceReview.device_id == device_id))
+    if not review:
+        review = DeviceReview(device_id=device_id)
+        db.add(review)
+    review.status = body.status
+    review.disposition_note = body.disposition_note
+    review.evidence_links = [link.strip() for link in body.evidence_links if link.strip()][:8]
+    review.reviewed_by = principal.actor
+    review.reviewed_at = datetime.utcnow()
+    audit(db, principal, "device.review.disposition", "device", device_id, {"status": body.status, "evidence_links": len(review.evidence_links)})
+    db.commit()
+    return device_review_view(device, review)
+@app.patch("/v1/device-review-groups")
+def update_device_review_group(body: DeviceReviewGroupPatch, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
+    if body.status not in DEVICE_REVIEW_STATUSES: raise HTTPException(422, "Unknown device review status")
+    groups = _review_groups(db, body.area_id, "all")
+    group = next((item for item in groups if item["group_key"] == body.group_key), None)
+    if not group: raise HTTPException(404, "Review group not found")
+    links = [link.strip() for link in body.evidence_links if link.strip()][:8]
+    now = datetime.utcnow()
+    for device_id in group["device_ids"]:
+        review = db.scalar(select(DeviceReview).where(DeviceReview.device_id == device_id))
+        if not review:
+            review = DeviceReview(device_id=device_id)
+            db.add(review)
+        review.status = body.status
+        review.disposition_note = body.disposition_note
+        review.evidence_links = links
+        review.reviewed_by = principal.actor
+        review.reviewed_at = now
+    audit(db, principal, "device.review_group.disposition", "device_review_group", body.group_key, {"status": body.status, "devices": len(group["device_ids"]), "evidence_links": len(links)})
+    db.commit()
+    return {"group_key": body.group_key, "status": body.status, "devices_updated": len(group["device_ids"])}
+@app.post("/v1/devices/categories/rebuild")
+def rebuild_device_categories(limit: int = Query(50000, ge=1, le=50000), db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
+    updated, overridden = rebuild_categories(db, limit)
+    audit(db, principal, "device.categories_rebuilt", "device_category_rules", detail={"updated": updated, "overridden_skipped": overridden, "limit": limit})
+    db.commit()
+    return {"rule_version": "rules-v6", "role_rule_version": ROLE_RULE_VERSION, "updated": updated, "overridden_skipped": overridden, "limit": limit}
 @app.get("/v1/devices/{device_id}")
 def device_detail(device_id: int, limit: int = Query(100, ge=1, le=500), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     device = db.get(Device, device_id)
@@ -492,6 +714,15 @@ def device_detail(device_id: int, limit: int = Query(100, ge=1, le=500), db: Ses
     # collection(s) can only be derived by joining its observations' runs.
     collections = list(db.scalars(select(SurveyArea.name).join(SurveyRun, SurveyRun.survey_area_id == SurveyArea.id).join(Observation, Observation.survey_run_id == SurveyRun.id).where(Observation.device_id == device_id).distinct().order_by(SurveyArea.name)).all())
     return {"device": device_view(device), "summary": {"observations": observation_count, "runs": run_count, "coarse_cells": cells}, "collections": collections, "observations": [{**dump(item), "run_name": run_name} for item, run_name in records]}
+@app.patch("/v1/devices/{device_id}/category")
+def override_device_category(device_id: int, body: CategoryPatch, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
+    if body.category not in ALLOWED_CATEGORIES: raise HTTPException(422, "Unknown device category")
+    device = db.get(Device, device_id)
+    if not device: raise HTTPException(404, "Device not found")
+    device.category = body.category; device.category_confidence = 1.0; device.category_overridden = True
+    device.category_evidence = [f"analyst override by {principal.actor}"]
+    audit(db, principal, "device.category_overridden", "device", device.id, {"category": body.category}); db.commit()
+    return device_view(device)
 @app.post("/v1/devices/{device_id}/reveal-address")
 def reveal_device_address(device_id: int, db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
     device = db.get(Device, device_id)
@@ -567,7 +798,7 @@ def update_anomaly(anomaly_id: int, body: AnomalyPatch, db: Session = Depends(db
     if body.status not in {"open", "dismissed", "confirmed", "needs_review"}: raise HTTPException(422, "Unknown anomaly status")
     item = db.get(Anomaly, anomaly_id)
     if not item: raise HTTPException(404, "Anomaly not found")
-    item.status = body.status; item.disposition_note = body.disposition_note; audit(db, principal, "anomaly.disposition", "anomaly", item.id, {"status": item.status}); db.commit(); return dump(item)
+    item.status = body.status; item.disposition_note = body.disposition_note; item.evidence_links = [link.strip() for link in body.evidence_links if link.strip()][:8]; audit(db, principal, "anomaly.disposition", "anomaly", item.id, {"status": item.status, "evidence_links": len(item.evidence_links)}); db.commit(); return dump(item)
 @app.post("/v1/saved-filters")
 def save_filter(body: FilterInput, db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     item = SavedFilter(name=body.name, owner=principal.actor, resource=body.resource, filters=body.filters); db.add(item); db.flush(); audit(db, principal, "filter.saved", "saved_filter", item.id); db.commit(); return dump(item)

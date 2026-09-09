@@ -1,6 +1,8 @@
 # Signal Ledger — Delivery Roadmap
 
-**Source of requirements:** [`../plan.md`](../plan.md).  
+**Source of requirements:** the original `plan.md` is not present in this
+checkout; current policy decisions are recorded in [`POLICIES.md`](POLICIES.md)
+and [`DESIGN.md`](DESIGN.md).
 **How to use this file:** check an item only after the implementation and its
 named validation both exist. “Implemented” is not “production hardened.”
 
@@ -20,8 +22,8 @@ baseline-to-review loop; hardening and policy defaults remain explicit gates.
 - [x] Validate the actual authorized WiGLE variant through an import job.
 - [x] Validate and fixture an authorized Kismet 2025.09 native SQLite log
   (schema v9) through its summary-device table only.
-- [ ] Set written retention, export, and area-precision policies.
-- [ ] Define an approved survey-area polygon format and acceptance checks.
+- [x] Set written retention, export, and area-precision policies.
+- [x] Define an approved survey-area polygon format and acceptance checks.
 
 **Exit gate:** real authorized fixtures from both source families, documented
 policy defaults, and deterministic parser reports in CI.
@@ -41,7 +43,7 @@ policy defaults, and deterministic parser reports in CI.
   and user creation.
 - [x] User disable/enable and administrator session revocation controls.
 - [x] Redis-backed request-rate limit and browser security headers.
-- [ ] Password reset/change flow and TLS/secure-cookie production deployment
+- [x] Password reset/change flow and TLS/secure-cookie production deployment
   runbook/configuration test.
 
 ### Ingestion
@@ -61,7 +63,7 @@ policy defaults, and deterministic parser reports in CI.
 - [ ] Encrypted or external object storage with short retention configuration.
 - [x] Downloadable, human-readable ingestion report.
 - [x] Location-completeness, parser-version, and rejection-reason report context.
-- [ ] Integration test: upload → worker → report → device/coverage APIs.
+- [x] Integration test: upload → worker → report → device/coverage APIs.
 
 ### Explorer
 
@@ -79,7 +81,7 @@ policy defaults, and deterministic parser reports in CI.
   and vendor across inventory, observations, map, and analytics APIs.
 - [x] Optional MapLibre basemap mode with an explicit privacy decision for any
   external tile provider; the local coarse map remains the default.
-- [ ] Time-series, category/vendor, and quality/coverage overlays.
+- [x] Time-series, category/vendor, and quality/coverage overlays.
 - [x] Replace in-memory analytics aggregation with grouped SQL queries.
 - [x] Populate PostGIS geometry during new ingestion while retaining coarse-cell
   UI defaults.
@@ -91,9 +93,14 @@ policy defaults, and deterministic parser reports in CI.
   organization label, and re-enrichment of existing devices.
 - [x] Reviewed IEEE MA-L import contract: retain only prefix and organization,
   record source hash/version, and ignore non-MA-L registry rows.
-- [ ] Transparent category-rule engine, confidence, evidence, and review override.
-- [ ] Area polygon validation/enforcement and exact-location privilege/audit path.
-- [ ] Saved-filter UI and audit-event UI.
+- [x] Transparent category-rule engine using OUI, device name/type, SSID,
+  protocol, and privacy-safe MAC scope, with confidence, evidence, and review
+  override.
+- [x] Orthogonal, explainable device-role/context rules for POS, security,
+  smart-home, industrial/OT, medical, and guest-network signals, with
+  inventory filtering and retained evidence.
+- [x] Area polygon validation/enforcement and exact-location privilege/audit path.
+- [x] Saved-filter UI and audit-event UI.
 
 **Exit gate:** a user can create an authorized area/run, import each supported
 fixture repeatably, understand the report, filter and inspect results, and use
@@ -112,7 +119,7 @@ a coarse map/analytics view. Automated integration tests cover the path.
 - [x] Explainable Wi-Fi profile-change rule preserving source facts.
 - [x] Anomaly queue with score, confidence, explanation, and disposition.
 - [x] Audit trail for baseline creation/evaluation and dispositions.
-- [ ] Analyst disposition notes and evidence links in the UI.
+- [x] Analyst disposition notes and evidence links in the UI.
 - [ ] End-to-end integration tests from upload through every finding type.
 
 **Exit gate:** selected runs yield a reproducible baseline and reviewable,
@@ -122,7 +129,7 @@ non-automated findings with evidence and explanations.
 
 - [x] Admin-reviewed retention/deletion workflow removes raw upload, observations,
   unreferenced device tokens, derived cells, and affected baseline/anomaly material; test it.
-- [ ] Admin-editable retention windows (raw/normalized) with selectable presets
+- [x] Admin-editable retention windows (raw/normalized) with selectable presets
   (30/90/180 days, custom), replacing the current env-var-only
   `RAW_RETENTION_DAYS`/`NORMALIZED_RETENTION_DAYS` read-only display; needs a
   persisted settings row, an audited update endpoint, and the purge sweep
@@ -130,7 +137,7 @@ non-automated findings with evidence and explanations.
 - [x] Backup/restore tooling and operational runbook; restore drill pending.
 - [x] HMAC-key rotation and re-baselining procedure; live drill pending.
 - [ ] Load/performance tests for realistic import and explorer volumes.
-- [ ] Parser regression fixtures for new source variants.
+- [x] Parser regression fixtures for JSON-array Kismet source variant.
 - [x] First hardening pass: headers, session revocation, request limiting, secret
   handling, and deliberate destructive-operation controls.
 - [ ] Accessibility and responsive UI pass.
@@ -140,13 +147,47 @@ non-automated findings with evidence and explanations.
 **Exit gate:** the system can be operated, backed up, restored, cleaned up,
 and evolved without weakening the privacy or authorization boundaries.
 
+## Improvement program — inventory intelligence
+
+These workstreams extend the current category and role evidence layer without
+turning inferred labels into identity or security verdicts.
+
+- [x] Durable evidence review queue for unknown/low-confidence devices, with
+  category/role evidence, analyst disposition, notes, references, audit
+  events, evidence-quality buckets, repeated-signature grouping, and group
+  dispositions. Review context is optional, no-signal groups support an
+  `insufficient_evidence` disposition, and single-device groups expose an
+  audited category override picker. The queue is paginated at 24 groups per
+  page, and the SPA pages are addressable with browser back/forward support.
+  Validation: 44 API/UI regression tests, production build, and live
+  actionable/no-signal count check.
+- [x] Role/category overview dashboard with counts, confidence, top evidence,
+  overlap handling, and click-through inventory filters. Validation: 44
+  containerized tests, production frontend build, and live summary payload
+  check.
+- [ ] Rule feedback loop that records analyst corrections as reviewable,
+  versioned rule proposals; no automatic rule promotion.
+- [ ] Privacy-safe device fingerprinting using vendor, name/type, protocol,
+  security, channel, timing, and coarse observation patterns; output should be
+  a similarity suggestion, not an identity merge.
+- [ ] Import comparison view showing new, returning, disappeared, and changed
+  devices between completed runs, with coverage context.
+- [ ] Saved inventory views for unknown devices, POS, guest-network context,
+  automotive, and review backlog, including role/category/vendor filters.
+- [ ] Privacy-safe evidence exports containing pseudonymous tokens, coarse
+  cells, classifications, roles, confidence, and provenance; never raw MACs,
+  HMAC secrets, or exact coordinates by default.
+
+**Improvement exit gate:** an analyst can move from a new import to a bounded
+review queue, understand why each item was prioritized, record a disposition,
+compare it with prior runs, and export only policy-approved evidence.
+
 ## Immediate next build sequence
 
-1. Make the existing explorer comprehensible: import-history detail, UI
-   pagination, device detail, and clear run completion state.
-2. Add the real coarse map and consistent server-side filters/aggregates.
-3. Add the end-to-end Phase 1 integration test suite and correct PostGIS data
-   population/queries.
-4. Run backup/restore and HMAC-rotation drills against a disposable stack.
-5. Exercise the completed UI in a browser and tune findings from representative
-   authorized runs.
+1. Add the role/category overview dashboard and click-through review metrics.
+2. Add analyst feedback proposals and measure false positives by area/time
+   window before changing thresholds.
+3. Build privacy-safe device fingerprints and import-to-import comparison.
+4. Add saved inventory views and policy-bounded evidence exports.
+5. Run the end-to-end integration, backup/restore, HMAC-rotation, and browser
+   validation gates against representative authorized runs.

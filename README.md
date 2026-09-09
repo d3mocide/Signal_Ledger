@@ -15,6 +15,8 @@ The stack intentionally uses three containers: app (FastAPI, static UI, and RQ w
 - [Product & technical plan](plan.md) — original requirements and scope.
 - [Design brief](docs/DESIGN.md) — current decisions, boundaries, and system shape.
 - [Delivery roadmap](docs/ROADMAP.md) — every phase, checked honestly against evidence.
+- [Policy defaults](docs/POLICIES.md) — retention, precision, polygon, and review boundaries.
+- [Deployment runbook](docs/DEPLOYMENT.md) — TLS, monitoring, upgrades, and rollback.
 - [Build log](docs/BUILD_LOG.md) — append-only implementation and validation history.
 
 ## Current MVP boundary
@@ -26,13 +28,14 @@ Run parser tests with python -m pytest after installing requirements, or inside 
 ## Operational defaults
 
 The included defaults retain raw uploads for 30 days and normalized observations
-for 365 days; set them explicitly in `.env` before a real deployment. The app
+for 365 days; administrators can change the persisted windows from the access
+screen. The app
 uses opaque HttpOnly sessions, Redis-backed request limits, security response
 headers, and administrator session-revocation controls. Set `COOKIE_SECURE=true`
 behind HTTPS.
 
 This remains a private-tool foundation, not yet a production security deployment:
-malware scanning, signed upload URLs, precise-area polygon enforcement,
+malware scanning, signed upload URLs, encrypted external object storage,
 backup/restore and HMAC-rotation drills, load testing, and accessibility
 validation remain operational hardening work. See [the operations runbook](docs/OPERATIONS.md)
 before using retention, backup, restore, or key rotation.

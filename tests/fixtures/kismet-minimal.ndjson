@@ -1,2 +1,2 @@
-{"mac":"00:16:3E:AA:BB:CC","protocol":"wifi","timestamp":"2026-09-07T11:00:00Z","name":"Kismet-fixture","signal":"-62","latitude":"37.7760","longitude":"-122.4180","encryption":"WPA3"}
+{"mac":"00:16:3E:AA:BB:CC","protocol":"wifi","timestamp":"2026-09-07T11:00:00Z","name":"Kismet-fixture","type":"wifi","signal":"-62","latitude":"37.7760","longitude":"-122.4180","encryption":"WPA3"}
 {"bluetooth_address":"02:AA:BB:CC:DD:EE","protocol":"ble","timestamp":"2026-09-07T11:01:00Z","name":"BLE fixture","signal":"-80"}

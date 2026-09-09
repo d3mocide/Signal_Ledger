@@ -34,8 +34,10 @@ run evidence older than `NORMALIZED_RETENTION_DAYS`, including dependent
 observations, affected baselines/findings, and devices no longer referenced by
 any run. It records the action in the audit log.
 
-Choose retention windows deliberately in `.env`; make a backup before any
-sweep. The server does not schedule destructive work automatically.
+Choose retention windows deliberately in the administrator retention control;
+the initial defaults may be supplied through `.env` before the first settings
+row is created. Make a backup before any sweep. The server does not schedule
+destructive work automatically.
 
 ## HMAC pseudonym rotation
 

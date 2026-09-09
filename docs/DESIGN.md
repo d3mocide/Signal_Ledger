@@ -67,16 +67,19 @@ the backend and parser worker are Python. Redis keeps imports asynchronous.
    uses those cells rather than precise points.
 
 Raw uploads are currently held on the Docker named volume for reproducibility.
-They are not encrypted by the application, and retention deletion has not yet
-been built. This is a development/private-installation boundary, not a claim
-of production-grade at-rest protection.
+New uploads can receive application-level Fernet wrapping when
+`RAW_STORAGE_ENCRYPTION_KEY` is configured; legacy plaintext jobs remain
+readable until separately migrated or purged. The admin-reviewed retention
+sweep exists, but external encrypted object storage and malware/parser
+controls are still operational gates. This is a development/private-
+installation boundary, not a claim of production-grade at-rest protection.
 
 ## Supported input contract today
 
 | Source | Current supported contract |
 |---|---|
 | WiGLE | CSV including the common WiGLE 1.6 metadata line followed by a `MAC,...` header; timestamps, coordinates, RSSI, SSID, security fields when present. |
-| Kismet | The tested CSV/JSON/NDJSON-shaped adapter contract in the parser fixtures; real-world Kismet variants still need representative fixtures before being called supported. |
+| Kismet | The tested CSV/JSON/NDJSON-shaped adapter contract in the parser fixtures; supported device name/type fields are retained as evidence, while real-world Kismet variants still need representative fixtures before being called supported. |
 
 Every new real source variant gets a minimized, authorized fixture and a parser
 test before it is considered supported.
@@ -86,8 +89,9 @@ test before it is considered supported.
 - Overview answers “what did my last import do?” before setup actions.
 - Explain terms in-place: area = authorized place/policy; run = collection
   session; import = file-validation job.
-- Inventory shows pseudonymous tokens, OUI evidence, category hypothesis, and
-  first/last seen—not a presumed person or exact device identity.
+- Inventory shows pseudonymous tokens, OUI evidence, category hypothesis,
+  evidence-backed device roles/context, and first/last seen—not a presumed
+  person or exact device identity.
 - Coverage defaults to coarse cells. A future map must preserve that default
   and make any exact-location access explicit and auditable.
 - Every statistic needs a quality or coverage context; an observation count is

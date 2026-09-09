@@ -20,6 +20,15 @@ def test_kismet_ndjson_parses_wifi_and_bluetooth():
     assert not errors
     assert [row.protocol for row in rows] == ["wifi", "bluetooth"]
     assert rows[0].security == "WPA3"
+    assert rows[0].device_name == "Kismet-fixture"
+    assert rows[0].device_type == "wifi"
+
+def test_kismet_json_array_parses():
+    rows, errors = accepted("kismet", "kismet-minimal.json")
+    assert not errors
+    assert len(rows) == 1
+    assert rows[0].protocol == "wifi"
+    assert rows[0].rssi == -41
 
 def test_wigle_16_metadata_row_is_skipped():
     rows, errors = accepted("wigle", "wigle-1.6-minimal.csv")
