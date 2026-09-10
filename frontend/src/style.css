@@ -644,6 +644,9 @@ main:not(.auth) {
 .taxonomy-summary {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
+.taxonomy-summary.summary-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .category-summary > div {
   display: grid;
   gap: 6px;
