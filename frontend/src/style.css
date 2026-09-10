@@ -923,6 +923,7 @@ main:not(.auth) {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  margin-bottom: 16px;
   border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
 }
 .latest-import-panel h2 { margin: 2px 0 6px; }

@@ -134,16 +134,24 @@ non-automated findings with evidence and explanations.
   `RAW_RETENTION_DAYS`/`NORMALIZED_RETENTION_DAYS` read-only display; needs a
   persisted settings row, an audited update endpoint, and the purge sweep
   reading from it instead of the environment.
-- [x] Backup/restore tooling and operational runbook; restore drill pending.
-- [x] HMAC-key rotation and re-baselining procedure; live drill pending.
-- [ ] Load/performance tests for realistic import and explorer volumes.
+- [x] Backup/restore tooling and operational runbook; a disposable restore
+  drill verifies a readable archive and matching migration/device/observation/
+  job counts without replacing the active database.
+- [x] HMAC-key rotation and re-baselining procedure; a disposable re-ingestion
+  drill verifies that the same source creates a distinct token epoch after a
+  secret change. Production secret-store cutover remains a deployment action.
+- [x] Load/performance test for a realistic synthetic import and explorer
+  volume: 5,000 rows completed ingestion in 4.622 seconds and inventory/map
+  queries in 0.024 seconds on the disposable local Compose stack.
 - [x] Parser regression fixtures for JSON-array Kismet source variant.
 - [x] First hardening pass: headers, session revocation, request limiting, secret
   handling, and deliberate destructive-operation controls.
-- [ ] Accessibility and responsive UI pass.
+- [x] Accessibility and responsive UI pass; see Workflow Phase D browser
+  acceptance below.
 - [x] Add false-positive measurement by area/time window; threshold tuning still
   requires representative review volume.
-- [ ] Deployment runbook, monitoring, structured logs, and upgrade procedure.
+- [x] Deployment runbook, dependency-aware health, structured redacted logs,
+  and a read-only post-upgrade verification procedure.
 
 **Exit gate:** the system can be operated, backed up, restored, cleaned up,
 and evolved without weakening the privacy or authorization boundaries.
@@ -248,24 +256,29 @@ summary, then entered inventory at the exact `run_id` and collection scope.
 
 ### Phase D — efficient and accessible operations
 
-- [ ] Review prioritization states the retained evidence that makes an item
+- [x] Review prioritization states the retained evidence that makes an item
   actionable and keeps no-signal material out of the primary queue.
-- [ ] Inventory and review layouts remain usable at narrow desktop widths and
+- [x] Inventory and review layouts remain usable at narrow desktop widths and
   200% zoom, with compact optional columns and clear mutation feedback.
-- [ ] Keyboard, focus, ARIA semantics, error/status announcements, and local
+- [x] Keyboard, focus, ARIA semantics, error/status announcements, and local
   map fallback behavior pass browser acceptance.
 
 **Exit gate:** keyboard and assistive-technology users can operate the core
 import, investigate, review, and export loop without hidden state or traps.
+Verified on the rebuilt local app: keyboard focus reaches the workspace skip
+link; review cards state their retained vendor/network evidence; the primary
+queue separates no-signal material; and the Coverage explorer starts on the
+private local grid with third-party tiles opt-in. At a 900px viewport, the
+inventory retains Device, Category, Last seen, and Actions while compacting
+secondary columns. Status feedback is announced politely and inventory headers
+expose their table semantics.
 
 ## Immediate next build sequence
 
-1. Complete Phase A end to end before changing navigation or visual hierarchy.
-2. Complete Phase B shared query/route state, then Phase C session-led flow.
-3. Complete Phase D accessibility/responsive acceptance alongside the changed
-   surfaces.
-4. Run realistic import/explorer load tests and the backup/restore and
-   HMAC-rotation drills.
-5. Tune categorization thresholds from representative analyst feedback and
-   finish deployment monitoring, structured logs, upgrade procedure, and
-   policy-bounded evidence export review.
+1. Add end-to-end upload-to-every-finding-type coverage and test it against a
+   representative authorized dataset.
+2. Finish restricted parser isolation, malware scanning, and an approved
+   encrypted/external raw-object storage deployment.
+3. Tune categorization thresholds from representative analyst feedback and
+   perform the TLS/reverse-proxy and deployment-secret cutover on the intended
+   production host.

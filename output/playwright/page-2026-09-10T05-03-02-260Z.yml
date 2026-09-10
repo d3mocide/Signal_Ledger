@@ -1,0 +1,685 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Overview" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [active] [ref=e35] [cursor=pointer]
+      - button "Category view" [ref=e39] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e43] [cursor=pointer]
+      - button "Coverage explorer" [ref=e47] [cursor=pointer]
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: ANALYSIS
+        - button "Findings" [ref=e52] [cursor=pointer]
+      - button "Review" [ref=e56] [cursor=pointer]
+      - button "Rule learning" [ref=e60] [cursor=pointer]
+      - button "Compare" [ref=e64] [cursor=pointer]
+      - button "Baselines" [ref=e68] [cursor=pointer]
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: COLLECTION
+        - button "Imports" [ref=e73] [cursor=pointer]
+      - button "Collections" [ref=e77] [cursor=pointer]
+      - button "Administration" [ref=e81] [cursor=pointer]
+      - generic [ref=e84]:
+        - paragraph [ref=e85]: GOVERNANCE
+        - button "Audit log" [ref=e86] [cursor=pointer]
+    - generic [ref=e89]:
+      - generic [ref=e93]:
+        - text: Private by design
+        - generic [ref=e94]: Site-scoped tokens. Local maps.
+      - generic [ref=e95]:
+        - generic [ref=e96]: D3
+        - generic [ref=e97]:
+          - text: d3mo
+          - generic [ref=e98]: admin
+        - button "Sign out" [ref=e99] [cursor=pointer]
+  - generic [ref=e100]:
+    - banner [ref=e101]:
+      - generic [ref=e102]: Workspace/Device inventory
+      - generic [ref=e103]: Private instance
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - paragraph [ref=e108]: SIGNAL LEDGER / INVENTORY
+          - heading "Device inventory" [level=1] [ref=e676]
+          - paragraph [ref=e110]: Explore site-scoped devices and the evidence behind them.
+        - generic [ref=e111]:
+          - button "Refresh" [ref=e112] [cursor=pointer]
+          - button "Import data" [ref=e115] [cursor=pointer]
+      - generic [ref=e677]:
+        - generic [ref=e678]:
+          - generic [ref=e679]:
+            - paragraph [ref=e680]: PSEUDONYMOUS INVENTORY
+            - heading "Devices from imported runs" [level=2] [ref=e681]
+            - paragraph [ref=e682]: Review device hypotheses and the latest observed network evidence.
+          - generic [ref=e683]:
+            - generic [ref=e684]: Scope
+            - combobox "Survey area" [ref=e685]:
+              - option "All areas" [selected]
+              - option "Test 1"
+        - generic [ref=e686]:
+          - generic [ref=e687]:
+            - generic [ref=e688]: Vendor evidence
+            - combobox "Vendor evidence" [ref=e689]
+          - generic [ref=e690]:
+            - generic [ref=e691]: Category hypothesis
+            - combobox "Device category" [ref=e692]:
+              - option "All categories" [selected]
+              - option "unknown"
+              - option "camera"
+              - option "printer"
+              - option "network"
+              - option "mobile"
+              - option "iot"
+              - option "bluetooth"
+              - option "workstation"
+              - option "audio"
+              - option "entertainment"
+              - option "wearable"
+              - option "automotive"
+          - generic [ref=e693]:
+            - generic [ref=e694]: Role or context
+            - combobox "Device role or context" [ref=e695]:
+              - option "All roles" [selected]
+              - option "retail pos"
+              - option "security access"
+              - option "smart home"
+              - option "industrial ot"
+              - option "medical"
+              - option "guest network"
+          - generic [ref=e696]:
+            - checkbox "Attributed only" [ref=e697]
+            - generic [ref=e698]: Attributed only
+          - generic [ref=e699]:
+            - button "Apply filters" [ref=e700] [cursor=pointer]
+            - button "Clear" [ref=e701] [cursor=pointer]
+        - generic [ref=e702]:
+          - combobox "Saved inventory view" [ref=e703]:
+            - option "Saved inventory views" [selected]
+          - textbox "Saved inventory view name" [ref=e704]:
+            - /placeholder: Name current view
+          - button "Save view" [disabled] [ref=e705]
+          - link "Export first 5,000 CSV" [ref=e706] [cursor=pointer]:
+            - /url: /v1/exports/devices.csv?limit=5000&vendor=&category=&role=&attributed_only=false&sort=last_seen&direction=desc
+        - generic [ref=e707]:
+          - paragraph [ref=e708]: 25,498 matching devices · showing 1–50
+          - generic [ref=e709]: Sorted by last seen newest first
+        - table [ref=e711]:
+          - rowgroup [ref=e712]:
+            - row [ref=e713]:
+              - columnheader "Device" [ref=e714]
+              - columnheader [ref=e715]:
+                - button "Category" [ref=e716] [cursor=pointer]
+              - columnheader [ref=e717]:
+                - button "Last seen ▼" [ref=e718] [cursor=pointer]
+              - columnheader "Actions" [ref=e719]
+          - rowgroup [ref=e721]:
+            - row [ref=e722]:
+              - cell "ac7d7dc30511a5… site token" [ref=e723]:
+                - button [ref=e724] [cursor=pointer]:
+                  - code [ref=e725]: ac7d7dc30511a5…
+                - generic [ref=e726]: site token
+              - cell "automotive 59% confidence" [ref=e727]:
+                - generic [ref=e728]: automotive
+                - generic [ref=e729]: 59% confidence
+              - cell "8/29/2026, 8:18:02 PM" [ref=e730]
+              - cell [ref=e731]:
+                - button "Map sightings" [ref=e732] [cursor=pointer]
+            - row [ref=e733]:
+              - cell "ed8c20306dce55… site token" [ref=e734]:
+                - button [ref=e735] [cursor=pointer]:
+                  - code [ref=e736]: ed8c20306dce55…
+                - generic [ref=e737]: site token
+              - cell "bluetooth 57% confidence" [ref=e738]:
+                - generic [ref=e739]: bluetooth
+                - generic [ref=e740]: 57% confidence
+              - cell "8/29/2026, 8:18:00 PM" [ref=e741]
+              - cell [ref=e742]:
+                - button "Map sightings" [ref=e743] [cursor=pointer]
+            - row [ref=e744]:
+              - cell "654e046cd6b31e… site token" [ref=e745]:
+                - button [ref=e746] [cursor=pointer]:
+                  - code [ref=e747]: 654e046cd6b31e…
+                - generic [ref=e748]: site token
+              - cell "unknown No hypothesis" [ref=e749]:
+                - generic [ref=e750]: unknown
+                - generic [ref=e751]: No hypothesis
+              - cell "8/29/2026, 8:18:00 PM" [ref=e752]
+              - cell [ref=e753]:
+                - button "Map sightings" [ref=e754] [cursor=pointer]
+            - row [ref=e755]:
+              - cell "19de7a84c4966a… site token" [ref=e756]:
+                - button [ref=e757] [cursor=pointer]:
+                  - code [ref=e758]: 19de7a84c4966a…
+                - generic [ref=e759]: site token
+              - cell "bluetooth 68% confidence" [ref=e760]:
+                - generic [ref=e761]: bluetooth
+                - generic [ref=e762]: 68% confidence
+              - cell "8/29/2026, 8:18:00 PM" [ref=e763]
+              - cell [ref=e764]:
+                - button "Map sightings" [ref=e765] [cursor=pointer]
+            - row [ref=e766]:
+              - cell "441958f1a13ebf… site token" [ref=e767]:
+                - button [ref=e768] [cursor=pointer]:
+                  - code [ref=e769]: 441958f1a13ebf…
+                - generic [ref=e770]: site token
+              - cell "bluetooth 68% confidence" [ref=e771]:
+                - generic [ref=e772]: bluetooth
+                - generic [ref=e773]: 68% confidence
+              - cell "8/29/2026, 8:17:59 PM" [ref=e774]
+              - cell [ref=e775]:
+                - button "Map sightings" [ref=e776] [cursor=pointer]
+            - row [ref=e777]:
+              - cell "6cfaa52ef80218… site token" [ref=e778]:
+                - button [ref=e779] [cursor=pointer]:
+                  - code [ref=e780]: 6cfaa52ef80218…
+                - generic [ref=e781]: site token
+              - cell "unknown No hypothesis" [ref=e782]:
+                - generic [ref=e783]: unknown
+                - generic [ref=e784]: No hypothesis
+              - cell "8/29/2026, 8:17:58 PM" [ref=e785]
+              - cell [ref=e786]:
+                - button "Map sightings" [ref=e787] [cursor=pointer]
+            - row [ref=e788]:
+              - cell "3a786e2d81257b… site token" [ref=e789]:
+                - button [ref=e790] [cursor=pointer]:
+                  - code [ref=e791]: 3a786e2d81257b…
+                - generic [ref=e792]: site token
+              - cell "bluetooth 87% confidence" [ref=e793]:
+                - generic [ref=e794]: bluetooth
+                - generic [ref=e795]: 87% confidence
+              - cell "8/29/2026, 8:17:57 PM" [ref=e796]
+              - cell [ref=e797]:
+                - button "Map sightings" [ref=e798] [cursor=pointer]
+            - row [ref=e799]:
+              - cell "9eb657f24d89b0… site token" [ref=e800]:
+                - button [ref=e801] [cursor=pointer]:
+                  - code [ref=e802]: 9eb657f24d89b0…
+                - generic [ref=e803]: site token
+              - cell "automotive 59% confidence" [ref=e804]:
+                - generic [ref=e805]: automotive
+                - generic [ref=e806]: 59% confidence
+              - cell "8/29/2026, 8:17:57 PM" [ref=e807]
+              - cell [ref=e808]:
+                - button "Map sightings" [ref=e809] [cursor=pointer]
+            - row [ref=e810]:
+              - cell "26af02c38ff545… site token" [ref=e811]:
+                - button [ref=e812] [cursor=pointer]:
+                  - code [ref=e813]: 26af02c38ff545…
+                - generic [ref=e814]: site token
+              - cell "unknown No hypothesis" [ref=e815]:
+                - generic [ref=e816]: unknown
+                - generic [ref=e817]: No hypothesis
+              - cell "8/29/2026, 8:17:55 PM" [ref=e818]
+              - cell [ref=e819]:
+                - button "Map sightings" [ref=e820] [cursor=pointer]
+            - row [ref=e821]:
+              - cell "4bf7f4961b04c7… site token" [ref=e822]:
+                - button [ref=e823] [cursor=pointer]:
+                  - code [ref=e824]: 4bf7f4961b04c7…
+                - generic [ref=e825]: site token
+              - cell "network 64% confidence" [ref=e826]:
+                - generic [ref=e827]: network
+                - generic [ref=e828]: 64% confidence
+              - cell "8/29/2026, 8:17:55 PM" [ref=e829]
+              - cell [ref=e830]:
+                - button "Map sightings" [ref=e831] [cursor=pointer]
+            - row [ref=e832]:
+              - cell "5da05b8e38300e… site token" [ref=e833]:
+                - button [ref=e834] [cursor=pointer]:
+                  - code [ref=e835]: 5da05b8e38300e…
+                - generic [ref=e836]: site token
+              - cell "unknown No hypothesis" [ref=e837]:
+                - generic [ref=e838]: unknown
+                - generic [ref=e839]: No hypothesis
+              - cell "8/29/2026, 8:17:53 PM" [ref=e840]
+              - cell [ref=e841]:
+                - button "Map sightings" [ref=e842] [cursor=pointer]
+            - row [ref=e843]:
+              - cell "a107950582ffbf… site token" [ref=e844]:
+                - button [ref=e845] [cursor=pointer]:
+                  - code [ref=e846]: a107950582ffbf…
+                - generic [ref=e847]: site token
+              - cell "bluetooth 92% confidence" [ref=e848]:
+                - generic [ref=e849]: bluetooth
+                - generic [ref=e850]: 92% confidence
+              - cell "8/29/2026, 8:17:53 PM" [ref=e851]
+              - cell [ref=e852]:
+                - button "Map sightings" [ref=e853] [cursor=pointer]
+            - row [ref=e854]:
+              - cell "cc7a882ebd4af4… site token" [ref=e855]:
+                - button [ref=e856] [cursor=pointer]:
+                  - code [ref=e857]: cc7a882ebd4af4…
+                - generic [ref=e858]: site token
+              - cell "unknown No hypothesis" [ref=e859]:
+                - generic [ref=e860]: unknown
+                - generic [ref=e861]: No hypothesis
+              - cell "8/29/2026, 8:17:51 PM" [ref=e862]
+              - cell [ref=e863]:
+                - button "Map sightings" [ref=e864] [cursor=pointer]
+            - row [ref=e865]:
+              - cell "c239ce93290d76… site token" [ref=e866]:
+                - button [ref=e867] [cursor=pointer]:
+                  - code [ref=e868]: c239ce93290d76…
+                - generic [ref=e869]: site token
+              - cell "network 56% confidence" [ref=e870]:
+                - generic [ref=e871]: network
+                - generic [ref=e872]: 56% confidence
+              - cell "8/29/2026, 8:17:49 PM" [ref=e873]
+              - cell [ref=e874]:
+                - button "Map sightings" [ref=e875] [cursor=pointer]
+            - row [ref=e876]:
+              - cell "ae0c71ec88eff4… site token" [ref=e877]:
+                - button [ref=e878] [cursor=pointer]:
+                  - code [ref=e879]: ae0c71ec88eff4…
+                - generic [ref=e880]: site token
+              - cell "bluetooth 57% confidence" [ref=e881]:
+                - generic [ref=e882]: bluetooth
+                - generic [ref=e883]: 57% confidence
+              - cell "8/29/2026, 8:17:48 PM" [ref=e884]
+              - cell [ref=e885]:
+                - button "Map sightings" [ref=e886] [cursor=pointer]
+            - row [ref=e887]:
+              - cell "5560ddb85b8961… site token" [ref=e888]:
+                - button [ref=e889] [cursor=pointer]:
+                  - code [ref=e890]: 5560ddb85b8961…
+                - generic [ref=e891]: site token
+              - cell "network 91% confidence" [ref=e892]:
+                - generic [ref=e893]: network
+                - generic [ref=e894]: 91% confidence
+              - cell "8/29/2026, 8:17:47 PM" [ref=e895]
+              - cell [ref=e896]:
+                - button "Map sightings" [ref=e897] [cursor=pointer]
+            - row [ref=e898]:
+              - cell "9707a8d93032ee… site token" [ref=e899]:
+                - button [ref=e900] [cursor=pointer]:
+                  - code [ref=e901]: 9707a8d93032ee…
+                - generic [ref=e902]: site token
+              - cell "bluetooth 57% confidence" [ref=e903]:
+                - generic [ref=e904]: bluetooth
+                - generic [ref=e905]: 57% confidence
+              - cell "8/29/2026, 8:17:45 PM" [ref=e906]
+              - cell [ref=e907]:
+                - button "Map sightings" [ref=e908] [cursor=pointer]
+            - row [ref=e909]:
+              - cell "069421f81c0a70… site token" [ref=e910]:
+                - button [ref=e911] [cursor=pointer]:
+                  - code [ref=e912]: 069421f81c0a70…
+                - generic [ref=e913]: site token
+              - cell "bluetooth 57% confidence" [ref=e914]:
+                - generic [ref=e915]: bluetooth
+                - generic [ref=e916]: 57% confidence
+              - cell "8/29/2026, 8:17:45 PM" [ref=e917]
+              - cell [ref=e918]:
+                - button "Map sightings" [ref=e919] [cursor=pointer]
+            - row [ref=e920]:
+              - cell "4ea0e65bdd21cd… site token" [ref=e921]:
+                - button [ref=e922] [cursor=pointer]:
+                  - code [ref=e923]: 4ea0e65bdd21cd…
+                - generic [ref=e924]: site token
+              - cell "unknown No hypothesis" [ref=e925]:
+                - generic [ref=e926]: unknown
+                - generic [ref=e927]: No hypothesis
+              - cell "8/29/2026, 8:17:43 PM" [ref=e928]
+              - cell [ref=e929]:
+                - button "Map sightings" [ref=e930] [cursor=pointer]
+            - row [ref=e931]:
+              - cell "69ec7fdae57d40… site token" [ref=e932]:
+                - button [ref=e933] [cursor=pointer]:
+                  - code [ref=e934]: 69ec7fdae57d40…
+                - generic [ref=e935]: site token
+              - cell "unknown No hypothesis" [ref=e936]:
+                - generic [ref=e937]: unknown
+                - generic [ref=e938]: No hypothesis
+              - cell "8/29/2026, 8:17:43 PM" [ref=e939]
+              - cell [ref=e940]:
+                - button "Map sightings" [ref=e941] [cursor=pointer]
+            - row [ref=e942]:
+              - cell "131c063244a42a… site token" [ref=e943]:
+                - button [ref=e944] [cursor=pointer]:
+                  - code [ref=e945]: 131c063244a42a…
+                - generic [ref=e946]: site token
+              - cell "network 64% confidence" [ref=e947]:
+                - generic [ref=e948]: network
+                - generic [ref=e949]: 64% confidence
+              - cell "8/29/2026, 8:17:43 PM" [ref=e950]
+              - cell [ref=e951]:
+                - button "Map sightings" [ref=e952] [cursor=pointer]
+            - row [ref=e953]:
+              - cell "bebecbc6a5e4d4… site token" [ref=e954]:
+                - button [ref=e955] [cursor=pointer]:
+                  - code [ref=e956]: bebecbc6a5e4d4…
+                - generic [ref=e957]: site token
+              - cell "unknown No hypothesis" [ref=e958]:
+                - generic [ref=e959]: unknown
+                - generic [ref=e960]: No hypothesis
+              - cell "8/29/2026, 8:17:43 PM" [ref=e961]
+              - cell [ref=e962]:
+                - button "Map sightings" [ref=e963] [cursor=pointer]
+            - row [ref=e964]:
+              - cell "095aab115c8ecb… site token" [ref=e965]:
+                - button [ref=e966] [cursor=pointer]:
+                  - code [ref=e967]: 095aab115c8ecb…
+                - generic [ref=e968]: site token
+              - cell "unknown No hypothesis" [ref=e969]:
+                - generic [ref=e970]: unknown
+                - generic [ref=e971]: No hypothesis
+              - cell "8/29/2026, 8:17:42 PM" [ref=e972]
+              - cell [ref=e973]:
+                - button "Map sightings" [ref=e974] [cursor=pointer]
+            - row [ref=e975]:
+              - cell "08fb046c1d083b… site token" [ref=e976]:
+                - button [ref=e977] [cursor=pointer]:
+                  - code [ref=e978]: 08fb046c1d083b…
+                - generic [ref=e979]: site token
+              - cell "unknown No hypothesis" [ref=e980]:
+                - generic [ref=e981]: unknown
+                - generic [ref=e982]: No hypothesis
+              - cell "8/29/2026, 8:17:40 PM" [ref=e983]
+              - cell [ref=e984]:
+                - button "Map sightings" [ref=e985] [cursor=pointer]
+            - row [ref=e986]:
+              - cell "6881f50ad7961f… site token" [ref=e987]:
+                - button [ref=e988] [cursor=pointer]:
+                  - code [ref=e989]: 6881f50ad7961f…
+                - generic [ref=e990]: site token
+              - cell "unknown No hypothesis" [ref=e991]:
+                - generic [ref=e992]: unknown
+                - generic [ref=e993]: No hypothesis
+              - cell "8/29/2026, 8:17:40 PM" [ref=e994]
+              - cell [ref=e995]:
+                - button "Map sightings" [ref=e996] [cursor=pointer]
+            - row [ref=e997]:
+              - cell "622e82bca3fd1a… site token" [ref=e998]:
+                - button [ref=e999] [cursor=pointer]:
+                  - code [ref=e1000]: 622e82bca3fd1a…
+                - generic [ref=e1001]: site token
+              - cell "unknown No hypothesis" [ref=e1002]:
+                - generic [ref=e1003]: unknown
+                - generic [ref=e1004]: No hypothesis
+              - cell "8/29/2026, 8:17:38 PM" [ref=e1005]
+              - cell [ref=e1006]:
+                - button "Map sightings" [ref=e1007] [cursor=pointer]
+            - row [ref=e1008]:
+              - cell "d942509b555704… site token" [ref=e1009]:
+                - button [ref=e1010] [cursor=pointer]:
+                  - code [ref=e1011]: d942509b555704…
+                - generic [ref=e1012]: site token
+              - cell "unknown No hypothesis" [ref=e1013]:
+                - generic [ref=e1014]: unknown
+                - generic [ref=e1015]: No hypothesis
+              - cell "8/29/2026, 8:17:37 PM" [ref=e1016]
+              - cell [ref=e1017]:
+                - button "Map sightings" [ref=e1018] [cursor=pointer]
+            - row [ref=e1019]:
+              - cell "495ffffac1e964… site token" [ref=e1020]:
+                - button [ref=e1021] [cursor=pointer]:
+                  - code [ref=e1022]: 495ffffac1e964…
+                - generic [ref=e1023]: site token
+              - cell "network 64% confidence" [ref=e1024]:
+                - generic [ref=e1025]: network
+                - generic [ref=e1026]: 64% confidence
+              - cell "8/29/2026, 8:17:37 PM" [ref=e1027]
+              - cell [ref=e1028]:
+                - button "Map sightings" [ref=e1029] [cursor=pointer]
+            - row [ref=e1030]:
+              - cell "9809ed26dd93fb… site token" [ref=e1031]:
+                - button [ref=e1032] [cursor=pointer]:
+                  - code [ref=e1033]: 9809ed26dd93fb…
+                - generic [ref=e1034]: site token
+              - cell "unknown No hypothesis" [ref=e1035]:
+                - generic [ref=e1036]: unknown
+                - generic [ref=e1037]: No hypothesis
+              - cell "8/29/2026, 8:17:37 PM" [ref=e1038]
+              - cell [ref=e1039]:
+                - button "Map sightings" [ref=e1040] [cursor=pointer]
+            - row [ref=e1041]:
+              - cell "c2a821fb2bb5e4… site token" [ref=e1042]:
+                - button [ref=e1043] [cursor=pointer]:
+                  - code [ref=e1044]: c2a821fb2bb5e4…
+                - generic [ref=e1045]: site token
+              - cell "network 64% confidence" [ref=e1046]:
+                - generic [ref=e1047]: network
+                - generic [ref=e1048]: 64% confidence
+              - cell "8/29/2026, 8:17:37 PM" [ref=e1049]
+              - cell [ref=e1050]:
+                - button "Map sightings" [ref=e1051] [cursor=pointer]
+            - row [ref=e1052]:
+              - cell "12f16b50cfd02e… site token" [ref=e1053]:
+                - button [ref=e1054] [cursor=pointer]:
+                  - code [ref=e1055]: 12f16b50cfd02e…
+                - generic [ref=e1056]: site token
+              - cell "unknown No hypothesis" [ref=e1057]:
+                - generic [ref=e1058]: unknown
+                - generic [ref=e1059]: No hypothesis
+              - cell "8/29/2026, 8:17:35 PM" [ref=e1060]
+              - cell [ref=e1061]:
+                - button "Map sightings" [ref=e1062] [cursor=pointer]
+            - row [ref=e1063]:
+              - cell "c57e2e8a2a8e33… site token" [ref=e1064]:
+                - button [ref=e1065] [cursor=pointer]:
+                  - code [ref=e1066]: c57e2e8a2a8e33…
+                - generic [ref=e1067]: site token
+              - cell "unknown No hypothesis" [ref=e1068]:
+                - generic [ref=e1069]: unknown
+                - generic [ref=e1070]: No hypothesis
+              - cell "8/29/2026, 8:17:34 PM" [ref=e1071]
+              - cell [ref=e1072]:
+                - button "Map sightings" [ref=e1073] [cursor=pointer]
+            - row [ref=e1074]:
+              - cell "dde87ade1c3db4… site token" [ref=e1075]:
+                - button [ref=e1076] [cursor=pointer]:
+                  - code [ref=e1077]: dde87ade1c3db4…
+                - generic [ref=e1078]: site token
+              - cell "unknown No hypothesis" [ref=e1079]:
+                - generic [ref=e1080]: unknown
+                - generic [ref=e1081]: No hypothesis
+              - cell "8/29/2026, 8:17:34 PM" [ref=e1082]
+              - cell [ref=e1083]:
+                - button "Map sightings" [ref=e1084] [cursor=pointer]
+            - row [ref=e1085]:
+              - cell "27f7aba1ca981f… site token" [ref=e1086]:
+                - button [ref=e1087] [cursor=pointer]:
+                  - code [ref=e1088]: 27f7aba1ca981f…
+                - generic [ref=e1089]: site token
+              - cell "unknown No hypothesis" [ref=e1090]:
+                - generic [ref=e1091]: unknown
+                - generic [ref=e1092]: No hypothesis
+              - cell "8/29/2026, 8:17:34 PM" [ref=e1093]
+              - cell [ref=e1094]:
+                - button "Map sightings" [ref=e1095] [cursor=pointer]
+            - row [ref=e1096]:
+              - cell "780afe93843a56… site token" [ref=e1097]:
+                - button [ref=e1098] [cursor=pointer]:
+                  - code [ref=e1099]: 780afe93843a56…
+                - generic [ref=e1100]: site token
+              - cell "unknown No hypothesis" [ref=e1101]:
+                - generic [ref=e1102]: unknown
+                - generic [ref=e1103]: No hypothesis
+              - cell "8/29/2026, 8:17:34 PM" [ref=e1104]
+              - cell [ref=e1105]:
+                - button "Map sightings" [ref=e1106] [cursor=pointer]
+            - row [ref=e1107]:
+              - cell "1d6e9e6cb8c252… site token" [ref=e1108]:
+                - button [ref=e1109] [cursor=pointer]:
+                  - code [ref=e1110]: 1d6e9e6cb8c252…
+                - generic [ref=e1111]: site token
+              - cell "unknown No hypothesis" [ref=e1112]:
+                - generic [ref=e1113]: unknown
+                - generic [ref=e1114]: No hypothesis
+              - cell "8/29/2026, 8:17:33 PM" [ref=e1115]
+              - cell [ref=e1116]:
+                - button "Map sightings" [ref=e1117] [cursor=pointer]
+            - row [ref=e1118]:
+              - cell "738bc97fa9478d… site token" [ref=e1119]:
+                - button [ref=e1120] [cursor=pointer]:
+                  - code [ref=e1121]: 738bc97fa9478d…
+                - generic [ref=e1122]: site token
+              - cell "unknown No hypothesis" [ref=e1123]:
+                - generic [ref=e1124]: unknown
+                - generic [ref=e1125]: No hypothesis
+              - cell "8/29/2026, 8:17:32 PM" [ref=e1126]
+              - cell [ref=e1127]:
+                - button "Map sightings" [ref=e1128] [cursor=pointer]
+            - row [ref=e1129]:
+              - cell "27bb34b0845367… site token" [ref=e1130]:
+                - button [ref=e1131] [cursor=pointer]:
+                  - code [ref=e1132]: 27bb34b0845367…
+                - generic [ref=e1133]: site token
+              - cell "unknown No hypothesis" [ref=e1134]:
+                - generic [ref=e1135]: unknown
+                - generic [ref=e1136]: No hypothesis
+              - cell "8/29/2026, 8:17:31 PM" [ref=e1137]
+              - cell [ref=e1138]:
+                - button "Map sightings" [ref=e1139] [cursor=pointer]
+            - row [ref=e1140]:
+              - cell "a5a4cc4c5cc7a5… site token" [ref=e1141]:
+                - button [ref=e1142] [cursor=pointer]:
+                  - code [ref=e1143]: a5a4cc4c5cc7a5…
+                - generic [ref=e1144]: site token
+              - cell "unknown No hypothesis" [ref=e1145]:
+                - generic [ref=e1146]: unknown
+                - generic [ref=e1147]: No hypothesis
+              - cell "8/29/2026, 8:17:30 PM" [ref=e1148]
+              - cell [ref=e1149]:
+                - button "Map sightings" [ref=e1150] [cursor=pointer]
+            - row [ref=e1151]:
+              - cell "e3026eff73da83… site token" [ref=e1152]:
+                - button [ref=e1153] [cursor=pointer]:
+                  - code [ref=e1154]: e3026eff73da83…
+                - generic [ref=e1155]: site token
+              - cell "bluetooth 57% confidence" [ref=e1156]:
+                - generic [ref=e1157]: bluetooth
+                - generic [ref=e1158]: 57% confidence
+              - cell "8/29/2026, 8:17:30 PM" [ref=e1159]
+              - cell [ref=e1160]:
+                - button "Map sightings" [ref=e1161] [cursor=pointer]
+            - row [ref=e1162]:
+              - cell "c0dcfee04a5478… site token" [ref=e1163]:
+                - button [ref=e1164] [cursor=pointer]:
+                  - code [ref=e1165]: c0dcfee04a5478…
+                - generic [ref=e1166]: site token
+              - cell "unknown No hypothesis" [ref=e1167]:
+                - generic [ref=e1168]: unknown
+                - generic [ref=e1169]: No hypothesis
+              - cell "8/29/2026, 8:17:29 PM" [ref=e1170]
+              - cell [ref=e1171]:
+                - button "Map sightings" [ref=e1172] [cursor=pointer]
+            - row [ref=e1173]:
+              - cell "19ded99c5454e1… site token" [ref=e1174]:
+                - button [ref=e1175] [cursor=pointer]:
+                  - code [ref=e1176]: 19ded99c5454e1…
+                - generic [ref=e1177]: site token
+              - cell "unknown No hypothesis" [ref=e1178]:
+                - generic [ref=e1179]: unknown
+                - generic [ref=e1180]: No hypothesis
+              - cell "8/29/2026, 8:17:29 PM" [ref=e1181]
+              - cell [ref=e1182]:
+                - button "Map sightings" [ref=e1183] [cursor=pointer]
+            - row [ref=e1184]:
+              - cell "d45e2e4c7dc711… site token" [ref=e1185]:
+                - button [ref=e1186] [cursor=pointer]:
+                  - code [ref=e1187]: d45e2e4c7dc711…
+                - generic [ref=e1188]: site token
+              - cell "unknown No hypothesis" [ref=e1189]:
+                - generic [ref=e1190]: unknown
+                - generic [ref=e1191]: No hypothesis
+              - cell "8/29/2026, 8:17:27 PM" [ref=e1192]
+              - cell [ref=e1193]:
+                - button "Map sightings" [ref=e1194] [cursor=pointer]
+            - row [ref=e1195]:
+              - cell "c37807927a4562… site token" [ref=e1196]:
+                - button [ref=e1197] [cursor=pointer]:
+                  - code [ref=e1198]: c37807927a4562…
+                - generic [ref=e1199]: site token
+              - cell "bluetooth 57% confidence" [ref=e1200]:
+                - generic [ref=e1201]: bluetooth
+                - generic [ref=e1202]: 57% confidence
+              - cell "8/29/2026, 8:17:27 PM" [ref=e1203]
+              - cell [ref=e1204]:
+                - button "Map sightings" [ref=e1205] [cursor=pointer]
+            - row [ref=e1206]:
+              - cell "97f7c87334171c… site token" [ref=e1207]:
+                - button [ref=e1208] [cursor=pointer]:
+                  - code [ref=e1209]: 97f7c87334171c…
+                - generic [ref=e1210]: site token
+              - cell "automotive 59% confidence" [ref=e1211]:
+                - generic [ref=e1212]: automotive
+                - generic [ref=e1213]: 59% confidence
+              - cell "8/29/2026, 8:17:27 PM" [ref=e1214]
+              - cell [ref=e1215]:
+                - button "Map sightings" [ref=e1216] [cursor=pointer]
+            - row [ref=e1217]:
+              - cell "bf825a243a34f5… site token" [ref=e1218]:
+                - button [ref=e1219] [cursor=pointer]:
+                  - code [ref=e1220]: bf825a243a34f5…
+                - generic [ref=e1221]: site token
+              - cell "network 64% confidence" [ref=e1222]:
+                - generic [ref=e1223]: network
+                - generic [ref=e1224]: 64% confidence
+              - cell "8/29/2026, 8:17:26 PM" [ref=e1225]
+              - cell [ref=e1226]:
+                - button "Map sightings" [ref=e1227] [cursor=pointer]
+            - row [ref=e1228]:
+              - cell "6b6b50abc99d33… site token" [ref=e1229]:
+                - button [ref=e1230] [cursor=pointer]:
+                  - code [ref=e1231]: 6b6b50abc99d33…
+                - generic [ref=e1232]: site token
+              - cell "network 64% confidence" [ref=e1233]:
+                - generic [ref=e1234]: network
+                - generic [ref=e1235]: 64% confidence
+              - cell "8/29/2026, 8:17:26 PM" [ref=e1236]
+              - cell [ref=e1237]:
+                - button "Map sightings" [ref=e1238] [cursor=pointer]
+            - row [ref=e1239]:
+              - cell "8ea9b40f0258fe… site token" [ref=e1240]:
+                - button [ref=e1241] [cursor=pointer]:
+                  - code [ref=e1242]: 8ea9b40f0258fe…
+                - generic [ref=e1243]: site token
+              - cell "unknown No hypothesis" [ref=e1244]:
+                - generic [ref=e1245]: unknown
+                - generic [ref=e1246]: No hypothesis
+              - cell "8/29/2026, 8:17:26 PM" [ref=e1247]
+              - cell [ref=e1248]:
+                - button "Map sightings" [ref=e1249] [cursor=pointer]
+            - row [ref=e1250]:
+              - cell "bdfabc1d9a12a6… site token" [ref=e1251]:
+                - button [ref=e1252] [cursor=pointer]:
+                  - code [ref=e1253]: bdfabc1d9a12a6…
+                - generic [ref=e1254]: site token
+              - cell "bluetooth 68% confidence" [ref=e1255]:
+                - generic [ref=e1256]: bluetooth
+                - generic [ref=e1257]: 68% confidence
+              - cell "8/29/2026, 8:17:26 PM" [ref=e1258]
+              - cell [ref=e1259]:
+                - button "Map sightings" [ref=e1260] [cursor=pointer]
+            - row [ref=e1261]:
+              - cell "3f1faea3313d22… site token" [ref=e1262]:
+                - button [ref=e1263] [cursor=pointer]:
+                  - code [ref=e1264]: 3f1faea3313d22…
+                - generic [ref=e1265]: site token
+              - cell "unknown No hypothesis" [ref=e1266]:
+                - generic [ref=e1267]: unknown
+                - generic [ref=e1268]: No hypothesis
+              - cell "8/29/2026, 8:17:25 PM" [ref=e1269]
+              - cell [ref=e1270]:
+                - button "Map sightings" [ref=e1271] [cursor=pointer]
+        - generic [ref=e1272]:
+          - button "Previous" [disabled] [ref=e1273]
+          - generic [ref=e1274]: Page 1 of 510
+          - button "Next" [ref=e1275] [cursor=pointer]
+      - generic [ref=e673]:
+        - generic [ref=e674]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e675]: Workspace refreshed at 10:01 PM

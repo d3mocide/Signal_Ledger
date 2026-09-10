@@ -1,5 +1,38 @@
 # Signal Ledger — Build Log
 
+## 2026-09-10 — Disposable operational-hardening drills
+
+### Built
+
+- Added dependency-aware `/health`: Postgres, Redis, and an RQ worker serving
+  the `signal-ledger` queue must all respond before it returns 200.
+- Added newline-delimited JSON application events for migrations, health,
+  requests, and ingestion outcomes. The formatter rejects sensitive field
+  names, and request events record only method, path, status, and duration.
+- Hardened backup archives with a readable-catalog check and SHA-256 sidecar.
+  Added `backup_restore_drill.sh`, which restores only into a temporary
+  database and compares schema/device/observation/job counts before cleanup.
+- Added an explicit guarded 5,000-row synthetic load harness and a read-only
+  post-upgrade deployment verifier for health, response headers, and migration
+  ledger presence.
+
+### Evidence
+
+- The disposable restore drill passed against the local stack; it left the
+  active database unchanged.
+- A separate temporary Compose project imported 5,000 synthetic rows in 4.622
+  seconds; inventory and map explorer queries took 0.024 seconds. The project
+  and all of its volumes were removed afterward.
+- The rebuilt local service returned healthy Postgres/Redis/worker status,
+  emitted structured redacted health/request events, and passed the deployment
+  verifier with 13 applied migrations. The container suite passed 56 tests.
+
+### Boundary
+
+- These are local disposable drills, not a production TLS/reverse-proxy or
+  secret-store cutover. A real deployment still requires its own backup,
+  browser acceptance, and operator-owned secret change record.
+
 This is an append-only engineering log. It records what changed, the evidence
 we have, and what that evidence does **not** prove. Current product scope is
 tracked in `ROADMAP.md`; decisions belong in `DESIGN.md`; policy boundaries

@@ -1,4 +1,4 @@
-import hashlib, hmac, os
+import hashlib, hmac, logging, os
 from sqlalchemy import select, text
 from .crypto import encrypt_address
 from .database import SessionLocal
@@ -7,8 +7,16 @@ from .oui import vendor_for
 from .parsers import PARSER_VERSION, parse
 from .policies import CATEGORY_RULE_VERSION, ROLE_RULE_VERSION, category_from_scores, category_scores, device_role_scores, device_roles_from_scores, mac_address_scope, point_in_polygon
 from .raw_storage import materialize_raw
+from .observability import configure_logging, event
 
 HMAC_SECRET = os.getenv("HMAC_SECRET", "development-only-replace-me").encode()
+configure_logging()
+logger = logging.getLogger("signal_ledger")
+
+
+def device_token(normalized_address: str, secret: bytes | None = None) -> str:
+    return hmac.new(secret if secret is not None else HMAC_SECRET, normalized_address.encode(), hashlib.sha256).hexdigest()
+
 def _cell(lat, lon):
     return f"{round(lat,3):.3f},{round(lon,3):.3f}" if lat is not None and lon is not None and not (lat == 0 and lon == 0) else None
 
@@ -31,7 +39,7 @@ def process_ingestion(job_id: int):
                 normalized = parsed.address.replace(":", "").replace("-", "").upper()
                 address_scope = mac_address_scope(parsed.address)
                 prefix = normalized[:6] if address_scope == "globally_administered" else None
-                token = hmac.new(HMAC_SECRET, normalized.encode(), hashlib.sha256).hexdigest()
+                token = device_token(normalized)
                 key = (token, parsed.captured_at, parsed.protocol, parsed.ssid, _cell(parsed.latitude, parsed.longitude))
                 if key in seen: skipped += 1; continue
                 seen.add(key)
@@ -87,8 +95,10 @@ def process_ingestion(job_id: int):
         job.status = "complete"; job.parser_version = PARSER_VERSION; job.report = {"accepted": accepted, "rejected": rejected, "skipped_duplicates": skipped, "reasons": reasons, "parser_version": PARSER_VERSION, "source": job.source_format, "coverage": run.collector_coverage, "location_present": located, "location_completeness": round(located / accepted, 3) if accepted else 0}
         db.add(AuditEvent(actor="worker", role="system", action="ingestion.completed", resource_type="ingestion_job", resource_id=str(job.id), detail=job.report))
         db.commit()
+        event(logger, "ingestion.completed", job_id=job.id, source=job.source_format, accepted=accepted, rejected=rejected, skipped=skipped)
     except Exception as exc:
         db.rollback(); job = db.get(IngestionJob, job_id)
         if job: job.status = "failed"; job.report = {"error": str(exc)[:300], "parser_version": "v1"}; db.commit()
+        event(logger, "ingestion.failed", job_id=job_id, error_type=type(exc).__name__)
         raise
     finally: db.close()

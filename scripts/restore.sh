@@ -12,6 +12,11 @@ if [[ "${CONFIRM_RESTORE:-}" != "YES" ]]; then
   exit 2
 fi
 
+if [[ -f "$archive.sha256" ]]; then
+  sha256sum --check "$archive.sha256"
+fi
+docker compose exec -T db sh -lc 'pg_restore --list >/dev/null' < "$archive"
+
 docker compose exec -T db sh -lc 'dropdb -U "$POSTGRES_USER" --if-exists "$POSTGRES_DB" && createdb -U "$POSTGRES_USER" "$POSTGRES_DB"'
 docker compose exec -T db sh -lc 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --exit-on-error' < "$archive"
 printf 'Restore completed. Restart the app container to re-run schema setup.\n'

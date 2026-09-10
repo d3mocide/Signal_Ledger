@@ -108,9 +108,10 @@ headers, and administrator session-revocation controls. Set `COOKIE_SECURE=true`
 behind HTTPS.
 
 This remains a private-tool foundation, not yet a production security
-deployment. Restricted parser isolation and malware scanning, encrypted
-external object storage, backup/restore and HMAC-rotation drills, load testing,
-accessibility/browser validation, categorization threshold tuning, and
-deployment monitoring remain open hardening work. See [the operations
+deployment. Disposable backup/restore, HMAC-epoch, load, accessibility/browser,
+and local deployment-verification drills have passed. Restricted parser
+isolation and malware scanning, approved encrypted/external object storage,
+categorization threshold tuning from representative feedback, and a real
+TLS/secret-store production deployment remain open. See [the operations
 runbook](docs/OPERATIONS.md) and [the roadmap](docs/ROADMAP.md) before using
 retention, backup, restore, key rotation, or exports operationally.

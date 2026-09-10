@@ -34,7 +34,7 @@ from app.main import (
     learning_summary,
     import_comparison,
 )
-from app.models import Anomaly, Device, DeviceReview, Observation, SurveyRun, User
+from app.models import Anomaly, CaptureSession, Device, DeviceReview, IngestionJob, Observation, SurveyRun, User
 from app.categorization import rebuild_categories
 from app.policies import classify_device, device_role_scores, device_roles_from_scores, mac_address_scope, point_in_polygon, validate_polygon
 from app.raw_storage import materialize_raw, write_raw
@@ -146,6 +146,22 @@ def test_device_review_queue_prioritizes_uncertain_devices_and_persists_disposit
     assert updated["devices_updated"] == 1
     assert db.scalar(select(DeviceReview).where(DeviceReview.device_id == unknown.id)).reviewed_by == "analyst"
     assert list_device_reviews(status="open", bucket="no_signal", db=db, principal=viewer)["total"] == 0
+
+
+def test_actionable_review_groups_expose_retained_observation_evidence():
+    db = make_db()
+    device = Device(token="e" * 64, oui_organization="Nova Labs", category="unknown", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add(device); db.flush()
+    session = CaptureSession(name="Evidence review", authorization_ref="test")
+    db.add(session); db.flush()
+    job = IngestionJob(capture_session_id=session.id, filename="evidence.csv", source_format="wigle", file_hash="e" * 64, raw_path="/tmp/evidence.csv")
+    db.add(job); db.flush()
+    db.add(Observation(capture_session_id=session.id, device_id=device.id, ingestion_job_id=job.id, captured_at=datetime(2026, 1, 1), protocol="wifi", ssid="Helium", device_name=None, device_type=None, security=None, rssi=None, latitude=None, longitude=None, spatial_cell=None, quality=1.0, source_row=1))
+    db.commit()
+
+    queue = list_device_reviews(bucket="actionable", db=db, principal=Principal(1, "viewer", "viewer"))
+    assert queue["total"] == 1
+    assert set(queue["items"][0]["evidence"]) >= {"vendor: nova labs", "network: helium"}
 
 
 def test_group_review_is_status_scoped_and_preserves_untouched_context():

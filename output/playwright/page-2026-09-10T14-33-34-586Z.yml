@@ -1,0 +1,159 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Overview" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [active] [ref=e35] [cursor=pointer]
+      - button "Category view" [ref=e39] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e43] [cursor=pointer]
+      - button "Coverage explorer" [ref=e47] [cursor=pointer]
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: ANALYSIS
+        - button "Findings" [ref=e52] [cursor=pointer]
+      - button "Review" [ref=e56] [cursor=pointer]
+      - button "Rule learning" [ref=e60] [cursor=pointer]
+      - button "Compare" [ref=e64] [cursor=pointer]
+      - button "Baselines" [ref=e68] [cursor=pointer]
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: COLLECTION
+        - button "Imports" [ref=e73] [cursor=pointer]
+      - button "Collections" [ref=e77] [cursor=pointer]
+      - button "Administration" [ref=e81] [cursor=pointer]
+      - generic [ref=e84]:
+        - paragraph [ref=e85]: GOVERNANCE
+        - button "Audit log" [ref=e86] [cursor=pointer]
+    - generic [ref=e89]:
+      - generic [ref=e93]:
+        - text: Private by design
+        - generic [ref=e94]: Site-scoped tokens. Local maps.
+      - generic [ref=e95]:
+        - generic [ref=e96]: D3
+        - generic [ref=e97]:
+          - text: d3mo
+          - generic [ref=e98]: admin
+        - button "Sign out" [ref=e99] [cursor=pointer]
+  - generic [ref=e100]:
+    - banner [ref=e101]:
+      - generic [ref=e102]: Workspace/Overview
+      - generic [ref=e103]: Private instance
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - paragraph [ref=e108]: OPERATIONAL OVERVIEW
+          - heading "Overview" [level=1] [ref=e1277]
+          - paragraph [ref=e110]: Your discovery landscape, at a glance.
+        - generic [ref=e111]:
+          - button "Refresh" [ref=e112] [cursor=pointer]
+          - button "Import data" [ref=e115] [cursor=pointer]
+      - generic [ref=e1278]:
+        - generic [ref=e1279]:
+          - generic [ref=e1280]:
+            - paragraph [ref=e1281]: LATEST IMPORT
+            - heading "ouispy_wardrive_20260829_104036.csv" [level=2] [ref=e1282]
+            - paragraph [ref=e1283]:
+              - generic [ref=e1284]: complete
+              - text: 26,705 accepted · 100% GPS present · wigle
+          - generic [ref=e1285]:
+            - button "Review import" [ref=e1286] [cursor=pointer]
+            - button "Open review" [ref=e1287] [cursor=pointer]
+        - generic [ref=e1288]:
+          - generic [ref=e1289]:
+            - generic [ref=e1290]: Total observations
+            - generic [ref=e1293]: 26,705
+            - text: Retained source evidence
+          - generic [ref=e1294]:
+            - generic [ref=e1295]: Observed devices
+            - generic [ref=e1298]: 25,498
+            - text: Site-scoped identities
+          - generic [ref=e1299]:
+            - generic [ref=e1300]: Capture sessions
+            - generic [ref=e1303]: "1"
+            - text: 1 completed
+          - generic [ref=e1304]:
+            - generic [ref=e1305]: Attributed devices
+            - generic [ref=e1308]: 8,624
+            - text: 34% of inventory · 16,874 unattributable
+        - generic [ref=e1309]:
+          - generic [ref=e1311]:
+            - generic [ref=e1312]:
+              - generic [ref=e1313]:
+                - paragraph [ref=e1314]: SPATIAL INTELLIGENCE
+                - heading "Observation footprint" [level=2] [ref=e1315]
+              - button "Explore coverage" [ref=e1316] [cursor=pointer]
+            - generic [ref=e1319]: Loading observation footprint…
+            - generic [ref=e1320]:
+              - generic [ref=e1321]: 0 coarse cells shown · up to 1,000
+              - generic [ref=e1323]: Relative coordinates · no external tiles
+          - generic [ref=e1324]:
+            - generic [ref=e1325]:
+              - generic [ref=e1327]:
+                - paragraph [ref=e1328]: SIGNAL COMPOSITION
+                - heading "Protocol distribution" [level=2] [ref=e1329]
+              - generic [ref=e1332]:
+                - generic [ref=e1333]: —
+                - generic [ref=e1334]: retained observations
+              - generic [ref=e1336]:
+                - generic [ref=e1337]: Mean evidence quality
+                - generic [ref=e1338]: —
+            - generic [ref=e1339]:
+              - generic [ref=e1341]:
+                - paragraph [ref=e1342]: ATTENTION & REVIEW
+                - heading "Changes to investigate" [level=2] [ref=e1343]
+              - generic [ref=e1347]:
+                - generic [ref=e1348]: —
+                - generic [ref=e1349]: findings awaiting review
+              - paragraph [ref=e1350]: Baseline comparisons surface changes here. Scores guide review, not security verdicts.
+              - button "Manage baselines" [ref=e1351] [cursor=pointer]
+            - generic [ref=e1354]:
+              - generic [ref=e1355]:
+                - generic [ref=e1356]:
+                  - paragraph [ref=e1357]: COLLECTION HISTORY
+                  - heading "Discovery activity" [level=2] [ref=e1358]
+                - generic [ref=e1359]: Last 0 observed days
+              - img "No recorded activity" [ref=e1360]:
+                - paragraph [ref=e1361]: Your collection timeline will appear after the first import.
+              - generic [ref=e1362]: No observations
+        - generic [ref=e1364]:
+          - generic [ref=e1365]:
+            - generic [ref=e1366]:
+              - paragraph [ref=e1367]: INGESTION PIPELINE
+              - heading "Recent imports" [level=2] [ref=e1368]
+            - button "Manage collection" [ref=e1369] [cursor=pointer]
+          - generic [ref=e1372]:
+            - button "ouispy_wardrive_20260829_104036.csv wigle · 9/9/2026 complete" [pressed] [ref=e1374] [cursor=pointer]:
+              - generic [ref=e1378]:
+                - generic [ref=e1379]: ouispy_wardrive_20260829_104036.csv
+                - generic [ref=e1380]: wigle · 9/9/2026
+              - generic [ref=e1381]: complete
+            - generic [ref=e1382]:
+              - paragraph [ref=e1383]: SELECTED IMPORT
+              - heading "ouispy_wardrive_20260829_104036.csv" [level=3] [ref=e1384]
+              - generic [ref=e1385]:
+                - generic [ref=e1386]:
+                  - generic [ref=e1387]: 26,705
+                  - text: Accepted
+                - generic [ref=e1388]:
+                  - generic [ref=e1389]: "3"
+                  - text: Duplicates
+                - generic [ref=e1390]:
+                  - generic [ref=e1391]: "0"
+                  - text: Rejected
+              - paragraph [ref=e1392]: 100% location present · 100% collector coverage
+              - link "Download validation report ↗" [ref=e1393] [cursor=pointer]:
+                - /url: /v1/ingestions/4/report
+      - generic [ref=e673]:
+        - generic [ref=e674]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e675]: Workspace refreshed at 10:01 PM

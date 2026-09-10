@@ -35,6 +35,15 @@ against the intended role before granting access to another operator.
 - Review the in-app audit log for authentication, retention, key-change,
   category-override, baseline, disposition, and destructive-operation events.
 
+`/health` verifies Postgres, Redis, and an RQ worker serving the
+`signal-ledger` queue. It returns `200` only when all components respond,
+otherwise `503` with a bounded component status map.
+Application request, migration, health, and ingestion-completion events are
+newline-delimited JSON written to the app container's standard output. These
+events contain route/status/duration and bounded operational counts only; they
+must not contain query values, capture contents, raw addresses, secrets,
+passwords, cookies, raw storage paths, or upload names.
+
 ## Upgrade and rollback
 
 1. Take and verify a database backup and separately snapshot the raw-upload
@@ -54,3 +63,13 @@ Automated build and API checks do not replace a browser acceptance pass. Before
 calling a deployment production-ready, verify authenticated navigation,
 responsive picker layouts, browser back/forward routes, evidence dispositions,
 exports, and role restrictions in a real browser.
+
+For the read-only stack checks after an upgrade, run:
+
+```bash
+scripts/verify_deployment.sh https://your-private-host.example
+```
+
+It verifies dependency-aware health, the browser security headers, and that
+the migration ledger is populated. It does not replace the authenticated
+browser checks above.

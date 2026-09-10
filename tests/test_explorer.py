@@ -240,6 +240,30 @@ def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
     assert coverage == [{"cell": "37.775,-122.419", "count": 1, "avg_rssi": -41.0, "device_count": 1}]
 
 
+def test_hmac_rotation_creates_a_new_token_epoch_on_reingestion(tmp_path, monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, class_=_PostgisAgnosticSession)
+    monkeypatch.setattr(tasks_module, "SessionLocal", Session)
+    capture = tmp_path / "authorized-capture.csv"
+    capture.write_text("MAC,FirstTime,SSID\n00:11:22:33:44:55,2026-09-08T12:00:00Z,rotation-check\n")
+    db = Session()
+
+    def ingest(epoch: bytes, suffix: str):
+        run = SurveyRun(name="Rotation " + suffix, authorization_ref="AUTH-ROTATION")
+        db.add(run); db.flush()
+        job = IngestionJob(survey_run_id=run.id, filename="authorized-capture.csv", source_format="wigle", file_hash=suffix * 64, raw_path=str(capture))
+        db.add(job); db.commit()
+        monkeypatch.setattr(tasks_module, "HMAC_SECRET", epoch)
+        process_ingestion(job.id)
+
+    ingest(b"first-disposable-epoch", "a")
+    ingest(b"second-disposable-epoch", "b")
+    tokens = set(db.scalars(select(Device.token)).all())
+    assert len(tokens) == 2
+    assert db.query(Observation).count() == 2
+
+
 def test_failed_worker_keeps_capture_session_incomplete(tmp_path, monkeypatch):
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)

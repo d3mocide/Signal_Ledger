@@ -1,4 +1,4 @@
-import csv, hashlib, io, json, os, re, time
+import csv, hashlib, io, json, logging, os, re, time
 import urllib.error, urllib.request
 from collections import Counter, defaultdict
 from contextlib import asynccontextmanager
@@ -9,13 +9,13 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from redis import Redis
-from rq import Queue
-from sqlalchemy import Text, and_, case, cast, delete, func, or_, select
+from rq import Queue, Worker
+from sqlalchemy import Text, and_, case, cast, delete, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from .crypto import decrypt_address
 from .categorization import rebuild_categories
-from .database import SessionLocal
+from .database import SessionLocal, engine
 from .fingerprints import FINGERPRINT_VERSION, public_summary, signal_payload, similarity
 from .migrations import upgrade
 from .models import Anomaly, AuditEvent, Baseline, Device, DeviceReview, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, RuleProposal, SavedFilter, SurveyArea, SurveyRun, User, WorkspaceSetting
@@ -24,6 +24,7 @@ from .raw_storage import write_raw
 from .security import Principal, ROLE_ORDER, ROLES, SESSION_COOKIE, authenticate, expires_at, password_hash, password_valid, session_token, token_hash
 from .tasks import process_ingestion
 from .upload_security import validate_upload
+from .observability import configure_logging, event
 
 CARTO_API_KEY = os.getenv("CARTO_API_KEY") or None
 IEEE_OUI_URL = "https://standards-oui.ieee.org/oui/oui.csv"
@@ -31,17 +32,25 @@ RAW = Path(os.getenv("RAW_STORAGE_PATH", "/tmp/signal-ledger/raw")); RAW.mkdir(p
 redis = Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0")); queue = Queue("signal-ledger", connection=redis)
 MAX_UPLOAD = 100 * 1024 * 1024; ALLOWED_SUFFIXES = {".csv", ".json", ".ndjson", ".kismet"}
 MAX_OUI_UPLOAD = 20 * 1024 * 1024
+configure_logging()
+logger = logging.getLogger("signal_ledger")
 @asynccontextmanager
 async def lifespan(app):
     for _ in range(20):
-        try: upgrade(); break
-        except Exception: time.sleep(1)
+        try:
+            upgrade()
+            event(logger, "database.migrations.ready")
+            break
+        except Exception as error:
+            event(logger, "database.migrations.retry", error_type=type(error).__name__)
+            time.sleep(1)
     yield
 app = FastAPI(title="Signal Ledger", version="0.2.0", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/assets", StaticFiles(directory="app/static/assets"), name="assets")
 @app.middleware("http")
 async def request_database(request, call_next):
+    started = time.perf_counter()
     if not request.url.path.startswith(("/assets", "/static", "/health")):
         try:
             key = f"rate:{request.client.host if request.client else 'unknown'}:{request.url.path}"
@@ -56,7 +65,11 @@ async def request_database(request, call_next):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "same-origin"
+        event(logger, "http.request.complete", method=request.method, path=request.url.path, status_code=response.status_code, duration_ms=round((time.perf_counter() - started) * 1000, 1))
         return response
+    except Exception as error:
+        event(logger, "http.request.failed", method=request.method, path=request.url.path, error_type=type(error).__name__, duration_ms=round((time.perf_counter() - started) * 1000, 1))
+        raise
     finally: request.state.db.close()
 def db_session():
     db = SessionLocal()
@@ -120,6 +133,10 @@ def _review_groups(db, area_id=None, status="all"):
         group["priority"] = max(group["priority"], device_review_view(device, review)["priority"])
         group["categories"][device.category] += 1
         for role in device.device_roles or []: group["roles"][role] += 1
+        for label, value in (("vendor", vendor), ("device name", _review_text(fact.get("last_device_name"))), ("network", _review_text(fact.get("last_ssid"))), ("device type", _review_text(fact.get("last_device_type")))):
+            if value:
+                evidence = f"{label}: {value}"
+                if evidence not in group["evidence"]: group["evidence"].append(evidence)
         for item in (device.category_evidence or []) + (device.role_evidence or []):
             if item not in group["evidence"] and not item.startswith("unknown:"): group["evidence"].append(item)
         if group["label"] is None:
@@ -327,7 +344,23 @@ def workspace_settings(db):
 @app.get("/")
 def home(): return FileResponse("app/static/index.html")
 @app.get("/health")
-def health(): return {"status": "ok", "queue": "signal-ledger", "version": app.version}
+def health():
+    components = {"database": False, "redis": False, "worker": False}
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        components["database"] = True
+    except Exception as error:
+        event(logger, "health.database.unavailable", error_type=type(error).__name__)
+    try:
+        redis.ping()
+        components["redis"] = True
+        components["worker"] = any("signal-ledger" in worker.queue_names() for worker in Worker.all(connection=redis))
+    except Exception as error:
+        event(logger, "health.redis.unavailable", error_type=type(error).__name__)
+    status = "ok" if all(components.values()) else "degraded"
+    event(logger, "health.checked", status=status, **components)
+    return JSONResponse({"status": status, "queue": "signal-ledger", "version": app.version, "components": components}, status_code=200 if status == "ok" else 503)
 @app.get("/v1/setup/status")
 def setup_status(db: Session = Depends(db_session)):
     return {"setup_required": db.scalar(select(func.count()).select_from(User)) == 0}

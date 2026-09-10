@@ -123,8 +123,11 @@ success do not prove keyboard, responsive, or authenticated browser behavior.
 
 ## Remaining work
 
-See [`ROADMAP.md`](ROADMAP.md) for the authoritative checklist. The immediate
-gates are end-to-end upload-to-finding integration tests, realistic load tests,
-backup/restore and HMAC-rotation drills, accessibility/responsive/browser
-validation, categorization threshold tuning from representative feedback, and
-deployment monitoring/upgrade evidence.
+See [`ROADMAP.md`](ROADMAP.md) for the authoritative checklist. The current
+hardening evidence includes a 5,000-row disposable import/explorer load drill,
+a non-destructive database restore drill, a disposable HMAC token-epoch drill,
+dependency-aware health, structured redacted logs, and a post-upgrade verifier.
+Remaining gates are end-to-end upload-to-every-finding coverage, restricted
+parser isolation/malware scanning, approved encrypted or external raw-object
+storage, representative feedback threshold tuning, and a real TLS/secret-store
+production deployment.

@@ -1,0 +1,1317 @@
+- generic [ref=e14]:
+  - link "Skip to workspace" [ref=e15] [cursor=pointer]:
+    - /url: "#workspace"
+  - complementary [ref=e16]:
+    - link "Signal Ledger DISCOVERY OBSERVATORY" [ref=e17] [cursor=pointer]:
+      - /url: "#overview"
+      - generic [ref=e21]:
+        - text: Signal Ledger
+        - generic [ref=e22]: DISCOVERY OBSERVATORY
+    - generic [ref=e23]:
+      - generic [ref=e24]: SL
+      - generic [ref=e25]:
+        - text: Private workspace
+        - generic [ref=e26]: Authorized discovery
+    - navigation "Main navigation" [ref=e28]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: WORKSPACE
+        - button "Overview" [ref=e31] [cursor=pointer]
+      - button "Device inventory" [ref=e35] [cursor=pointer]
+      - button "Category view" [ref=e39] [cursor=pointer]
+      - button "Vendor breakdown" [ref=e43] [cursor=pointer]
+      - button "Coverage explorer" [active] [ref=e47] [cursor=pointer]
+      - generic [ref=e50]:
+        - paragraph [ref=e51]: ANALYSIS
+        - button "Findings" [ref=e52] [cursor=pointer]
+      - button "Review" [ref=e56] [cursor=pointer]
+      - button "Rule learning" [ref=e60] [cursor=pointer]
+      - button "Compare" [ref=e64] [cursor=pointer]
+      - button "Baselines" [ref=e68] [cursor=pointer]
+      - generic [ref=e71]:
+        - paragraph [ref=e72]: COLLECTION
+        - button "Imports" [ref=e73] [cursor=pointer]
+      - button "Collections" [ref=e77] [cursor=pointer]
+      - button "Administration" [ref=e81] [cursor=pointer]
+      - generic [ref=e84]:
+        - paragraph [ref=e85]: GOVERNANCE
+        - button "Audit log" [ref=e86] [cursor=pointer]
+    - generic [ref=e89]:
+      - generic [ref=e93]:
+        - text: Private by design
+        - generic [ref=e94]: Site-scoped tokens. Local maps.
+      - generic [ref=e95]:
+        - generic [ref=e96]: D3
+        - generic [ref=e97]:
+          - text: d3mo
+          - generic [ref=e98]: admin
+        - button "Sign out" [ref=e99] [cursor=pointer]
+  - generic [ref=e100]:
+    - banner [ref=e101]:
+      - generic [ref=e102]: Workspace/Coverage explorer
+      - generic [ref=e103]: Private instance
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - paragraph [ref=e108]: SIGNAL LEDGER / COVERAGE
+          - heading "Coverage explorer" [level=1] [ref=e1127]
+          - paragraph [ref=e110]: Understand where your collection has observed signals.
+        - generic [ref=e111]:
+          - button "Refresh" [ref=e112] [cursor=pointer]
+          - button "Import data" [ref=e115] [cursor=pointer]
+      - generic [ref=e1128]:
+        - generic [ref=e1129]:
+          - generic [ref=e1130]:
+            - paragraph [ref=e1131]: CAPTURE MAP
+            - heading "Explore collected GPS coverage" [level=2] [ref=e1132]
+            - paragraph [ref=e1133]: Locations are rounded cells, not precise device points. No third-party map tiles receive this data.
+          - button "Show geographic basemap" [ref=e1134] [cursor=pointer]
+          - combobox "Collection" [ref=e1135]:
+            - option "All collections" [selected]
+            - option "Test 1"
+          - combobox "Import session" [ref=e1136]:
+            - option "All sessions" [selected]
+            - option "ouispy_wardrive_20260829_104036 · 2026-09-09 03:04 UTC"
+          - combobox "Device" [ref=e1137]:
+            - option "All devices" [selected]
+            - option "ac7d7dc30511a5… · unattributable"
+            - option "ed8c20306dce55… · unattributable"
+            - option "19de7a84c4966a… · unattributable"
+            - option "654e046cd6b31e… · unattributable"
+            - option "441958f1a13ebf… · unattributable"
+            - option "6cfaa52ef80218… · unattributable"
+            - option "3a786e2d81257b… · unattributable"
+            - option "9eb657f24d89b0… · unattributable"
+            - option "26af02c38ff545… · MITSUMI ELECTRIC CO.,LTD."
+            - option "4bf7f4961b04c7… · Vantiva USA LLC"
+            - option "5da05b8e38300e… · unattributable"
+            - option "a107950582ffbf… · unattributable"
+            - option "cc7a882ebd4af4… · unattributable"
+            - option "c239ce93290d76… · Arcadyan Corporation"
+            - option "ae0c71ec88eff4… · unattributable"
+            - option "5560ddb85b8961… · Sagemcom Broadband SAS"
+            - option "9707a8d93032ee… · unattributable"
+            - option "069421f81c0a70… · unattributable"
+            - option "131c063244a42a… · Arcadyan Corporation"
+            - option "4ea0e65bdd21cd… · AUMOVIO Systems, Inc."
+            - option "bebecbc6a5e4d4… · MITSUMI ELECTRIC CO.,LTD."
+            - option "69ec7fdae57d40… · unattributable"
+            - option "095aab115c8ecb… · unattributable"
+            - option "08fb046c1d083b… · unattributable"
+            - option "6881f50ad7961f… · unattributable"
+            - option "622e82bca3fd1a… · unattributable"
+            - option "d942509b555704… · unattributable"
+            - option "495ffffac1e964… · Commscope"
+            - option "c2a821fb2bb5e4… · ASKEY COMPUTER CORP"
+            - option "9809ed26dd93fb… · unattributable"
+            - option "12f16b50cfd02e… · SHENZHEN BILIAN ELECTRONIC CO.，LTD"
+            - option "780afe93843a56… · unattributable"
+            - option "c57e2e8a2a8e33… · unattributable"
+            - option "27f7aba1ca981f… · unattributable"
+            - option "dde87ade1c3db4… · unattributable"
+            - option "1d6e9e6cb8c252… · unattributable"
+            - option "738bc97fa9478d… · unattributable"
+            - option "27bb34b0845367… · unattributable"
+            - option "e3026eff73da83… · unattributable"
+            - option "a5a4cc4c5cc7a5… · unattributable"
+            - option "19ded99c5454e1… · unattributable"
+            - option "c0dcfee04a5478… · unattributable"
+            - option "d45e2e4c7dc711… · unattributable"
+            - option "97f7c87334171c… · unattributable"
+            - option "c37807927a4562… · unattributable"
+            - option "8ea9b40f0258fe… · unattributable"
+            - option "6b6b50abc99d33… · Vantiva USA LLC"
+            - option "bdfabc1d9a12a6… · unattributable"
+            - option "bf825a243a34f5… · Vantiva USA LLC"
+            - option "3f1faea3313d22… · unattributable"
+            - option "e1242ed5c92c17… · unattributable"
+            - option "90fef17b835fa4… · unattributable"
+            - option "a5f6d67ba3fb58… · unattributable"
+            - option "516c6268d17ff6… · unattributable"
+            - option "8818af1ca34734… · unattributable"
+            - option "beb3322f4ae3d8… · unattributable"
+            - option "024c0ba07e065c… · unattributable"
+            - option "35d6feafac68d7… · Arcadyan Corporation"
+            - option "c89ce893019c33… · unattributable"
+            - option "ceb6b5301c7f3d… · unattributable"
+            - option "c0f8d3b7044d41… · unattributable"
+            - option "8b6910d79bff15… · unattributable"
+            - option "629fe443bc35e7… · Silicon Laboratories"
+            - option "9dc6dcf7cf6864… · unattributable"
+            - option "11acf3429c43d5… · Sagemcom Broadband SAS"
+            - option "f81aa719903ace… · unattributable"
+            - option "d3027e44bf52dd… · Vantiva USA LLC"
+            - option "17edbe00ece16a… · unattributable"
+            - option "f9f6fdc1d52e6c… · unattributable"
+            - option "ffba69f0c4d554… · unattributable"
+            - option "d3ed5dd5cdfbfa… · unattributable"
+            - option "a081887cbf76f1… · TP-LINK TECHNOLOGIES CO.,LTD."
+            - option "22814f80ed9ae9… · unattributable"
+            - option "4364b8f83abf81… · Hewlett Packard"
+            - option "c07e95cf6e56df… · unattributable"
+            - option "ceb3738cf010c5… · Vantiva USA LLC"
+            - option "26db61ccfde7c2… · Arcadyan Corporation"
+            - option "8b8578a4a7c43f… · unattributable"
+            - option "01e322c9ee6881… · unattributable"
+            - option "ba97209c4330f4… · Mojo Networks, Inc."
+            - option "a023a0b369be9b… · unattributable"
+            - option "4f04694bad643c… · Mojo Networks, Inc."
+            - option "0cd1ba7458a820… · unattributable"
+            - option "925f30dde6ad32… · unattributable"
+            - option "622853f97c97f0… · unattributable"
+            - option "96c57b02a8cd9d… · unattributable"
+            - option "0690178d7338d4… · unattributable"
+            - option "830734cafff30b… · unattributable"
+            - option "7a35df0850cc6c… · D-Link International"
+            - option "40fb054b53f985… · unattributable"
+            - option "7d005dd711b45f… · unattributable"
+            - option "c69439e0642832… · unattributable"
+            - option "72934124b7d6ad… · unattributable"
+            - option "bc0f5508b53aa2… · PEGATRON CORPORATION"
+            - option "be77c5cbf32273… · unattributable"
+            - option "56ee233180b9a2… · unattributable"
+            - option "085775b2958a0b… · unattributable"
+            - option "ebddd3e539a93e… · unattributable"
+            - option "3c8e780077df22… · unattributable"
+            - option "f4909095902244… · unattributable"
+            - option "ce2f13474aa12c… · unattributable"
+            - option "878746a39110bc… · unattributable"
+            - option "0e82a64ec03078… · unattributable"
+            - option "cfcc0ec4a8ce59… · unattributable"
+            - option "f1a87f760a7062… · unattributable"
+            - option "dcfad2b503602d… · unattributable"
+            - option "80c6797bbbd835… · Vantiva USA LLC"
+            - option "c7d0d5b5e9d1ab… · Espressif Inc."
+            - option "30e44e151b27d1… · unattributable"
+            - option "0bad1bf607037c… · unattributable"
+            - option "c5d5c7a0875719… · unattributable"
+            - option "6e5441d180b9d4… · Vantiva USA LLC"
+            - option "a757b0a8c6ed9a… · unattributable"
+            - option "9dab3c3d6ffb60… · unattributable"
+            - option "8daf84b6efb6d5… · unattributable"
+            - option "d098aedfacd5c3… · unattributable"
+            - option "7e4009d22792f8… · unattributable"
+            - option "c48417cbad18a5… · unattributable"
+            - option "b5076314ef01b8… · unattributable"
+            - option "f7dbd077ebf2c7… · unattributable"
+            - option "67795af9d93827… · unattributable"
+            - option "21b9bb96a13073… · Ubiquiti Inc"
+            - option "ff236a40925968… · Vantiva USA LLC"
+            - option "b256d7f1cae6e2… · TP-LINK TECHNOLOGIES CO.,LTD."
+            - option "5fa22f2dc0eca6… · WNC Corporation"
+            - option "fb77f6176fd168… · unattributable"
+            - option "72a18c75988b08… · unattributable"
+            - option "d59f3f1d3e8f9f… · unattributable"
+            - option "a6a3bc10dd5683… · unattributable"
+            - option "1b246777179133… · unattributable"
+            - option "05eecb9699c7fa… · NETGEAR"
+            - option "47e8e82dc1c201… · unattributable"
+            - option "fff66c90579188… · MCS Logic Inc."
+            - option "35ab9b09f1b76c… · unattributable"
+            - option "cafffd91d7d3ba… · unattributable"
+            - option "4ae346c05aa3cc… · unattributable"
+            - option "f6f4a68f3d57ef… · unattributable"
+            - option "fb8ed1b7193ec6… · unattributable"
+            - option "f3aa60af756371… · unattributable"
+            - option "d3a57b1ff56c2c… · unattributable"
+            - option "a1dabe804cfa06… · unattributable"
+            - option "d01b0b9de135c3… · TP-Link Systems Inc"
+            - option "8135ff0061ca0a… · Vantiva USA LLC"
+            - option "8f94de87d7286d… · Commscope"
+            - option "7bb38c25839440… · unattributable"
+            - option "6475e0a40ab3eb… · Hewlett Packard"
+            - option "c40d91ed7a9cb1… · unattributable"
+            - option "35db00b715a602… · Cisco Meraki"
+            - option "472622bf55f618… · unattributable"
+            - option "85076da91d1ace… · Samsung Electronics Co.,Ltd"
+            - option "c80ec2f8ff1aa0… · WNC Corporation"
+            - option "bc192f764fe04a… · unattributable"
+            - option "633bd84cecfc27… · unattributable"
+            - option "5c0c3a08255300… · unattributable"
+            - option "a9afbb14420962… · Vantiva USA LLC"
+            - option "1229549dceb3e1… · Vantiva USA LLC"
+            - option "6252cf07144757… · Vantiva USA LLC"
+            - option "8697b78f634dc4… · unattributable"
+            - option "0a4a473f5ef1c5… · unattributable"
+            - option "ff6c70831a3267… · unattributable"
+            - option "b46ea8e9878afa… · unattributable"
+            - option "a3862759df1da9… · unattributable"
+            - option "563f9a4398d921… · unattributable"
+            - option "6b728a550347f1… · unattributable"
+            - option "456e05c4caee0b… · NETGEAR"
+            - option "a1bf028c7ecd42… · unattributable"
+            - option "e9b4d1af4b2bfc… · unattributable"
+            - option "cdbb29ab95f2ab… · unattributable"
+            - option "a03176d916d4ec… · unattributable"
+            - option "4e17c0f98fa882… · unattributable"
+            - option "19e6db5b2c2463… · ASKEY COMPUTER CORP"
+            - option "b9171ab54de057… · Commscope"
+            - option "3c65e903151a67… · unattributable"
+            - option "b59685fa5b223c… · unattributable"
+            - option "e41b7127b544cd… · Arcadyan Corporation"
+            - option "bfd4934bb0e885… · unattributable"
+            - option "1a41984d40a172… · unattributable"
+            - option "b40699ec111968… · unattributable"
+            - option "fee61a49374271… · unattributable"
+            - option "ce1a944cbb2385… · NETGEAR"
+            - option "3469f7f881974c… · Arcadyan Corporation"
+            - option "ef8429fc640809… · unattributable"
+            - option "7be88afccb8385… · unattributable"
+            - option "5e5aa25d647180… · unattributable"
+            - option "92496ab4c024ba… · unattributable"
+            - option "b3c56a4b999003… · unattributable"
+            - option "a9028292232666… · unattributable"
+            - option "136ea0b5a8c6b5… · unattributable"
+            - option "70cb0afd1857b4… · Nokia Solutions and Networks GmbH & Co. KG"
+            - option "4410e47a9d51e0… · unattributable"
+            - option "96d9d595cf19be… · Vantiva USA LLC"
+            - option "2c2db478d7280d… · unattributable"
+            - option "540b0d4460a792… · Sagemcom Broadband SAS"
+            - option "b8babdbd4563d9… · unattributable"
+            - option "456e2cc23afae1… · unattributable"
+            - option "cc47fce133c746… · unattributable"
+            - option "a1123b5c91b200… · unattributable"
+            - option "7ef33fce9160db… · TP-Link Systems Inc"
+            - option "c1431d55cd6b1c… · Arcadyan Corporation"
+            - option "d96e38cc7f34d4… · unattributable"
+            - option "dd50ce875cb9f5… · unattributable"
+            - option "4f1a1cd78a54ec… · Sagemcom Broadband SAS"
+            - option "5b82c5c1c79f15… · unattributable"
+            - option "f7cde2499a6621… · Sercomm Corporation."
+            - option "7f3881cab3fed2… · Commscope"
+            - option "4c6c0684b5b02e… · Commscope"
+            - option "5bf15bec7b7836… · unattributable"
+            - option "f66e7f5109bbe9… · unattributable"
+            - option "06a4fb438adf98… · unattributable"
+            - option "eac965fff7e3ec… · Fortinet, Inc."
+            - option "4ed3906423a5d2… · unattributable"
+            - option "b2ec392b6e6fd4… · Arcadyan Corporation"
+            - option "c0e93f38aa35db… · unattributable"
+            - option "8e62a43d87c5e8… · unattributable"
+            - option "dfea557cbc3b9a… · unattributable"
+            - option "87711baff94e28… · unattributable"
+            - option "19bff72efe6aaf… · unattributable"
+            - option "93f2c7e3811680… · WNC Corporation"
+            - option "1f960f9e1a0b2b… · Arcadyan Corporation"
+            - option "9550cb8cce16a4… · unattributable"
+            - option "d90e25654136a7… · Chiun Mai Communication System, Inc"
+            - option "603a515a2686fa… · unattributable"
+            - option "c9b6b30ebd86ea… · unattributable"
+            - option "955f9400776437… · unattributable"
+            - option "5863af2e777e6d… · unattributable"
+            - option "66a523c977fc32… · IEEE Registration Authority"
+            - option "c5971bfe4b3f25… · unattributable"
+            - option "013a6150bbc9f2… · unattributable"
+            - option "0d7a27f4ce6fe6… · unattributable"
+            - option "552d188942dcf4… · unattributable"
+            - option "0a9051a52f7e1f… · SERCOMM PHILIPPINES INC"
+            - option "172a93cef536fe… · ASKEY COMPUTER CORP"
+            - option "ff66381242de73… · unattributable"
+            - option "0b1ba139eacc79… · unattributable"
+            - option "5a0d14ae497953… · unattributable"
+            - option "f771a69e9c868f… · WNC Corporation"
+            - option "c32f2d017fbb82… · unattributable"
+            - option "e4c9eba148d917… · Cisco Systems, Inc"
+            - option "cd199a74b4afd9… · LG Innotek"
+            - option "6e59a3d3318e2c… · unattributable"
+            - option "834fa1b7627660… · Vantiva USA LLC"
+            - option "c0362dceab5fef… · unattributable"
+            - option "f926734e73dfb9… · ASKEY COMPUTER CORP"
+            - option "01eb5a7c5b5c6a… · unattributable"
+            - option "57295d83ea3192… · unattributable"
+            - option "ec33d7191c3e09… · Cisco Meraki"
+            - option "1619b298259469… · unattributable"
+            - option "bed92f5103b594… · unattributable"
+            - option "c6ff878b9a1c65… · unattributable"
+            - option "d1ce7b75726e73… · unattributable"
+            - option "e9483a51139c9d… · Cisco Meraki"
+            - option "02b52ba79995dc… · unattributable"
+            - option "389a6d54e15018… · unattributable"
+            - option "73077e23d5d91f… · unattributable"
+            - option "5df4432c5528ef… · unattributable"
+            - option "a759acd99f8df1… · unattributable"
+            - option "89d9c60a3f4171… · unattributable"
+            - option "fa7c79b9ed4642… · unattributable"
+            - option "897ef0b69896a3… · unattributable"
+            - option "0799ad44ae6917… · Samsung Electronics Co.,Ltd"
+            - option "f63763b02f9106… · unattributable"
+            - option "4b777a758b17fe… · unattributable"
+            - option "80ddb72df4a637… · unattributable"
+            - option "ddc27725d260ab… · Vantiva USA LLC"
+            - option "8452665797fec8… · unattributable"
+            - option "0bd8ebf6081e44… · unattributable"
+            - option "8bdb78ca503cde… · Fortinet, Inc."
+            - option "55cbbd23c1ec87… · Fortinet, Inc."
+            - option "57fa75394db062… · unattributable"
+            - option "e735d179c29af9… · Fortinet, Inc."
+            - option "e7601ae8521962… · unattributable"
+            - option "6e3baec0e711b5… · unattributable"
+            - option "86d21299af1933… · unattributable"
+            - option "7cb06b420a4fe1… · unattributable"
+            - option "02b0d648643099… · unattributable"
+            - option "00e0460145413d… · unattributable"
+            - option "2068e6a8de7c39… · unattributable"
+            - option "58041f8b7a1395… · unattributable"
+            - option "37292bb88f8e21… · unattributable"
+            - option "8c616187768e60… · Axon Networks Inc."
+            - option "df00295444d2cf… · unattributable"
+            - option "16078365e6b96b… · ASKEY COMPUTER CORP"
+            - option "110c887c832d6e… · Vantiva USA LLC"
+            - option "e4a87472fec83b… · unattributable"
+            - option "5f5720a8677a3a… · unattributable"
+            - option "1487318f236854… · unattributable"
+            - option "ba0532b6be3420… · unattributable"
+            - option "caf3f10b88c9c0… · unattributable"
+            - option "2d690ffcceb60c… · unattributable"
+            - option "d5b79b5978ee54… · unattributable"
+            - option "8019eabedbe337… · unattributable"
+            - option "31c8cac7456c33… · Fortinet, Inc."
+            - option "893fa84afe4214… · unattributable"
+            - option "9fc540d5c4e8cf… · Google, Inc."
+            - option "87430581b0a2aa… · unattributable"
+            - option "7802d593282a8b… · unattributable"
+            - option "36b895b64636eb… · NETGEAR"
+            - option "024aad6dd2b598… · NETGEAR"
+            - option "230d27d9119fd8… · unattributable"
+            - option "d4d1ddf475a4f3… · Texas Instruments"
+            - option "142cdab2640a54… · unattributable"
+            - option "5b86989b075df3… · Fortinet, Inc."
+            - option "70401896338686… · NETGEAR"
+            - option "55c863ade0a353… · unattributable"
+            - option "001f5d3b957b9f… · Ubiquiti Inc"
+            - option "2703976e5f2a13… · Fortinet, Inc."
+            - option "b072ddb8737d12… · unattributable"
+            - option "b77086dd9812f3… · unattributable"
+            - option "62e0052e245241… · Ubiquiti Inc"
+            - option "1e71a103a923ac… · Cameo Communications, INC."
+            - option "c9e5cb1f72f697… · unattributable"
+            - option "1e9744ee93c32a… · Belkin International Inc."
+            - option "d9a865bda4e24d… · unattributable"
+            - option "30b7fda7cbc701… · NETGEAR"
+            - option "5e686241991244… · unattributable"
+            - option "e26b3c2e87c7f1… · unattributable"
+            - option "df25bcabd1a583… · unattributable"
+            - option "b1e80bc177cdbe… · Commscope"
+            - option "c813220beea213… · unattributable"
+            - option "9b21e3f8b4542b… · Texas Instruments"
+            - option "2992a5c275fa15… · unattributable"
+            - option "963307f10716ce… · unattributable"
+            - option "eb9ac23e8cfe06… · Vantiva USA LLC"
+            - option "12c8b1bd16c370… · unattributable"
+            - option "b963e32356f967… · Senao International Co., Ltd."
+            - option "812ed2c7b224fe… · unattributable"
+            - option "07de0369ba9a9e… · unattributable"
+            - option "1283cec92e18d4… · Hewlett Packard Enterprise"
+            - option "c2a9cc2ecded3e… · Arcadyan Corporation"
+            - option "2f25fda831f260… · TP-Link Systems Inc"
+            - option "45eea3b40ba66f… · Arcadyan Corporation"
+            - option "fc4e80d823d3b1… · Arcadyan Corporation"
+            - option "ecce44c273be6f… · LIFI LABS MANAGEMENT PTY LTD"
+            - option "964ef3b9cff9ef… · unattributable"
+            - option "d858623732ddc7… · unattributable"
+            - option "79c19fc29cae8a… · Vantiva USA LLC"
+            - option "a8c11e5a2788cb… · unattributable"
+            - option "85e3cf885e4414… · unattributable"
+            - option "5649d1a8035e86… · Ubiquiti Inc"
+            - option "42f6b03a84d667… · unattributable"
+            - option "cb3f2e63e4eb80… · unattributable"
+            - option "591e262f49e0cd… · Commscope"
+            - option "04d7ed049c5eab… · unattributable"
+            - option "3e7dd975151eed… · Zyxel Communications Corporation"
+            - option "d46fec321b2d1a… · Arcadyan Corporation"
+            - option "3af0b986d4d47a… · Hewlett Packard Enterprise"
+            - option "543412861a7464… · unattributable"
+            - option "c117c27e3fb859… · SERCOMM PHILIPPINES INC"
+            - option "5ca4f496b9ebf4… · Sagemcom Broadband SAS"
+            - option "07897ca009feb9… · Commscope"
+            - option "edb3374c02b03a… · Vantiva USA LLC"
+            - option "86e3120f7252fc… · Commscope"
+            - option "f7d9691a1f0089… · ASKEY COMPUTER CORP"
+            - option "46dfdd01af4c81… · unattributable"
+            - option "323eb425fa8ad0… · unattributable"
+            - option "4b910ea3ef2a52… · unattributable"
+            - option "828b387c456baa… · PEGATRON CORPORATION"
+            - option "c6a2ac38b612e8… · unattributable"
+            - option "e73d310a00f5c3… · unattributable"
+            - option "6edfbcb10d98c2… · GD Midea Air-Conditioning Equipment Co.,Ltd."
+            - option "ed944939e29fc3… · Actiontec Electronics, Inc"
+            - option "4ff1a38116fe04… · unattributable"
+            - option "2e7cbdb0ca739e… · Mojo Networks, Inc."
+            - option "ee7b5e7a3a5e61… · unattributable"
+            - option "178802ab6be22f… · unattributable"
+            - option "eab061de1f571e… · Cambridge Mobile Telematics, Inc."
+            - option "1b4306d13fd47a… · unattributable"
+            - option "fb0b101955bbda… · unattributable"
+            - option "2d4a02566df286… · unattributable"
+            - option "fa62c93ad796d8… · unattributable"
+            - option "48ccafda9c9120… · unattributable"
+            - option "da9d09d0f6b8c5… · unattributable"
+            - option "568192b2aa9803… · Nokia Solutions and Networks GmbH & Co. KG"
+            - option "b518f27c5f1fef… · Vantiva USA LLC"
+            - option "a81431973da8e5… · Resideo"
+            - option "e666f8fb4e236c… · unattributable"
+            - option "8d6a6d84a7b20f… · unattributable"
+            - option "1f96070aa21a7a… · unattributable"
+            - option "8968490879f9aa… · unattributable"
+            - option "c1e39a5a2aad90… · unattributable"
+            - option "e17354785c1675… · unattributable"
+            - option "c44ba54b1bfabb… · Mojo Networks, Inc."
+            - option "4c68d69bf72f5f… · ASUSTek COMPUTER INC."
+            - option "ebf44d65bdf762… · ASKEY COMPUTER CORP"
+            - option "af67ed9e69f870… · unattributable"
+            - option "dd8a0eb6b4bf59… · unattributable"
+            - option "651b3f987f19bf… · unattributable"
+            - option "304024d0a4e01a… · unattributable"
+            - option "7f5b84975a3627… · Hewlett Packard"
+            - option "88429cc2a463e5… · Hewlett Packard"
+            - option "c9b2a5e9a74865… · Vantiva USA LLC"
+            - option "bc4978361fb3af… · unattributable"
+            - option "35b4893f73bde2… · unattributable"
+            - option "030094b88b4eea… · unattributable"
+            - option "eaf6b9e8d6e4ec… · unattributable"
+            - option "8227e280332f55… · unattributable"
+            - option "50d69ca662231a… · unattributable"
+            - option "d334917393e636… · unattributable"
+            - option "002c9395f96b79… · AUMOVIO Systems, Inc."
+            - option "c7d4397a93cf88… · unattributable"
+            - option "21754ce8e16350… · unattributable"
+            - option "a156428a758039… · Cambridge Mobile Telematics, Inc."
+            - option "96dafc1e41c6df… · unattributable"
+            - option "92125df4459b15… · unattributable"
+            - option "448f0ee8cae2a4… · Zyxel Communications Corporation"
+            - option "99cc4c301ed2b7… · unattributable"
+            - option "d0346c4dfcc005… · unattributable"
+            - option "f2de73aade13f7… · unattributable"
+            - option "6e6b5f3480426d… · unattributable"
+            - option "90beb72b54e6fc… · unattributable"
+            - option "04e7cd4abc9ee0… · unattributable"
+            - option "cdc719b7c05529… · unattributable"
+            - option "b0108d70ff980f… · unattributable"
+            - option "d6119953ae4ff2… · Fortinet, Inc."
+            - option "ac04d8c2004195… · Actiontec Electronics, Inc"
+            - option "5677868f94423c… · XEROX CORPORATION"
+            - option "2e706541ff9397… · unattributable"
+            - option "59c08ddb1ff040… · unattributable"
+            - option "7d7028249c6e1e… · unattributable"
+            - option "e1a06e4801556c… · unattributable"
+            - option "5a3918a155dc98… · Cisco Meraki"
+            - option "1eae0e17b557b5… · unattributable"
+            - option "10a6eea5f914c2… · unattributable"
+            - option "6378cac9b7f3a6… · unattributable"
+            - option "fc025b91b92af6… · unattributable"
+            - option "eafd8dc08a8a93… · unattributable"
+            - option "c150b6dbb31250… · unattributable"
+            - option "78f8ebe581c15f… · unattributable"
+            - option "4de79de1f70e94… · unattributable"
+            - option "212ba324a938f6… · unattributable"
+            - option "658774391445cb… · unattributable"
+            - option "63efbf91c55289… · unattributable"
+            - option "88c9a1bf1908bb… · unattributable"
+            - option "fc918f2548c3d7… · unattributable"
+            - option "61221f3310e919… · unattributable"
+            - option "268abb42237e2d… · unattributable"
+            - option "b7e50a0aa9e8ba… · unattributable"
+            - option "0968cd0e0fa0e0… · Vantiva USA LLC"
+            - option "581a3360390f6c… · unattributable"
+            - option "69599290522ca4… · unattributable"
+            - option "3b7de1b6175b86… · unattributable"
+            - option "a4a61caa2ead57… · unattributable"
+            - option "c55ec56b5127d0… · unattributable"
+            - option "94f603c0433c9c… · unattributable"
+            - option "4533a335450d61… · unattributable"
+            - option "235980d4acbc8f… · unattributable"
+            - option "a79af0f05dc75b… · unattributable"
+            - option "a1a2afb6cb6e5f… · unattributable"
+            - option "2fa818bc4dcd52… · Shenzhen Phaten Tech. LTD"
+            - option "ed9f2e9ff17903… · unattributable"
+            - option "160d5b81793f44… · unattributable"
+            - option "ce4c978ea4a3d9… · Commscope"
+            - option "25a176038553d9… · unattributable"
+            - option "b101fcfca293ed… · Arcadyan Corporation"
+            - option "8898826e06be38… · CradlePoint, Inc"
+            - option "73b4d05bd11804… · Jiangxi Risound Electronics Co.,LTD"
+            - option "3b14b96f0033f9… · unattributable"
+            - option "e7583c55771bd6… · unattributable"
+            - option "59e92497658daa… · unattributable"
+            - option "6eecb7b16f7de6… · unattributable"
+            - option "148d9fb08a69e3… · unattributable"
+            - option "330440c22a79a1… · unattributable"
+            - option "1cf9a4c7c18503… · unattributable"
+            - option "fdea5bd666483b… · unattributable"
+            - option "bd429e852756d9… · unattributable"
+            - option "4c2f12c728ab2e… · unattributable"
+            - option "9c0e347d9d166f… · Vantiva USA LLC"
+            - option "ec36be2d5f2c77… · unattributable"
+            - option "31ff0393d257fa… · unattributable"
+            - option "fdbd408d9d9e4c… · unattributable"
+            - option "356d85ec2d4c9f… · unattributable"
+            - option "f9462c6f05b6a0… · unattributable"
+            - option "8de11cfa07f0c0… · unattributable"
+            - option "5673a1e600410e… · unattributable"
+            - option "1782d3ff1ed9b8… · unattributable"
+            - option "67d561058af0cb… · unattributable"
+            - option "4dcdd4beffc186… · unattributable"
+            - option "0febdd8163ce16… · unattributable"
+            - option "842f3f239739e8… · unattributable"
+            - option "2fb2e602958d84… · unattributable"
+            - option "cbdca0f4791295… · unattributable"
+            - option "6bea143be6b7a6… · Vantiva USA LLC"
+            - option "3a639b22c340e7… · unattributable"
+            - option "33216e9096744f… · WNC Corporation"
+            - option "2bf30160461896… · unattributable"
+            - option "bead513c6006e2… · unattributable"
+            - option "b95549997f546b… · unattributable"
+            - option "81c78ee11b40db… · unattributable"
+            - option "1d2235491d2158… · unattributable"
+            - option "1804357b6caef4… · unattributable"
+            - option "36675ae8bb825c… · unattributable"
+            - option "1a6495f432ef79… · unattributable"
+            - option "b27fb6cdf6f360… · unattributable"
+            - option "a6a9059fb3fa8e… · unattributable"
+            - option "1724a1baf33df1… · unattributable"
+            - option "13d91b2cd5d9af… · unattributable"
+            - option "6483f8ddd8d8e0… · unattributable"
+            - option "0433125e440ae9… · unattributable"
+            - option "a02e1977238550… · unattributable"
+            - option "006ba38251080d… · unattributable"
+        - generic [ref=e1138]:
+          - combobox "Radio protocol" [ref=e1139]:
+            - option "All radio types" [selected]
+            - option "Wi-Fi"
+            - option "Bluetooth"
+          - combobox "OUI organization" [ref=e1140]
+          - spinbutton "Min RSSI" [ref=e1141]
+          - textbox "Start date" [ref=e1142]
+          - textbox "End date" [ref=e1143]
+          - button "Apply filters" [ref=e1144] [cursor=pointer]
+        - generic [ref=e1145]:
+          - combobox "Saved coverage filter" [ref=e1146]:
+            - option "Saved filters" [selected]
+          - textbox "Saved filter name" [ref=e1147]:
+            - /placeholder: Name current filter
+          - button "Save filter" [disabled] [ref=e1148]
+        - figure "550 coarse location cells shown. One circle is a rounded 0.001° GPS cell, not a device; its size represents the number of observations collected in that cell. The thin line shows collection movement and breaks between sessions or five-minute gaps. Placeholder 0,0 GPS values are excluded." [ref=e1149]:
+          - img "Coarse observation map" [ref=e1151]:
+            - generic [ref=e1154]: 45.516°
+            - generic [ref=e1155]: 45.482°
+            - generic [ref=e1156]: 45.448°
+            - generic [ref=e1157]: 45.415°
+            - generic [ref=e1158]: 45.381°
+            - generic [ref=e1159]: "-122.801°"
+            - generic [ref=e1160]: "-122.757°"
+            - generic [ref=e1161]: "-122.713°"
+            - generic [ref=e1162]: "-122.668°"
+            - generic [ref=e1163]: "-122.624°"
+            - 'generic "45.381,-122.767: 831 observations across 654 devices" [ref=e1168]'
+            - 'generic "45.383,-122.747: 379 observations across 376 devices" [ref=e1171]'
+            - 'generic "45.382,-122.759: 323 observations across 319 devices" [ref=e1174]'
+            - 'generic "45.487,-122.649: 297 observations across 281 devices" [ref=e1177]'
+            - 'generic "45.510,-122.660: 252 observations across 238 devices" [ref=e1180]'
+            - 'generic "45.405,-122.624: 248 observations across 236 devices" [ref=e1183]'
+            - 'generic "45.383,-122.759: 240 observations across 206 devices" [ref=e1186]'
+            - 'generic "45.381,-122.764: 231 observations across 223 devices" [ref=e1189]'
+            - 'generic "45.467,-122.710: 207 observations across 205 devices" [ref=e1192]'
+            - 'generic "45.492,-122.652: 207 observations across 207 devices" [ref=e1195]'
+            - 'generic "45.490,-122.649: 195 observations across 190 devices" [ref=e1198]'
+            - 'generic "45.384,-122.759: 192 observations across 181 devices" [ref=e1201]'
+            - 'generic "45.467,-122.714: 189 observations across 189 devices" [ref=e1204]'
+            - 'generic "45.493,-122.652: 186 observations across 186 devices" [ref=e1207]'
+            - 'generic "45.500,-122.654: 186 observations across 186 devices" [ref=e1210]'
+            - 'generic "45.494,-122.653: 183 observations across 183 devices" [ref=e1213]'
+            - 'generic "45.497,-122.654: 169 observations across 168 devices" [ref=e1216]'
+            - 'generic "45.509,-122.659: 161 observations across 159 devices" [ref=e1219]'
+            - 'generic "45.466,-122.751: 156 observations across 156 devices" [ref=e1222]'
+            - 'generic "45.409,-122.627: 154 observations across 153 devices" [ref=e1225]'
+            - 'generic "45.382,-122.758: 153 observations across 153 devices" [ref=e1228]'
+            - 'generic "45.516,-122.665: 147 observations across 147 devices" [ref=e1231]'
+            - 'generic "45.491,-122.651: 145 observations across 141 devices" [ref=e1234]'
+            - 'generic "45.516,-122.666: 143 observations across 140 devices" [ref=e1237]'
+            - 'generic "45.487,-122.800: 141 observations across 140 devices" [ref=e1240]'
+            - 'generic "45.381,-122.768: 134 observations across 126 devices" [ref=e1243]'
+            - 'generic "45.499,-122.654: 134 observations across 134 devices" [ref=e1246]'
+            - 'generic "45.506,-122.658: 133 observations across 127 devices" [ref=e1249]'
+            - 'generic "45.384,-122.764: 129 observations across 129 devices" [ref=e1252]'
+            - 'generic "45.495,-122.653: 128 observations across 128 devices" [ref=e1255]'
+            - 'generic "45.454,-122.773: 128 observations across 128 devices" [ref=e1258]'
+            - 'generic "45.381,-122.765: 121 observations across 115 devices" [ref=e1261]'
+            - 'generic "45.477,-122.641: 120 observations across 120 devices" [ref=e1264]'
+            - 'generic "45.467,-122.712: 120 observations across 120 devices" [ref=e1267]'
+            - 'generic "45.466,-122.750: 118 observations across 118 devices" [ref=e1270]'
+            - 'generic "45.486,-122.792: 115 observations across 113 devices" [ref=e1273]'
+            - 'generic "45.502,-122.658: 115 observations across 115 devices" [ref=e1276]'
+            - 'generic "45.503,-122.658: 113 observations across 110 devices" [ref=e1279]'
+            - 'generic "45.516,-122.662: 112 observations across 111 devices" [ref=e1282]'
+            - 'generic "45.467,-122.723: 111 observations across 108 devices" [ref=e1285]'
+            - 'generic "45.466,-122.749: 109 observations across 109 devices" [ref=e1288]'
+            - 'generic "45.515,-122.662: 108 observations across 108 devices" [ref=e1291]'
+            - 'generic "45.495,-122.673: 107 observations across 107 devices" [ref=e1294]'
+            - 'generic "45.443,-122.642: 107 observations across 107 devices" [ref=e1297]'
+            - 'generic "45.467,-122.719: 106 observations across 106 devices" [ref=e1300]'
+            - 'generic "45.465,-122.726: 106 observations across 106 devices" [ref=e1303]'
+            - 'generic "45.430,-122.635: 105 observations across 105 devices" [ref=e1306]'
+            - 'generic "45.496,-122.653: 104 observations across 104 devices" [ref=e1309]'
+            - 'generic "45.467,-122.713: 104 observations across 104 devices" [ref=e1312]'
+            - 'generic "45.385,-122.759: 103 observations across 103 devices" [ref=e1315]'
+            - 'generic "45.467,-122.718: 102 observations across 102 devices" [ref=e1318]'
+            - 'generic "45.501,-122.654: 101 observations across 101 devices" [ref=e1321]'
+            - 'generic "45.442,-122.642: 101 observations across 101 devices" [ref=e1324]'
+            - 'generic "45.446,-122.643: 99 observations across 99 devices" [ref=e1327]'
+            - 'generic "45.455,-122.771: 98 observations across 98 devices" [ref=e1330]'
+            - 'generic "45.489,-122.649: 96 observations across 96 devices" [ref=e1333]'
+            - 'generic "45.487,-122.793: 94 observations across 93 devices" [ref=e1336]'
+            - 'generic "45.420,-122.633: 91 observations across 91 devices" [ref=e1339]'
+            - 'generic "45.382,-122.757: 90 observations across 86 devices" [ref=e1342]'
+            - 'generic "45.467,-122.715: 90 observations across 90 devices" [ref=e1345]'
+            - 'generic "45.449,-122.642: 88 observations across 88 devices" [ref=e1348]'
+            - 'generic "45.514,-122.667: 88 observations across 88 devices" [ref=e1351]'
+            - 'generic "45.381,-122.761: 87 observations across 87 devices" [ref=e1354]'
+            - 'generic "45.511,-122.662: 87 observations across 87 devices" [ref=e1357]'
+            - 'generic "45.460,-122.761: 87 observations across 87 devices" [ref=e1360]'
+            - 'generic "45.415,-122.631: 86 observations across 86 devices" [ref=e1363]'
+            - 'generic "45.466,-122.708: 85 observations across 85 devices" [ref=e1366]'
+            - 'generic "45.490,-122.650: 85 observations across 85 devices" [ref=e1369]'
+            - 'generic "45.498,-122.654: 85 observations across 85 devices" [ref=e1372]'
+            - 'generic "45.383,-122.764: 84 observations across 84 devices" [ref=e1375]'
+            - 'generic "45.465,-122.754: 84 observations across 84 devices" [ref=e1378]'
+            - 'generic "45.483,-122.643: 84 observations across 84 devices" [ref=e1381]'
+            - 'generic "45.431,-122.635: 84 observations across 84 devices" [ref=e1384]'
+            - 'generic "45.412,-122.629: 83 observations across 83 devices" [ref=e1387]'
+            - 'generic "45.427,-122.634: 83 observations across 83 devices" [ref=e1390]'
+            - 'generic "45.465,-122.724: 83 observations across 83 devices" [ref=e1393]'
+            - 'generic "45.384,-122.763: 82 observations across 82 devices" [ref=e1396]'
+            - 'generic "45.465,-122.701: 82 observations across 82 devices" [ref=e1399]'
+            - 'generic "45.465,-122.700: 82 observations across 82 devices" [ref=e1402]'
+            - 'generic "45.466,-122.752: 82 observations across 82 devices" [ref=e1405]'
+            - 'generic "45.411,-122.628: 81 observations across 81 devices" [ref=e1408]'
+            - 'generic "45.486,-122.679: 81 observations across 81 devices" [ref=e1411]'
+            - 'generic "45.384,-122.760: 81 observations across 80 devices" [ref=e1414]'
+            - 'generic "45.466,-122.707: 81 observations across 81 devices" [ref=e1417]'
+            - 'generic "45.466,-122.748: 80 observations across 80 devices" [ref=e1420]'
+            - 'generic "45.381,-122.766: 80 observations across 79 devices" [ref=e1423]'
+            - 'generic "45.467,-122.711: 79 observations across 79 devices" [ref=e1426]'
+            - 'generic "45.424,-122.748: 79 observations across 79 devices" [ref=e1429]'
+            - 'generic "45.496,-122.673: 78 observations across 78 devices" [ref=e1432]'
+            - 'generic "45.485,-122.679: 78 observations across 78 devices" [ref=e1435]'
+            - 'generic "45.500,-122.673: 76 observations across 76 devices" [ref=e1438]'
+            - 'generic "45.465,-122.725: 75 observations across 75 devices" [ref=e1441]'
+            - 'generic "45.414,-122.630: 75 observations across 75 devices" [ref=e1444]'
+            - 'generic "45.478,-122.641: 75 observations across 75 devices" [ref=e1447]'
+            - 'generic "45.488,-122.800: 75 observations across 75 devices" [ref=e1450]'
+            - 'generic "45.383,-122.757: 75 observations across 75 devices" [ref=e1453]'
+            - 'generic "45.423,-122.634: 75 observations across 75 devices" [ref=e1456]'
+            - 'generic "45.496,-122.654: 74 observations across 74 devices" [ref=e1459]'
+            - 'generic "45.445,-122.643: 74 observations across 74 devices" [ref=e1462]'
+            - 'generic "45.383,-122.756: 74 observations across 74 devices" [ref=e1465]'
+            - 'generic "45.419,-122.633: 74 observations across 74 devices" [ref=e1468]'
+            - 'generic "45.466,-122.746: 73 observations across 73 devices" [ref=e1471]'
+            - 'generic "45.467,-122.720: 73 observations across 73 devices" [ref=e1474]'
+            - 'generic "45.462,-122.758: 73 observations across 73 devices" [ref=e1477]'
+            - 'generic "45.408,-122.626: 73 observations across 73 devices" [ref=e1480]'
+            - 'generic "45.456,-122.769: 73 observations across 73 devices" [ref=e1483]'
+            - 'generic "45.488,-122.649: 73 observations across 73 devices" [ref=e1486]'
+            - 'generic "45.466,-122.723: 72 observations across 72 devices" [ref=e1489]'
+            - 'generic "45.489,-122.800: 72 observations across 71 devices" [ref=e1492]'
+            - 'generic "45.497,-122.673: 72 observations across 72 devices" [ref=e1495]'
+            - 'generic "45.385,-122.760: 72 observations across 72 devices" [ref=e1498]'
+            - 'generic "45.512,-122.662: 72 observations across 70 devices" [ref=e1501]'
+            - 'generic "45.505,-122.658: 72 observations across 72 devices" [ref=e1504]'
+            - 'generic "45.416,-122.632: 71 observations across 71 devices" [ref=e1507]'
+            - 'generic "45.487,-122.797: 71 observations across 71 devices" [ref=e1510]'
+            - 'generic "45.493,-122.653: 71 observations across 71 devices" [ref=e1513]'
+            - 'generic "45.383,-122.751: 70 observations across 70 devices" [ref=e1516]'
+            - 'generic "45.486,-122.648: 70 observations across 70 devices" [ref=e1519]'
+            - 'generic "45.384,-122.762: 70 observations across 70 devices" [ref=e1522]'
+            - 'generic "45.434,-122.636: 69 observations across 68 devices" [ref=e1525]'
+            - 'generic "45.490,-122.651: 69 observations across 69 devices" [ref=e1528]'
+            - 'generic "45.499,-122.673: 69 observations across 69 devices" [ref=e1531]'
+            - 'generic "45.458,-122.764: 69 observations across 69 devices" [ref=e1534]'
+            - 'generic "45.450,-122.642: 68 observations across 68 devices" [ref=e1537]'
+            - 'generic "45.467,-122.716: 68 observations across 68 devices" [ref=e1540]'
+            - 'generic "45.439,-122.641: 68 observations across 68 devices" [ref=e1543]'
+            - 'generic "45.467,-122.722: 68 observations across 68 devices" [ref=e1546]'
+            - 'generic "45.491,-122.652: 68 observations across 68 devices" [ref=e1549]'
+            - 'generic "45.454,-122.641: 68 observations across 68 devices" [ref=e1552]'
+            - 'generic "45.426,-122.751: 67 observations across 67 devices" [ref=e1555]'
+            - 'generic "45.503,-122.655: 66 observations across 62 devices" [ref=e1558]'
+            - 'generic "45.444,-122.643: 66 observations across 66 devices" [ref=e1561]'
+            - 'generic "45.487,-122.794: 66 observations across 66 devices" [ref=e1564]'
+            - 'generic "45.502,-122.657: 65 observations across 65 devices" [ref=e1567]'
+            - 'generic "45.510,-122.661: 65 observations across 65 devices" [ref=e1570]'
+            - 'generic "45.418,-122.633: 65 observations across 65 devices" [ref=e1573]'
+            - 'generic "45.466,-122.705: 65 observations across 65 devices" [ref=e1576]'
+            - 'generic "45.385,-122.761: 64 observations across 64 devices" [ref=e1579]'
+            - 'generic "45.465,-122.702: 64 observations across 64 devices" [ref=e1582]'
+            - 'generic "45.381,-122.760: 63 observations across 63 devices" [ref=e1585]'
+            - 'generic "45.467,-122.717: 63 observations across 63 devices" [ref=e1588]'
+            - 'generic "45.422,-122.633: 63 observations across 63 devices" [ref=e1591]'
+            - 'generic "45.475,-122.788: 62 observations across 62 devices" [ref=e1594]'
+            - 'generic "45.426,-122.634: 62 observations across 62 devices" [ref=e1597]'
+            - 'generic "45.502,-122.656: 62 observations across 62 devices" [ref=e1600]'
+            - 'generic "45.465,-122.734: 62 observations across 62 devices" [ref=e1603]'
+            - 'generic "45.504,-122.658: 61 observations across 61 devices" [ref=e1606]'
+            - 'generic "45.432,-122.635: 61 observations across 61 devices" [ref=e1609]'
+            - 'generic "45.464,-122.726: 61 observations across 61 devices" [ref=e1612]'
+            - 'generic "45.459,-122.762: 61 observations across 61 devices" [ref=e1615]'
+            - 'generic "45.516,-122.667: 61 observations across 61 devices" [ref=e1618]'
+            - 'generic "45.425,-122.749: 61 observations across 61 devices" [ref=e1621]'
+            - 'generic "45.487,-122.796: 61 observations across 61 devices" [ref=e1624]'
+            - 'generic "45.465,-122.723: 60 observations across 60 devices" [ref=e1627]'
+            - 'generic "45.467,-122.709: 60 observations across 60 devices" [ref=e1630]'
+            - 'generic "45.413,-122.630: 60 observations across 60 devices" [ref=e1633]'
+            - 'generic "45.459,-122.763: 60 observations across 60 devices" [ref=e1636]'
+            - 'generic "45.461,-122.759: 60 observations across 60 devices" [ref=e1639]'
+            - 'generic "45.484,-122.644: 60 observations across 60 devices" [ref=e1642]'
+            - 'generic "45.458,-122.765: 59 observations across 59 devices" [ref=e1645]'
+            - 'generic "45.466,-122.747: 59 observations across 59 devices" [ref=e1648]'
+            - 'generic "45.427,-122.753: 59 observations across 59 devices" [ref=e1651]'
+            - 'generic "45.469,-122.639: 59 observations across 59 devices" [ref=e1654]'
+            - 'generic "45.488,-122.801: 58 observations across 58 devices" [ref=e1657]'
+            - 'generic "45.454,-122.772: 58 observations across 58 devices" [ref=e1660]'
+            - 'generic "45.383,-122.748: 58 observations across 58 devices" [ref=e1663]'
+            - 'generic "45.461,-122.760: 58 observations across 58 devices" [ref=e1666]'
+            - 'generic "45.463,-122.757: 58 observations across 58 devices" [ref=e1669]'
+            - 'generic "45.465,-122.733: 57 observations across 57 devices" [ref=e1672]'
+            - 'generic "45.492,-122.674: 57 observations across 57 devices" [ref=e1675]'
+            - 'generic "45.383,-122.755: 56 observations across 56 devices" [ref=e1678]'
+            - 'generic "45.436,-122.638: 56 observations across 56 devices" [ref=e1681]'
+            - 'generic "45.487,-122.795: 56 observations across 56 devices" [ref=e1684]'
+            - 'generic "45.490,-122.675: 56 observations across 56 devices" [ref=e1687]'
+            - 'generic "45.498,-122.673: 56 observations across 56 devices" [ref=e1690]'
+            - 'generic "45.466,-122.706: 56 observations across 56 devices" [ref=e1693]'
+            - 'generic "45.466,-122.694: 56 observations across 56 devices" [ref=e1696]'
+            - 'generic "45.507,-122.659: 56 observations across 56 devices" [ref=e1699]'
+            - 'generic "45.447,-122.643: 56 observations across 56 devices" [ref=e1702]'
+            - 'generic "45.514,-122.662: 56 observations across 56 devices" [ref=e1705]'
+            - 'generic "45.383,-122.754: 56 observations across 56 devices" [ref=e1708]'
+            - 'generic "45.464,-122.728: 55 observations across 55 devices" [ref=e1711]'
+            - 'generic "45.513,-122.662: 55 observations across 55 devices" [ref=e1714]'
+            - 'generic "45.467,-122.639: 55 observations across 55 devices" [ref=e1717]'
+            - 'generic "45.433,-122.635: 55 observations across 55 devices" [ref=e1720]'
+            - 'generic "45.424,-122.634: 54 observations across 54 devices" [ref=e1723]'
+            - 'generic "45.516,-122.664: 54 observations across 53 devices" [ref=e1726]'
+            - 'generic "45.465,-122.735: 54 observations across 54 devices" [ref=e1729]'
+            - 'generic "45.510,-122.662: 54 observations across 54 devices" [ref=e1732]'
+            - 'generic "45.466,-122.745: 54 observations across 54 devices" [ref=e1735]'
+            - 'generic "45.463,-122.727: 54 observations across 54 devices" [ref=e1738]'
+            - 'generic "45.508,-122.659: 54 observations across 54 devices" [ref=e1741]'
+            - 'generic "45.487,-122.679: 53 observations across 53 devices" [ref=e1744]'
+            - 'generic "45.381,-122.762: 53 observations across 53 devices" [ref=e1747]'
+            - 'generic "45.465,-122.736: 53 observations across 53 devices" [ref=e1750]'
+            - 'generic "45.417,-122.632: 53 observations across 53 devices" [ref=e1753]'
+            - 'generic "45.383,-122.749: 52 observations across 52 devices" [ref=e1756]'
+            - 'generic "45.465,-122.755: 52 observations across 52 devices" [ref=e1759]'
+            - 'generic "45.425,-122.750: 52 observations across 52 devices" [ref=e1762]'
+            - 'generic "45.421,-122.633: 51 observations across 51 devices" [ref=e1765]'
+            - 'generic "45.465,-122.730: 51 observations across 51 devices" [ref=e1768]'
+            - 'generic "45.435,-122.637: 51 observations across 51 devices" [ref=e1771]'
+            - 'generic "45.436,-122.639: 51 observations across 51 devices" [ref=e1774]'
+            - 'generic "45.481,-122.642: 51 observations across 51 devices" [ref=e1777]'
+            - 'generic "45.488,-122.678: 50 observations across 50 devices" [ref=e1780]'
+            - 'generic "45.488,-122.677: 50 observations across 50 devices" [ref=e1783]'
+            - 'generic "45.487,-122.798: 50 observations across 50 devices" [ref=e1786]'
+            - 'generic "45.383,-122.752: 50 observations across 50 devices" [ref=e1789]'
+            - 'generic "45.494,-122.673: 50 observations across 50 devices" [ref=e1792]'
+            - 'generic "45.470,-122.683: 50 observations across 50 devices" [ref=e1795]'
+            - 'generic "45.487,-122.799: 49 observations across 49 devices" [ref=e1798]'
+            - 'generic "45.466,-122.744: 49 observations across 49 devices" [ref=e1801]'
+            - 'generic "45.382,-122.764: 49 observations across 49 devices" [ref=e1804]'
+            - 'generic "45.466,-122.704: 49 observations across 49 devices" [ref=e1807]'
+            - 'generic "45.455,-122.772: 48 observations across 48 devices" [ref=e1810]'
+            - 'generic "45.440,-122.770: 48 observations across 48 devices" [ref=e1813]'
+            - 'generic "45.470,-122.685: 48 observations across 48 devices" [ref=e1816]'
+            - 'generic "45.457,-122.767: 47 observations across 47 devices" [ref=e1819]'
+            - 'generic "45.438,-122.640: 47 observations across 47 devices" [ref=e1822]'
+            - 'generic "45.465,-122.741: 47 observations across 47 devices" [ref=e1825]'
+            - 'generic "45.482,-122.643: 47 observations across 47 devices" [ref=e1828]'
+            - 'generic "45.515,-122.667: 47 observations across 47 devices" [ref=e1831]'
+            - 'generic "45.456,-122.770: 46 observations across 46 devices" [ref=e1834]'
+            - 'generic "45.423,-122.748: 46 observations across 46 devices" [ref=e1837]'
+            - 'generic "45.471,-122.786: 46 observations across 46 devices" [ref=e1840]'
+            - 'generic "45.424,-122.749: 46 observations across 46 devices" [ref=e1843]'
+            - 'generic "45.464,-122.755: 45 observations across 45 devices" [ref=e1846]'
+            - 'generic "45.485,-122.793: 45 observations across 45 devices" [ref=e1849]'
+            - 'generic "45.502,-122.654: 45 observations across 45 devices" [ref=e1852]'
+            - 'generic "45.472,-122.677: 44 observations across 44 devices" [ref=e1855]'
+            - 'generic "45.491,-122.674: 44 observations across 44 devices" [ref=e1858]'
+            - 'generic "45.489,-122.676: 43 observations across 43 devices" [ref=e1861]'
+            - 'generic "45.467,-122.721: 43 observations across 43 devices" [ref=e1864]'
+            - 'generic "45.462,-122.639: 43 observations across 43 devices" [ref=e1867]'
+            - 'generic "45.473,-122.678: 43 observations across 43 devices" [ref=e1870]'
+            - 'generic "45.438,-122.641: 43 observations across 43 devices" [ref=e1873]'
+            - 'generic "45.465,-122.739: 43 observations across 43 devices" [ref=e1876]'
+            - 'generic "45.457,-122.640: 43 observations across 43 devices" [ref=e1879]'
+            - 'generic "45.476,-122.641: 43 observations across 43 devices" [ref=e1882]'
+            - 'generic "45.451,-122.642: 42 observations across 42 devices" [ref=e1885]'
+            - 'generic "45.406,-122.624: 42 observations across 42 devices" [ref=e1888]'
+            - 'generic "45.484,-122.679: 42 observations across 42 devices" [ref=e1891]'
+            - 'generic "45.404,-122.744: 42 observations across 42 devices" [ref=e1894]'
+            - 'generic "45.466,-122.753: 42 observations across 42 devices" [ref=e1897]'
+            - 'generic "45.468,-122.639: 42 observations across 42 devices" [ref=e1900]'
+            - 'generic "45.438,-122.766: 42 observations across 42 devices" [ref=e1903]'
+            - 'generic "45.470,-122.687: 41 observations across 41 devices" [ref=e1906]'
+            - 'generic "45.464,-122.732: 41 observations across 41 devices" [ref=e1909]'
+            - 'generic "45.474,-122.678: 41 observations across 41 devices" [ref=e1912]'
+            - 'generic "45.513,-122.667: 41 observations across 41 devices" [ref=e1915]'
+            - 'generic "45.464,-122.729: 40 observations across 40 devices" [ref=e1918]'
+            - 'generic "45.466,-122.703: 40 observations across 40 devices" [ref=e1921]'
+            - 'generic "45.412,-122.744: 40 observations across 40 devices" [ref=e1924]'
+            - 'generic "45.473,-122.677: 40 observations across 40 devices" [ref=e1927]'
+            - 'generic "45.387,-122.751: 40 observations across 40 devices" [ref=e1930]'
+            - 'generic "45.407,-122.625: 40 observations across 40 devices" [ref=e1933]'
+            - 'generic "45.425,-122.634: 40 observations across 40 devices" [ref=e1936]'
+            - 'generic "45.381,-122.763: 40 observations across 40 devices" [ref=e1939]'
+            - 'generic "45.504,-122.674: 39 observations across 39 devices" [ref=e1942]'
+            - 'generic "45.470,-122.688: 38 observations across 38 devices" [ref=e1945]'
+            - 'generic "45.463,-122.639: 38 observations across 38 devices" [ref=e1948]'
+            - 'generic "45.465,-122.699: 38 observations across 38 devices" [ref=e1951]'
+            - 'generic "45.465,-122.738: 38 observations across 38 devices" [ref=e1954]'
+            - 'generic "45.466,-122.639: 38 observations across 38 devices" [ref=e1957]'
+            - 'generic "45.456,-122.640: 38 observations across 38 devices" [ref=e1960]'
+            - 'generic "45.402,-122.745: 38 observations across 38 devices" [ref=e1963]'
+            - 'generic "45.410,-122.627: 38 observations across 38 devices" [ref=e1966]'
+            - 'generic "45.464,-122.756: 38 observations across 38 devices" [ref=e1969]'
+            - 'generic "45.480,-122.642: 38 observations across 38 devices" [ref=e1972]'
+            - 'generic "45.455,-122.770: 37 observations across 37 devices" [ref=e1975]'
+            - 'generic "45.428,-122.634: 37 observations across 37 devices" [ref=e1978]'
+            - 'generic "45.462,-122.759: 37 observations across 37 devices" [ref=e1981]'
+            - 'generic "45.465,-122.737: 37 observations across 37 devices" [ref=e1984]'
+            - 'generic "45.407,-122.744: 36 observations across 36 devices" [ref=e1987]'
+            - 'generic "45.414,-122.744: 36 observations across 36 devices" [ref=e1990]'
+            - 'generic "45.456,-122.768: 36 observations across 36 devices" [ref=e1993]'
+            - 'generic "45.470,-122.686: 36 observations across 36 devices" [ref=e1996]'
+            - 'generic "45.479,-122.642: 36 observations across 36 devices" [ref=e1999]'
+            - 'generic "45.414,-122.631: 36 observations across 36 devices" [ref=e2002]'
+            - 'generic "45.442,-122.774: 36 observations across 36 devices" [ref=e2005]'
+            - 'generic "45.478,-122.791: 35 observations across 35 devices" [ref=e2008]'
+            - 'generic "45.458,-122.785: 34 observations across 34 devices" [ref=e2011]'
+            - 'generic "45.466,-122.743: 34 observations across 34 devices" [ref=e2014]'
+            - 'generic "45.516,-122.663: 34 observations across 34 devices" [ref=e2017]'
+            - 'generic "45.503,-122.673: 34 observations across 34 devices" [ref=e2020]'
+            - 'generic "45.382,-122.752: 34 observations across 34 devices" [ref=e2023]'
+            - 'generic "45.415,-122.744: 33 observations across 33 devices" [ref=e2026]'
+            - 'generic "45.448,-122.643: 33 observations across 33 devices" [ref=e2029]'
+            - 'generic "45.465,-122.740: 33 observations across 33 devices" [ref=e2032]'
+            - 'generic "45.483,-122.679: 33 observations across 33 devices" [ref=e2035]'
+            - 'generic "45.411,-122.744: 33 observations across 33 devices" [ref=e2038]'
+            - 'generic "45.470,-122.786: 33 observations across 33 devices" [ref=e2041]'
+            - 'generic "45.501,-122.673: 32 observations across 32 devices" [ref=e2044]'
+            - 'generic "45.479,-122.679: 32 observations across 32 devices" [ref=e2047]'
+            - 'generic "45.477,-122.679: 32 observations across 32 devices" [ref=e2050]'
+            - 'generic "45.409,-122.744: 32 observations across 32 devices" [ref=e2053]'
+            - 'generic "45.441,-122.642: 32 observations across 32 devices" [ref=e2056]'
+            - 'generic "45.465,-122.638: 32 observations across 32 devices" [ref=e2059]'
+            - 'generic "45.466,-122.709: 31 observations across 31 devices" [ref=e2062]'
+            - 'generic "45.509,-122.660: 31 observations across 31 devices" [ref=e2065]'
+            - 'generic "45.493,-122.674: 31 observations across 31 devices" [ref=e2068]'
+            - 'generic "45.470,-122.639: 31 observations across 31 devices" [ref=e2071]'
+            - 'generic "45.453,-122.641: 31 observations across 31 devices" [ref=e2074]'
+            - 'generic "45.470,-122.684: 30 observations across 30 devices" [ref=e2077]'
+            - 'generic "45.455,-122.641: 30 observations across 30 devices" [ref=e2080]'
+            - 'generic "45.408,-122.744: 30 observations across 30 devices" [ref=e2083]'
+            - 'generic "45.440,-122.769: 30 observations across 30 devices" [ref=e2086]'
+            - 'generic "45.384,-122.761: 29 observations across 29 devices" [ref=e2089]'
+            - 'generic "45.457,-122.768: 29 observations across 29 devices" [ref=e2092]'
+            - 'generic "45.384,-122.752: 29 observations across 29 devices" [ref=e2095]'
+            - 'generic "45.461,-122.639: 29 observations across 29 devices" [ref=e2098]'
+            - 'generic "45.465,-122.698: 29 observations across 29 devices" [ref=e2101]'
+            - 'generic "45.410,-122.628: 29 observations across 29 devices" [ref=e2104]'
+            - 'generic "45.426,-122.752: 29 observations across 29 devices" [ref=e2107]'
+            - 'generic "45.473,-122.640: 28 observations across 28 devices" [ref=e2110]'
+            - 'generic "45.405,-122.744: 28 observations across 28 devices" [ref=e2113]'
+            - 'generic "45.503,-122.656: 28 observations across 28 devices" [ref=e2116]'
+            - 'generic "45.464,-122.731: 28 observations across 28 devices" [ref=e2119]'
+            - 'generic "45.478,-122.679: 28 observations across 28 devices" [ref=e2122]'
+            - 'generic "45.465,-122.697: 28 observations across 28 devices" [ref=e2125]'
+            - 'generic "45.443,-122.775: 28 observations across 28 devices" [ref=e2128]'
+            - 'generic "45.417,-122.633: 27 observations across 27 devices" [ref=e2131]'
+            - 'generic "45.428,-122.754: 27 observations across 27 devices" [ref=e2134]'
+            - 'generic "45.403,-122.745: 27 observations across 27 devices" [ref=e2137]'
+            - 'generic "45.462,-122.786: 27 observations across 27 devices" [ref=e2140]'
+            - 'generic "45.468,-122.786: 26 observations across 26 devices" [ref=e2143]'
+            - 'generic "45.503,-122.654: 26 observations across 26 devices" [ref=e2146]'
+            - 'generic "45.469,-122.786: 26 observations across 26 devices" [ref=e2149]'
+            - 'generic "45.439,-122.768: 26 observations across 26 devices" [ref=e2152]'
+            - 'generic "45.485,-122.646: 26 observations across 26 devices" [ref=e2155]'
+            - 'generic "45.383,-122.753: 26 observations across 26 devices" [ref=e2158]'
+            - 'generic "45.455,-122.784: 26 observations across 26 devices" [ref=e2161]'
+            - 'generic "45.437,-122.639: 25 observations across 25 devices" [ref=e2164]'
+            - 'generic "45.437,-122.640: 25 observations across 25 devices" [ref=e2167]'
+            - 'generic "45.472,-122.640: 25 observations across 25 devices" [ref=e2170]'
+            - 'generic "45.476,-122.789: 25 observations across 25 devices" [ref=e2173]'
+            - 'generic "45.401,-122.745: 25 observations across 25 devices" [ref=e2176]'
+            - 'generic "45.464,-122.639: 25 observations across 25 devices" [ref=e2179]'
+            - 'generic "45.429,-122.635: 25 observations across 25 devices" [ref=e2182]'
+            - 'generic "45.486,-122.647: 24 observations across 24 devices" [ref=e2185]'
+            - 'generic "45.444,-122.778: 24 observations across 24 devices" [ref=e2188]'
+            - 'generic "45.441,-122.771: 24 observations across 24 devices" [ref=e2191]'
+            - 'generic "45.452,-122.641: 24 observations across 24 devices" [ref=e2194]'
+            - 'generic "45.463,-122.726: 24 observations across 24 devices" [ref=e2197]'
+            - 'generic "45.475,-122.678: 24 observations across 24 devices" [ref=e2200]'
+            - 'generic "45.467,-122.786: 24 observations across 24 devices" [ref=e2203]'
+            - 'generic "45.510,-122.667: 24 observations across 24 devices" [ref=e2206]'
+            - 'generic "45.470,-122.689: 24 observations across 24 devices" [ref=e2209]'
+            - 'generic "45.471,-122.640: 24 observations across 24 devices" [ref=e2212]'
+            - 'generic "45.460,-122.760: 23 observations across 23 devices" [ref=e2215]'
+            - 'generic "45.457,-122.766: 23 observations across 23 devices" [ref=e2218]'
+            - 'generic "45.383,-122.750: 23 observations across 23 devices" [ref=e2221]'
+            - 'generic "45.413,-122.744: 23 observations across 23 devices" [ref=e2224]'
+            - 'generic "45.474,-122.787: 23 observations across 23 devices" [ref=e2227]'
+            - 'generic "45.484,-122.793: 23 observations across 23 devices" [ref=e2230]'
+            - 'generic "45.505,-122.674: 23 observations across 23 devices" [ref=e2233]'
+            - 'generic "45.471,-122.677: 22 observations across 22 devices" [ref=e2236]'
+            - 'generic "45.459,-122.785: 22 observations across 22 devices" [ref=e2239]'
+            - 'generic "45.456,-122.784: 22 observations across 22 devices" [ref=e2242]'
+            - 'generic "45.422,-122.747: 22 observations across 22 devices" [ref=e2245]'
+            - 'generic "45.422,-122.746: 22 observations across 22 devices" [ref=e2248]'
+            - 'generic "45.502,-122.673: 22 observations across 22 devices" [ref=e2251]'
+            - 'generic "45.420,-122.743: 21 observations across 21 devices" [ref=e2254]'
+            - 'generic "45.460,-122.785: 21 observations across 21 devices" [ref=e2257]'
+            - 'generic "45.469,-122.690: 21 observations across 21 devices" [ref=e2260]'
+            - 'generic "45.470,-122.682: 21 observations across 21 devices" [ref=e2263]'
+            - 'generic "45.465,-122.742: 21 observations across 21 devices" [ref=e2266]'
+            - 'generic "45.485,-122.647: 21 observations across 21 devices" [ref=e2269]'
+            - 'generic "45.410,-122.744: 21 observations across 21 devices" [ref=e2272]'
+            - 'generic "45.456,-122.641: 20 observations across 20 devices" [ref=e2275]'
+            - 'generic "45.452,-122.642: 20 observations across 20 devices" [ref=e2278]'
+            - 'generic "45.465,-122.727: 20 observations across 20 devices" [ref=e2281]'
+            - 'generic "45.444,-122.779: 20 observations across 20 devices" [ref=e2284]'
+            - 'generic "45.466,-122.754: 20 observations across 20 devices" [ref=e2287]'
+            - 'generic "45.472,-122.786: 20 observations across 20 devices" [ref=e2290]'
+            - 'generic "45.477,-122.790: 20 observations across 20 devices" [ref=e2293]'
+            - 'generic "45.480,-122.679: 20 observations across 20 devices" [ref=e2296]'
+            - 'generic "45.482,-122.679: 20 observations across 20 devices" [ref=e2299]'
+            - 'generic "45.427,-122.752: 20 observations across 20 devices" [ref=e2302]'
+            - 'generic "45.416,-122.744: 20 observations across 20 devices" [ref=e2305]'
+            - 'generic "45.493,-122.673: 20 observations across 20 devices" [ref=e2308]'
+            - 'generic "45.386,-122.751: 20 observations across 20 devices" [ref=e2311]'
+            - 'generic "45.491,-122.675: 19 observations across 19 devices" [ref=e2314]'
+            - 'generic "45.466,-122.786: 19 observations across 19 devices" [ref=e2317]'
+            - 'generic "45.485,-122.792: 19 observations across 19 devices" [ref=e2320]'
+            - 'generic "45.441,-122.772: 19 observations across 19 devices" [ref=e2323]'
+            - 'generic "45.423,-122.747: 19 observations across 19 devices" [ref=e2326]'
+            - 'generic "45.465,-122.695: 19 observations across 19 devices" [ref=e2329]'
+            - 'generic "45.489,-122.677: 19 observations across 18 devices" [ref=e2332]'
+            - 'generic "45.485,-122.645: 19 observations across 19 devices" [ref=e2335]'
+            - 'generic "45.475,-122.641: 18 observations across 18 devices" [ref=e2338]'
+            - 'generic "45.507,-122.671: 18 observations across 18 devices" [ref=e2341]'
+            - 'generic "45.465,-122.696: 18 observations across 18 devices" [ref=e2344]'
+            - 'generic "45.438,-122.765: 18 observations across 18 devices" [ref=e2347]'
+            - 'generic "45.481,-122.679: 18 observations across 18 devices" [ref=e2350]'
+            - 'generic "45.479,-122.791: 18 observations across 18 devices" [ref=e2353]'
+            - 'generic "45.457,-122.784: 18 observations across 18 devices" [ref=e2356]'
+            - 'generic "45.406,-122.744: 18 observations across 18 devices" [ref=e2359]'
+            - 'generic "45.448,-122.642: 18 observations across 18 devices" [ref=e2362]'
+            - 'generic "45.468,-122.691: 18 observations across 18 devices" [ref=e2365]'
+            - 'generic "45.463,-122.758: 18 observations across 18 devices" [ref=e2368]'
+            - 'generic "45.388,-122.750: 18 observations across 18 devices" [ref=e2371]'
+            - 'generic "45.444,-122.642: 17 observations across 17 devices" [ref=e2374]'
+            - 'generic "45.506,-122.659: 17 observations across 17 devices" [ref=e2377]'
+            - 'generic "45.457,-122.785: 17 observations across 17 devices" [ref=e2380]'
+            - 'generic "45.383,-122.760: 17 observations across 17 devices" [ref=e2383]'
+            - 'generic "45.458,-122.763: 17 observations across 17 devices" [ref=e2386]'
+            - 'generic "45.470,-122.681: 17 observations across 17 devices" [ref=e2389]'
+            - 'generic "45.479,-122.641: 17 observations across 17 devices" [ref=e2392]'
+            - 'generic "45.468,-122.692: 17 observations across 17 devices" [ref=e2395]'
+            - 'generic "45.476,-122.678: 17 observations across 17 devices" [ref=e2398]'
+            - 'generic "45.490,-122.676: 16 observations across 16 devices" [ref=e2401]'
+            - 'generic "45.396,-122.747: 16 observations across 16 devices" [ref=e2404]'
+            - 'generic "45.433,-122.760: 16 observations across 16 devices" [ref=e2407]'
+            - 'generic "45.476,-122.679: 16 observations across 16 devices" [ref=e2410]'
+            - 'generic "45.482,-122.642: 16 observations across 16 devices" [ref=e2413]'
+            - 'generic "45.483,-122.644: 16 observations across 16 devices" [ref=e2416]'
+            - 'generic "45.426,-122.750: 16 observations across 16 devices" [ref=e2419]'
+            - 'generic "45.487,-122.678: 16 observations across 16 devices" [ref=e2422]'
+            - 'generic "45.409,-122.626: 16 observations across 16 devices" [ref=e2425]'
+            - 'generic "45.451,-122.784: 16 observations across 16 devices" [ref=e2428]'
+            - 'generic "45.460,-122.640: 15 observations across 15 devices" [ref=e2431]'
+            - 'generic "45.487,-122.792: 15 observations across 15 devices" [ref=e2434]'
+            - 'generic "45.511,-122.667: 15 observations across 15 devices" [ref=e2437]'
+            - 'generic "45.403,-122.744: 15 observations across 15 devices" [ref=e2440]'
+            - 'generic "45.417,-122.744: 15 observations across 15 devices" [ref=e2443]'
+            - 'generic "45.506,-122.673: 15 observations across 15 devices" [ref=e2446]'
+            - 'generic "45.439,-122.767: 15 observations across 15 devices" [ref=e2449]'
+            - 'generic "45.440,-122.641: 15 observations across 15 devices" [ref=e2452]'
+            - 'generic "45.436,-122.763: 15 observations across 15 devices" [ref=e2455]'
+            - 'generic "45.458,-122.640: 15 observations across 15 devices" [ref=e2458]'
+            - 'generic "45.430,-122.756: 14 observations across 14 devices" [ref=e2461]'
+            - 'generic "45.466,-122.693: 14 observations across 14 devices" [ref=e2464]'
+            - 'generic "45.470,-122.680: 14 observations across 14 devices" [ref=e2467]'
+            - 'generic "45.437,-122.764: 14 observations across 14 devices" [ref=e2470]'
+            - 'generic "45.421,-122.746: 13 observations across 13 devices" [ref=e2473]'
+            - 'generic "45.385,-122.751: 13 observations across 13 devices" [ref=e2476]'
+            - 'generic "45.459,-122.640: 13 observations across 13 devices" [ref=e2479]'
+            - 'generic "45.478,-122.790: 13 observations across 13 devices" [ref=e2482]'
+            - 'generic "45.512,-122.667: 13 observations across 13 devices" [ref=e2485]'
+            - 'generic "45.465,-122.786: 13 observations across 13 devices" [ref=e2488]'
+            - 'generic "45.446,-122.782: 12 observations across 12 devices" [ref=e2491]'
+            - 'generic "45.470,-122.640: 12 observations across 12 devices" [ref=e2494]'
+            - 'generic "45.393,-122.748: 12 observations across 12 devices" [ref=e2497]'
+            - 'generic "45.421,-122.745: 12 observations across 12 devices" [ref=e2500]'
+            - 'generic "45.509,-122.668: 11 observations across 11 devices" [ref=e2503]'
+            - 'generic "45.382,-122.751: 11 observations across 11 devices" [ref=e2506]'
+            - 'generic "45.464,-122.786: 11 observations across 11 devices" [ref=e2509]'
+            - 'generic "45.415,-122.632: 11 observations across 11 devices" [ref=e2512]'
+            - 'generic "45.443,-122.776: 11 observations across 11 devices" [ref=e2515]'
+            - 'generic "45.482,-122.793: 11 observations across 11 devices" [ref=e2518]'
+            - 'generic "45.435,-122.638: 10 observations across 10 devices" [ref=e2521]'
+            - 'generic "45.398,-122.746: 10 observations across 10 devices" [ref=e2524]'
+            - 'generic "45.400,-122.746: 10 observations across 10 devices" [ref=e2527]'
+            - 'generic "45.465,-122.729: 10 observations across 10 devices" [ref=e2530]'
+            - 'generic "45.419,-122.744: 10 observations across 10 devices" [ref=e2533]'
+            - 'generic "45.440,-122.642: 10 observations across 10 devices" [ref=e2536]'
+            - 'generic "45.435,-122.761: 9 observations across 9 devices" [ref=e2539]'
+            - 'generic "45.463,-122.786: 9 observations across 9 devices" [ref=e2542]'
+            - 'generic "45.484,-122.645: 9 observations across 9 devices" [ref=e2545]'
+            - 'generic "45.463,-122.756: 9 observations across 9 devices" [ref=e2548]'
+            - 'generic "45.461,-122.785: 9 observations across 9 devices" [ref=e2551]'
+            - 'generic "45.433,-122.636: 9 observations across 9 devices" [ref=e2554]'
+            - 'generic "45.450,-122.784: 9 observations across 9 devices" [ref=e2557]'
+            - 'generic "45.474,-122.640: 9 observations across 9 devices" [ref=e2560]'
+            - 'generic "45.390,-122.750: 9 observations across 9 devices" [ref=e2563]'
+            - 'generic "45.397,-122.747: 9 observations across 9 devices" [ref=e2566]'
+            - 'generic "45.406,-122.625: 9 observations across 9 devices" [ref=e2569]'
+            - 'generic "45.464,-122.638: 8 observations across 8 devices" [ref=e2572]'
+            - 'generic "45.483,-122.793: 8 observations across 8 devices" [ref=e2575]'
+            - 'generic "45.430,-122.757: 8 observations across 8 devices" [ref=e2578]'
+            - 'generic "45.487,-122.648: 8 observations across 8 devices" [ref=e2581]'
+            - 'generic "45.422,-122.634: 8 observations across 8 devices" [ref=e2584]'
+            - 'generic "45.470,-122.678: 8 observations across 8 devices" [ref=e2587]'
+            - 'generic "45.445,-122.779: 7 observations across 7 devices" [ref=e2590]'
+            - 'generic "45.466,-122.742: 7 observations across 7 devices" [ref=e2593]'
+            - 'generic "45.466,-122.702: 7 observations across 7 devices" [ref=e2596]'
+            - 'generic "45.429,-122.755: 7 observations across 7 devices" [ref=e2599]'
+            - 'generic "45.480,-122.792: 7 observations across 7 devices" [ref=e2602]'
+            - 'generic "45.470,-122.679: 7 observations across 7 devices" [ref=e2605]'
+            - 'generic "45.433,-122.759: 7 observations across 7 devices" [ref=e2608]'
+            - 'generic "45.467,-122.693: 7 observations across 7 devices" [ref=e2611]'
+            - 'generic "45.394,-122.748: 7 observations across 7 devices" [ref=e2614]'
+            - 'generic "45.465,-122.732: 6 observations across 6 devices" [ref=e2617]'
+            - 'generic "45.442,-122.773: 6 observations across 6 devices" [ref=e2620]'
+            - 'generic "45.429,-122.756: 6 observations across 6 devices" [ref=e2623]'
+            - 'generic "45.395,-122.747: 6 observations across 6 devices" [ref=e2626]'
+            - 'generic "45.477,-122.789: 6 observations across 6 devices" [ref=e2629]'
+            - 'generic "45.467,-122.692: 6 observations across 6 devices" [ref=e2632]'
+            - 'generic "45.487,-122.801: 6 observations across 6 devices" [ref=e2635]'
+            - 'generic "45.465,-122.731: 6 observations across 6 devices" [ref=e2638]'
+            - 'generic "45.506,-122.672: 6 observations across 6 devices" [ref=e2641]'
+            - 'generic "45.434,-122.760: 6 observations across 6 devices" [ref=e2644]'
+            - 'generic "45.391,-122.749: 6 observations across 6 devices" [ref=e2647]'
+            - 'generic "45.447,-122.783: 6 observations across 6 devices" [ref=e2650]'
+            - 'generic "45.473,-122.787: 6 observations across 6 devices" [ref=e2653]'
+            - 'generic "45.448,-122.783: 6 observations across 6 devices" [ref=e2656]'
+            - 'generic "45.418,-122.744: 6 observations across 6 devices" [ref=e2659]'
+            - 'generic "45.444,-122.777: 5 observations across 5 devices" [ref=e2662]'
+            - 'generic "45.474,-122.641: 5 observations across 5 devices" [ref=e2665]'
+            - 'generic "45.435,-122.762: 5 observations across 5 devices" [ref=e2668]'
+            - 'generic "45.436,-122.762: 5 observations across 5 devices" [ref=e2671]'
+            - 'generic "45.449,-122.784: 5 observations across 5 devices" [ref=e2674]'
+            - 'generic "45.399,-122.746: 5 observations across 5 devices" [ref=e2677]'
+            - 'generic "45.505,-122.673: 5 observations across 5 devices" [ref=e2680]'
+            - 'generic "45.508,-122.669: 5 observations across 5 devices" [ref=e2683]'
+            - 'generic "45.390,-122.749: 5 observations across 5 devices" [ref=e2686]'
+            - 'generic "45.389,-122.750: 5 observations across 5 devices" [ref=e2689]'
+            - 'generic "45.471,-122.678: 5 observations across 5 devices" [ref=e2692]'
+            - 'generic "45.428,-122.755: 4 observations across 4 devices" [ref=e2695]'
+            - 'generic "45.461,-122.786: 4 observations across 4 devices" [ref=e2698]'
+            - 'generic "45.464,-122.727: 4 observations across 4 devices" [ref=e2701]'
+            - 'generic "45.446,-122.781: 4 observations across 4 devices" [ref=e2704]'
+            - 'generic "45.411,-122.629: 4 observations across 4 devices" [ref=e2707]'
+            - 'generic "45.445,-122.780: 4 observations across 4 devices" [ref=e2710]'
+            - 'generic "45.413,-122.629: 4 observations across 4 devices" [ref=e2713]'
+            - 'generic "45.460,-122.639: 4 observations across 4 devices" [ref=e2716]'
+            - 'generic "45.508,-122.670: 4 observations across 4 devices" [ref=e2719]'
+            - 'generic "45.509,-122.667: 4 observations across 4 devices" [ref=e2722]'
+            - 'generic "45.441,-122.773: 4 observations across 4 devices" [ref=e2725]'
+            - 'generic "45.481,-122.792: 4 observations across 4 devices" [ref=e2728]'
+            - 'generic "45.381,-122.759: 4 observations across 4 devices" [ref=e2731]'
+            - 'generic "45.438,-122.767: 3 observations across 3 devices" [ref=e2734]'
+            - 'generic "45.420,-122.744: 3 observations across 3 devices" [ref=e2737]'
+            - 'generic "45.400,-122.745: 3 observations across 3 devices" [ref=e2740]'
+            - 'generic "45.392,-122.749: 3 observations across 3 devices" [ref=e2743]'
+            - 'generic "45.503,-122.674: 3 observations across 3 devices" [ref=e2746]'
+            - 'generic "45.508,-122.668: 3 observations across 3 devices" [ref=e2749]'
+            - 'generic "45.505,-122.657: 3 observations across 3 devices" [ref=e2752]'
+            - 'generic "45.470,-122.690: 3 observations across 3 devices" [ref=e2755]'
+            - 'generic "45.454,-122.784: 3 observations across 3 devices" [ref=e2758]'
+            - 'generic "45.443,-122.777: 3 observations across 3 devices" [ref=e2761]'
+            - 'generic "45.507,-122.670: 3 observations across 3 devices" [ref=e2764]'
+            - 'generic "45.506,-122.657: 2 observations across 2 devices" [ref=e2767]'
+            - 'generic "45.452,-122.785: 2 observations across 2 devices" [ref=e2770]'
+            - 'generic "45.474,-122.788: 2 observations across 2 devices" [ref=e2773]'
+            - 'generic "45.453,-122.784: 1 observations across 1 device" [ref=e2776]'
+            - 'generic "45.469,-122.691: 1 observations across 1 device" [ref=e2779]'
+            - 'generic "45.437,-122.765: 1 observations across 1 device" [ref=e2782]'
+            - 'generic "45.421,-122.744: 1 observations across 1 device" [ref=e2785]'
+            - 'generic "45.473,-122.786: 1 observations across 1 device" [ref=e2788]'
+            - 'generic "45.432,-122.759: 1 observations across 1 device" [ref=e2791]'
+            - 'generic "45.431,-122.757: 1 observations across 1 device" [ref=e2794]'
+            - 'generic "45.432,-122.758: 1 observations across 1 device" [ref=e2797]'
+            - 'generic "45.445,-122.781: 1 observations across 1 device" [ref=e2800]'
+            - 'generic "45.398,-122.747: 1 observations across 1 device" [ref=e2803]'
+            - 'generic "45.395,-122.748: 1 observations across 1 device" [ref=e2806]'
+            - 'generic "45.393,-122.749: 1 observations across 1 device" [ref=e2809]'
+            - 'generic "45.452,-122.784: 1 observations across 1 device" [ref=e2812]'
+            - 'generic "45.453,-122.785: 1 observations across 1 device" [ref=e2815]'
+            - generic [ref=e2816]: Latitude (°)
+            - generic [ref=e2817]: Longitude (°)
+          - generic [ref=e2818]:
+            - generic [ref=e2819]: 550 coarse location cells
+            - text: shown. One circle is a rounded 0.001° GPS cell, not a device; its size represents the number of observations collected in that cell. The thin line shows collection movement and breaks between sessions or five-minute gaps. Placeholder 0,0 GPS values are excluded.
+        - generic [ref=e2820]:
+          - generic [ref=e2821]:
+            - generic [ref=e2822]:
+              - generic [ref=e2823]: 45.381,-122.767
+              - generic [ref=e2825]: "831"
+            - generic [ref=e2826]:
+              - generic [ref=e2827]: 45.383,-122.747
+              - generic [ref=e2829]: "379"
+            - generic [ref=e2830]:
+              - generic [ref=e2831]: 45.382,-122.759
+              - generic [ref=e2833]: "323"
+            - generic [ref=e2834]:
+              - generic [ref=e2835]: 45.487,-122.649
+              - generic [ref=e2837]: "297"
+            - generic [ref=e2838]:
+              - generic [ref=e2839]: 45.510,-122.660
+              - generic [ref=e2841]: "252"
+            - generic [ref=e2842]:
+              - generic [ref=e2843]: 45.405,-122.624
+              - generic [ref=e2845]: "248"
+            - generic [ref=e2846]:
+              - generic [ref=e2847]: 45.383,-122.759
+              - generic [ref=e2849]: "240"
+            - generic [ref=e2850]:
+              - generic [ref=e2851]: 45.381,-122.764
+              - generic [ref=e2853]: "231"
+            - generic [ref=e2854]:
+              - generic [ref=e2855]: 45.467,-122.710
+              - generic [ref=e2857]: "207"
+            - generic [ref=e2858]:
+              - generic [ref=e2859]: 45.492,-122.652
+              - generic [ref=e2861]: "207"
+            - generic [ref=e2862]:
+              - generic [ref=e2863]: 45.490,-122.649
+              - generic [ref=e2865]: "195"
+            - generic [ref=e2866]:
+              - generic [ref=e2867]: 45.384,-122.759
+              - generic [ref=e2869]: "192"
+            - generic [ref=e2870]:
+              - generic [ref=e2871]: 45.467,-122.714
+              - generic [ref=e2873]: "189"
+            - generic [ref=e2874]:
+              - generic [ref=e2875]: 45.493,-122.652
+              - generic [ref=e2877]: "186"
+            - generic [ref=e2878]:
+              - generic [ref=e2879]: 45.500,-122.654
+              - generic [ref=e2881]: "186"
+            - generic [ref=e2882]:
+              - generic [ref=e2883]: 45.494,-122.653
+              - generic [ref=e2885]: "183"
+            - generic [ref=e2886]:
+              - generic [ref=e2887]: 45.497,-122.654
+              - generic [ref=e2889]: "169"
+            - generic [ref=e2890]:
+              - generic [ref=e2891]: 45.509,-122.659
+              - generic [ref=e2893]: "161"
+            - generic [ref=e2894]:
+              - generic [ref=e2895]: 45.466,-122.751
+              - generic [ref=e2897]: "156"
+            - generic [ref=e2898]:
+              - generic [ref=e2899]: 45.409,-122.627
+              - generic [ref=e2901]: "154"
+            - generic [ref=e2902]:
+              - generic [ref=e2903]: 45.382,-122.758
+              - generic [ref=e2905]: "153"
+            - generic [ref=e2906]:
+              - generic [ref=e2907]: 45.516,-122.665
+              - generic [ref=e2909]: "147"
+            - generic [ref=e2910]:
+              - generic [ref=e2911]: 45.491,-122.651
+              - generic [ref=e2913]: "145"
+            - generic [ref=e2914]:
+              - generic [ref=e2915]: 45.516,-122.666
+              - generic [ref=e2917]: "143"
+            - generic [ref=e2918]:
+              - generic [ref=e2919]: 45.487,-122.800
+              - generic [ref=e2921]: "141"
+            - generic [ref=e2922]:
+              - generic [ref=e2923]: 45.381,-122.768
+              - generic [ref=e2925]: "134"
+            - generic [ref=e2926]:
+              - generic [ref=e2927]: 45.499,-122.654
+              - generic [ref=e2929]: "134"
+            - generic [ref=e2930]:
+              - generic [ref=e2931]: 45.506,-122.658
+              - generic [ref=e2933]: "133"
+            - generic [ref=e2934]:
+              - generic [ref=e2935]: 45.384,-122.764
+              - generic [ref=e2937]: "129"
+            - generic [ref=e2938]:
+              - generic [ref=e2939]: 45.495,-122.653
+              - generic [ref=e2941]: "128"
+            - generic [ref=e2942]:
+              - generic [ref=e2943]: 45.454,-122.773
+              - generic [ref=e2945]: "128"
+            - generic [ref=e2946]:
+              - generic [ref=e2947]: 45.381,-122.765
+              - generic [ref=e2949]: "121"
+            - generic [ref=e2950]:
+              - generic [ref=e2951]: 45.477,-122.641
+              - generic [ref=e2953]: "120"
+            - generic [ref=e2954]:
+              - generic [ref=e2955]: 45.467,-122.712
+              - generic [ref=e2957]: "120"
+            - generic [ref=e2958]:
+              - generic [ref=e2959]: 45.466,-122.750
+              - generic [ref=e2961]: "118"
+            - generic [ref=e2962]:
+              - generic [ref=e2963]: 45.486,-122.792
+              - generic [ref=e2965]: "115"
+            - generic [ref=e2966]:
+              - generic [ref=e2967]: 45.502,-122.658
+              - generic [ref=e2969]: "115"
+            - generic [ref=e2970]:
+              - generic [ref=e2971]: 45.503,-122.658
+              - generic [ref=e2973]: "113"
+            - generic [ref=e2974]:
+              - generic [ref=e2975]: 45.516,-122.662
+              - generic [ref=e2977]: "112"
+            - generic [ref=e2978]:
+              - generic [ref=e2979]: 45.467,-122.723
+              - generic [ref=e2981]: "111"
+            - generic [ref=e2982]:
+              - generic [ref=e2983]: 45.466,-122.749
+              - generic [ref=e2985]: "109"
+            - generic [ref=e2986]:
+              - generic [ref=e2987]: 45.515,-122.662
+              - generic [ref=e2989]: "108"
+            - generic [ref=e2990]:
+              - generic [ref=e2991]: 45.495,-122.673
+              - generic [ref=e2993]: "107"
+            - generic [ref=e2994]:
+              - generic [ref=e2995]: 45.443,-122.642
+              - generic [ref=e2997]: "107"
+            - generic [ref=e2998]:
+              - generic [ref=e2999]: 45.467,-122.719
+              - generic [ref=e3001]: "106"
+            - generic [ref=e3002]:
+              - generic [ref=e3003]: 45.465,-122.726
+              - generic [ref=e3005]: "106"
+            - generic [ref=e3006]:
+              - generic [ref=e3007]: 45.430,-122.635
+              - generic [ref=e3009]: "105"
+            - generic [ref=e3010]:
+              - generic [ref=e3011]: 45.496,-122.653
+              - generic [ref=e3013]: "104"
+            - generic [ref=e3014]:
+              - generic [ref=e3015]: 45.467,-122.713
+              - generic [ref=e3017]: "104"
+            - generic [ref=e3018]:
+              - generic [ref=e3019]: 45.385,-122.759
+              - generic [ref=e3021]: "103"
+          - complementary [ref=e3022]:
+            - heading "Protocol mix" [level=3] [ref=e3023]
+            - paragraph [ref=e3024]: "bluetooth: 9853"
+            - paragraph [ref=e3025]: "wifi: 16852"
+      - generic [ref=e1124]:
+        - generic [ref=e1125]: Signal Ledger / Passive discovery intelligence
+        - generic [ref=e1126]: Workspace refreshed at 09:59 PM

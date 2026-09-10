@@ -24,6 +24,17 @@ Verify the restored state by signing in, reviewing the overview count, opening
 one inventory record, and checking the audit log. Do not test restores against
 the production database.
 
+Run a non-destructive restore drill regularly from the repository root:
+
+```bash
+scripts/backup_restore_drill.sh
+```
+
+It backs up the active database, restores it to a temporary database in the
+same Postgres container, compares migration/device/observation/job counts, and
+then removes the temporary database and archive. It never replaces the active
+application database.
+
 ## Retention
 
 Retention is never an unattended timer. An administrator first calls
@@ -58,6 +69,28 @@ safe in-place token rewrite.
 
 Never put an HMAC secret in source control, exports, screenshots, or audit
 details.
+
+The regression suite re-ingests the same authorized fixture under two
+disposable secrets and verifies that it creates two distinct token epochs.
+Run it only with the rest of the containerized suite; it does not change the
+configured deployment secret.
+
+## Load drill
+
+Use a separate Compose project and remove its volumes afterward. The supplied
+script generates synthetic data only and refuses to run without its explicit
+environment guard:
+
+```bash
+docker compose -p signal-ledger-load up -d db redis
+docker compose -p signal-ledger-load run --rm -e SIGNAL_LEDGER_LOAD_TEST=YES \
+  -v "$PWD/scripts:/scripts:ro" app python /scripts/load_test.py --rows 5000
+docker compose -p signal-ledger-load down -v
+```
+
+Record the JSON timing result with the host and image revision. The drill
+checks worker-style import completion and inventory/map explorer queries at
+the same volume; it is a capacity baseline, not a production SLA.
 
 ## Review learning and exports
 
