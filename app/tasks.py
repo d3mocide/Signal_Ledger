@@ -4,6 +4,7 @@ from .crypto import encrypt_address
 from .database import SessionLocal
 from .models import IngestionJob, SurveyRun, SurveyArea, Device, Observation, AuditEvent, OUIAssignment
 from .oui import vendor_for
+from .oui_catalog import apply_match, load_catalog, lookup
 from .parsers import PARSER_VERSION, parse
 from .policies import CATEGORY_RULE_VERSION, ROLE_RULE_VERSION, category_from_scores, category_scores, device_role_scores, device_roles_from_scores, mac_address_scope, point_in_polygon
 from .raw_storage import materialize_raw
@@ -47,11 +48,18 @@ def process_ingestion(job_id: int):
         # Load the area inventory once, then flush in two bounded phases. This
         # avoids a select/flush/update round-trip for every row in a wardrive.
         devices = {item.token: item for item in db.scalars(select(Device)).all()}
-        oui_catalog = {item.prefix: item.organization for item in db.scalars(select(OUIAssignment)).all()}
+        oui_catalog = load_catalog(db)
         for _, parsed, prefix, token, normalized in valid:
             device = devices.get(token)
             address_scope = mac_address_scope(parsed.address)
-            vendor = oui_catalog.get(prefix, vendor_for(prefix))
+            match = lookup(oui_catalog, normalized) if address_scope == "globally_administered" else None
+            if match:
+                prefix = match["prefix"]
+                vendor = match["organization"]
+            else:
+                vendor = vendor_for(prefix)
+                if vendor != "unattributable":
+                    match = {"prefix": prefix, "organization": vendor, "registry": "MA-L", "sources": [], "device_type": None, "catalog": "seed"}
             observed_scores, observed_evidence = category_scores(vendor, parsed.ssid, parsed.protocol, parsed.device_name, parsed.device_type, address_scope)
             observed_role_scores, observed_role_evidence = device_role_scores(vendor, parsed.ssid, parsed.protocol, parsed.device_name, parsed.device_type)
             if not device:
@@ -83,6 +91,7 @@ def process_ingestion(job_id: int):
                 for item in observed_role_evidence:
                     if item not in current_role_evidence: current_role_evidence.append(item)
                 device.role_evidence = current_role_evidence[:12]
+            apply_match(device, match)
         db.flush()
         db.add_all([Observation(survey_run_id=run.id, ingestion_job_id=job.id, device_id=devices[token].id, captured_at=parsed.captured_at, protocol=parsed.protocol, ssid=parsed.ssid, device_name=parsed.device_name, device_type=parsed.device_type, security=parsed.security, rssi=parsed.rssi, latitude=parsed.latitude, longitude=parsed.longitude, spatial_cell=_cell(parsed.latitude, parsed.longitude), quality=1.0 if parsed.latitude is not None else .65, source_row=line) for line, parsed, _, token, _ in valid])
         db.flush()

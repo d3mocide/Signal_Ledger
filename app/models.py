@@ -45,8 +45,14 @@ class Device(Base):
     collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id"), index=True, nullable=True)
     survey_area_id = synonym("collection_id")
     token: Mapped[str] = mapped_column(String(64), index=True)
-    oui_prefix: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    # This stores the actual matched assignment, not merely the first 24 bits.
+    # MA-M and MA-S assignments use 7 and 9 hexadecimal characters respectively.
+    oui_prefix: Mapped[str | None] = mapped_column(String(12), nullable=True)
     oui_organization: Mapped[str] = mapped_column(String(160), default="unattributable")
+    oui_registry: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    oui_sources: Mapped[list] = mapped_column(JSON, default=list)
+    oui_device_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    oui_catalog: Mapped[str | None] = mapped_column(String(40), nullable=True)
     category: Mapped[str] = mapped_column(String(48), default="unknown")
     category_confidence: Mapped[float] = mapped_column(Float, default=0)
     category_evidence: Mapped[list] = mapped_column(JSON, default=list)
@@ -99,12 +105,29 @@ class OUIImport(Base):
     source_hash: Mapped[str] = mapped_column(String(64), unique=True)
     registry_version: Mapped[str] = mapped_column(String(80))
     assignments: Mapped[int] = mapped_column(Integer)
+    source_kind: Mapped[str] = mapped_column(String(40), default="ieee")
+    upstream_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    upstream_revision: Mapped[str | None] = mapped_column(String(80), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 class OUIAssignment(Base):
     __tablename__ = "oui_assignments"
     prefix: Mapped[str] = mapped_column(String(6), primary_key=True)
     organization: Mapped[str] = mapped_column(String(255))
+    import_id: Mapped[int] = mapped_column(ForeignKey("oui_imports.id"), index=True)
+
+class OUIMasterAssignment(Base):
+    """Rich, operator-fetched OUI Master records, kept separate from IEEE MA-L."""
+    __tablename__ = "oui_master_assignments"
+    prefix: Mapped[str] = mapped_column(String(12), primary_key=True)
+    organization: Mapped[str] = mapped_column(String(255))
+    registry: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    short_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    device_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    registered_date: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    organization_address: Mapped[str | None] = mapped_column(String(600), nullable=True)
+    country: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    sources: Mapped[list] = mapped_column(JSON, default=list)
     import_id: Mapped[int] = mapped_column(ForeignKey("oui_imports.id"), index=True)
 
 class Observation(Base):

@@ -93,6 +93,9 @@ policy defaults, and deterministic parser reports in CI.
   organization label, and re-enrichment of existing devices.
 - [x] Reviewed IEEE MA-L import contract: retain only prefix and organization,
   record source hash/version, and ignore non-MA-L registry rows.
+- [x] Optional administrator-triggered OUI Master catalog: pinned upstream
+  revision and content hash, rich per-assignment provenance, IEEE precedence,
+  and longest-prefix MA-L/MA-M/MA-S/IAB resolution without retaining MACs.
 - [x] Transparent category-rule engine using OUI, device name/type, SSID,
   protocol, and privacy-safe MAC scope, with confidence, evidence, and review
   override.

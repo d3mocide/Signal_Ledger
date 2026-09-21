@@ -42,6 +42,10 @@ Redis and processed by the RQ worker under Supervisor.
   category override, and policy-gated exact-address reveal for administrators.
 - Local OUI enrichment. Locally administered/randomized addresses remain
   unattributable.
+- Optional OUI Master enrichment is separate from IEEE MA-L and preserves the
+  matched registry, contributing sources, assignment precision, and upstream
+  heuristic device type. Refresh is administrator-triggered and pins a GitHub
+  commit before downloading the CSV.
 - Coarse-cell coverage and analytics views; geographic basemap mode is explicit
   opt-in when configured.
 
@@ -109,11 +113,11 @@ state is component-local rather than encoded in the URL.
 
 The project uses the custom idempotent migration runner in
 `app/migrations.py`, not Prisma or automatic ORM migrations. The live schema
-currently includes migration `0013_rule_proposals`.
+currently includes migration `0014_oui_master_catalog`.
 
 Current evidence:
 
-- 47 containerized backend tests pass.
+- 58 containerized backend tests pass.
 - Frontend TypeScript/Vite production build passes.
 - Live `/health` check passes after deployment.
 - `git diff --check` passes for the current worktree.

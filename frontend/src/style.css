@@ -132,6 +132,34 @@ small {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  /* Keep Chrome's native scrollbar from overpowering the compact dark rail. */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #697174 #1b1e20;
+  padding-right: 4px;
+}
+.sidebar nav::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar nav::-webkit-scrollbar-track {
+  background: #1b1e20;
+  border-radius: 999px;
+  margin-block: 4px;
+}
+.sidebar nav::-webkit-scrollbar-thumb {
+  min-height: 42px;
+  background: #697174;
+  border: 2px solid #1b1e20;
+  border-radius: 999px;
+}
+.sidebar nav::-webkit-scrollbar-thumb:hover,
+.sidebar nav::-webkit-scrollbar-thumb:active {
+  background: #9aa3a5;
+}
+.sidebar nav::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 .brand {
   display: flex;
@@ -1475,6 +1503,9 @@ th {
   white-space: nowrap;
 }
 .bar-label {
+  display: block;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1483,7 +1514,7 @@ th {
   border: none;
   color: inherit;
   font: inherit;
-  padding: 0;
+  padding: 0 8px 0 0;
   cursor: pointer;
 }
 .bar-label:hover {
@@ -1952,6 +1983,10 @@ footer {
     gap: 5px;
     margin-top: 17px;
     padding-bottom: 3px;
+  }
+  .sidebar nav::-webkit-scrollbar {
+    width: auto;
+    height: 6px;
   }
   .sidebar nav > div {
     flex-shrink: 0;

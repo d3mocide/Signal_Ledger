@@ -49,6 +49,11 @@ type Device = {
   id: number;
   token: string;
   oui_organization: string;
+  oui_prefix?: string | null;
+  oui_registry?: string | null;
+  oui_sources?: string[];
+  oui_device_type?: string | null;
+  oui_catalog?: string | null;
   category: string;
   category_confidence?: number;
   category_evidence?: string[];
@@ -1910,6 +1915,15 @@ function DeviceEvidence({
         {x.category} · {Math.round((x.category_confidence || 0) * 100)}% confidence
         {x.category_overridden ? " · analyst override" : ""}
       </p>
+      {x.oui_organization !== "unattributable" && (
+        <p className="muted">
+          Assignment: {x.oui_prefix || "—"}
+          {x.oui_registry ? ` · ${x.oui_registry}` : ""}
+          {x.oui_catalog ? ` · ${x.oui_catalog}` : ""}
+          {x.oui_sources?.length ? ` · sources: ${x.oui_sources.join(", ")}` : ""}
+          {x.oui_device_type ? ` · dataset type: ${x.oui_device_type} (heuristic)` : ""}
+        </p>
+      )}
       <p className="muted device-roles-line">
         Roles / context: {x.device_roles?.length ? x.device_roles.map((item) => item.replaceAll("_", " ")).join(", ") : "No role signal"}
       </p>
@@ -2945,7 +2959,9 @@ function RunComparison({ runs, initialRight, setQuery }: { runs: Run[]; initialR
 function OUIImportPanel() {
   const [status, setStatus] = useState<{
       assignments: number;
+      master_assignments: number;
       latest: { registry_version: string; created_at: string } | null;
+      master_latest: { registry_version: string; created_at: string; upstream_revision?: string | null } | null;
     } | null>(null),
     [note, setNote] = useState(""),
     [refreshing, setRefreshing] = useState(false);
@@ -2966,6 +2982,25 @@ function OUIImportPanel() {
         (x.idempotent ? "Already up to date: " : "Refreshed from IEEE: ") +
           x.assignments +
           " assignments.",
+      );
+      load();
+    } catch (x) {
+      setNote(msg(x));
+    } finally {
+      setRefreshing(false);
+    }
+  }
+  async function refreshMaster() {
+    setRefreshing(true);
+    try {
+      const x = await send<{ idempotent?: boolean; assignments: number; upstream_revision?: string }>(
+        "/v1/oui-master/refresh",
+        {},
+      );
+      setNote(
+        (x.idempotent ? "Already up to date: " : "Fetched OUI Master at pinned revision ") +
+          (x.upstream_revision ? x.upstream_revision.slice(0, 12) + ": " : "") +
+          x.assignments + " assignments.",
       );
       load();
     } catch (x) {
@@ -2998,6 +3033,22 @@ function OUIImportPanel() {
       setNote(msg(x));
     }
   }
+  async function uploadMaster(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const file = new FormData(e.currentTarget).get("file");
+    if (!(file instanceof File)) return;
+    const body = new FormData();
+    body.set("file", file);
+    try {
+      const response = await fetch("/v1/oui-master/import", { method: "POST", body, credentials: "same-origin" });
+      if (!response.ok) throw new Error(await response.text());
+      const x = await response.json();
+      setNote((x.idempotent ? "Already imported: " : "Imported OUI Master: ") + x.assignments + " assignments.");
+      load();
+    } catch (x) {
+      setNote(msg(x));
+    }
+  }
   return (
     <section className="panel">
       <p className="eyebrow">OFFLINE OUI CATALOG</p>
@@ -3019,6 +3070,26 @@ function OUIImportPanel() {
         "Refresh from IEEE" has the server fetch the current registry
         directly from standards-oui.ieee.org over HTTPS — no file leaves
         or enters your browser.
+      </p>
+      <hr />
+      <p className="eyebrow">OPTIONAL MULTI-SOURCE CATALOG</p>
+      <h3>OUI Master Database</h3>
+      <p className="muted">
+        {status?.master_assignments?.toLocaleString() || 0} local assignments
+        {status?.master_latest ? " · " + status.master_latest.registry_version : ""}
+        {status?.master_latest?.upstream_revision ? " · " + status.master_latest.upstream_revision.slice(0, 12) : ""}
+      </p>
+      <div className="toolbar">
+        <form onSubmit={uploadMaster}>
+          <input name="file" type="file" accept=".csv" required />
+          <button>Import OUI Master CSV</button>
+        </form>
+        <button className="secondary" onClick={refreshMaster} disabled={refreshing}>
+          {refreshing ? "Fetching…" : "Fetch OUI Master"}
+        </button>
+      </div>
+      <p className="muted">
+        This administrator action resolves the upstream commit first, then fetches that pinned revision. IEEE MA-L remains authoritative for an equal 24-bit assignment; OUI Master fills gaps and adds MA-M/MA-S precision. Dataset device types are displayed as heuristics and never override Signal Ledger’s reviewable categories.
       </p>
       {note && <p className="notice">{note}</p>}
     </section>

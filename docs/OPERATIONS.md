@@ -119,4 +119,4 @@ There is no Prisma schema or automatic ORM migration generation. App startup
 applies unapplied versions recorded in `schema_migrations`. During an upgrade,
 confirm the new version is recorded and run the rebuilt-image test suite before
 accepting traffic. The current feature set includes migration
-`0013_rule_proposals`.
+`0014_oui_master_catalog`.

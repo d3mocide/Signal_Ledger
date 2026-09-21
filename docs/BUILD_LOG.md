@@ -1143,3 +1143,33 @@ at any width since it's a ratio, not a fixed number.
 - Live `/health` check passed after deployment.
 - Browser visual and authenticated interaction validation remain separate open
   gates; no browser surface was available for this documentation pass.
+
+## 2026-09-21 — OUI Master catalog and Chrome sidebar-scroll treatment
+
+### Built
+
+- Added the opt-in OUI Master catalog alongside IEEE MA-L, retaining the
+  matched assignment, registry, contributing sources, upstream device-type
+  heuristic, raw-file hash, and resolved Git revision. IEEE remains the winner
+  for equal 24-bit mappings; the catalog performs longest-prefix 24/28/36-bit
+  matching for new globally administered observations.
+- Added administrator-only fetch and air-gap CSV import paths. Fetch resolves
+  the Git commit before downloading the dataset, so every remote import has an
+  immutable provenance target in the audit record.
+- Styled the sidebar navigation scrollbar for Chrome: an 8px dark track,
+  rounded muted thumb, clear hover state, and no native arrow buttons. Mobile
+  horizontal navigation uses the same restrained treatment.
+
+### Evidence
+
+- Added catalog precedence, rich-source, longest-prefix, and pinned-refresh
+  tests; full containerized suite: **58 passed**.
+- TypeScript/Vite production build, Python syntax checks, and `git diff --check`
+  passed. The restarted local stack returned healthy and applied migration
+  `0014_oui_master_catalog`.
+- An operator fetch imported 58,783 assignments: 40,419 MA-L, 6,594 MA-M, and
+  11,770 MA-S/IAB; 39,914 records contain Wireshark provenance.
+- Automated visual Chrome confirmation remains unavailable on this host: the
+  browser tool requires a Chrome binary and its installer stopped at a missing
+  sudo password. Reload the app with a cache-busting URL before final visual
+  acceptance.

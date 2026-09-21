@@ -72,8 +72,19 @@ device deep links use `/#device?id=123`.
 The project does not use Prisma or automatic ORM schema generation. It uses the
 idempotent migration list in `app/migrations.py`. The app startup applies any
 pending migrations before serving traffic, and the applied versions are stored
-in `schema_migrations`. The current live rule-proposal migration is
-`0013_rule_proposals`.
+in `schema_migrations`. The current live OUI catalog migration is
+`0014_oui_master_catalog`.
+
+## OUI catalogs
+
+IEEE MA-L remains the default local catalog. Administrators may additionally
+fetch or air-gap import the OUI Master Database CSV. The fetch resolves the
+current Git commit first and records that immutable revision, upstream URL, and
+content hash in the audit trail. The richer catalog supports MA-L, MA-M, and
+MA-S/IAB-length assignments (24, 28, and 36 bits), while an equal 24-bit IEEE
+assignment always wins. Dataset device types are displayed as upstream
+heuristics; they never silently alter Signal Ledger categories or analyst
+overrides. Full device MAC addresses remain out of normalized storage.
 
 ## Privacy boundary
 
@@ -88,8 +99,8 @@ presents only coarse cells.
 
 ## Validation status
 
-The current implementation has **47 containerized tests** passing, a passing
-frontend production build, live health verification, and migration `0013`
+The current implementation has **58 containerized tests** passing, a passing
+frontend production build, live health verification, and migration `0014`
 applied. Visual browser acceptance is still a separate open validation gate.
 
 Run the suite with:

@@ -48,6 +48,10 @@ before using the system for a new authorized area.
   are shown with the device record.
 - OUI data identifies an assigned organization, not a guaranteed product model
   or device identity. Category output remains a reviewable hypothesis.
+- OUI Master device-type fields are upstream name-based heuristics. They are
+  displayed with registry/source provenance and never override local category
+  rules or an analyst decision. Its admin fetch records a resolved Git revision
+  and content hash; it is not a background collection task.
 - Device roles are a separate, multi-valued evidence layer. The current
   explainable roles are `retail_pos`, `security_access`, `smart_home`,
   `industrial_ot`, `medical`, and `guest_network`; a role may coexist with a

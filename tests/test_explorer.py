@@ -13,8 +13,9 @@ import app.main as main_module
 import app.tasks as tasks_module
 from app.crypto import decrypt_address
 from app.database import Base
-from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, export_devices_csv, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, rename_area, retention_preview, reveal_device_address, update_anomaly
+from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, apply_oui_csv, apply_oui_master_csv, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, export_devices_csv, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, refresh_oui_master, rename_area, retention_preview, reveal_device_address, update_anomaly
 from app.models import Device, IngestionJob, Observation, SurveyArea, SurveyRun
+from app.oui_catalog import load_catalog, lookup
 from app.security import Principal
 from app.tasks import process_ingestion
 
@@ -167,6 +168,55 @@ def test_oui_refresh_fetches_and_applies_the_ieee_registry(monkeypatch):
 
     again = refresh_oui(db=db, principal=admin)
     assert again["idempotent"] is True
+
+
+def test_oui_master_catalog_is_rich_longest_prefix_and_ieee_preserving():
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    area = SurveyArea(name="OUI Master area", authorization_ref="AUTH-master", precision="coarse")
+    db.add(area); db.flush()
+    device = Device(survey_area_id=area.id, token="o" * 64, oui_prefix="001122", oui_organization="unattributable", first_seen=datetime(2026, 1, 1), last_seen=datetime(2026, 1, 1))
+    db.add(device); db.commit()
+    master = (
+        "oui,manufacturer,registry,short_name,device_type,registered_date,address,country,sources\n"
+        "00:11:22,Master Networks,MA-L,MNET,Router,2020-01-01,Example Road,US,Wireshark+Nmap\n"
+        "00:11:22:3,Precise Devices,MA-M,PD,IoT,2021-01-01,Device Road,US,IEEE+Wireshark\n"
+        + "".join(f"{index:06X},Vendor {index},MA-L,,,,,,IEEE\n" for index in range(100, 200))
+    ).encode()
+    admin = Principal(1, "admin", "admin")
+    result = apply_oui_master_csv(db, admin, master, "master_oui.csv", "OUI Master Database", "oui_master.imported")
+    assert result["assignments"] == 102
+    assert db.get(Device, device.id).oui_organization == "Master Networks"
+    assert db.get(Device, device.id).oui_sources == ["Wireshark", "Nmap"]
+    catalog = load_catalog(db)
+    assert lookup(catalog, "0011223ABCDE")["organization"] == "Precise Devices"
+
+    ieee = ("Registry,Assignment,Organization Name\nMA-L,001122,Official IEEE Owner\n" + "".join(f"MA-L,{index:06X},Vendor {index}\n" for index in range(100, 200))).encode()
+    apply_oui_csv(db, admin, ieee, "oui.csv", "IEEE MA-L", "oui.imported")
+    assert db.get(Device, device.id).oui_organization == "Official IEEE Owner"
+    assert lookup(load_catalog(db), "0011224ABCDE")["organization"] == "Official IEEE Owner"
+
+
+def test_oui_master_refresh_pins_the_resolved_upstream_commit(monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    master = ("oui,manufacturer,registry,sources\n" + "".join(f"{index:06X},Vendor {index},MA-L,IEEE\n" for index in range(100, 200))).encode()
+    revision = "a" * 40
+
+    class FakeResponse:
+        def __init__(self, body): self.body = body
+        def __enter__(self): return self
+        def __exit__(self, *exc): return False
+        def read(self, limit=-1): return self.body
+
+    def urlopen(request, timeout=None):
+        return FakeResponse((('{"sha":"' + revision + '"}').encode()) if "api.github.com" in request.full_url else master)
+
+    monkeypatch.setattr(main_module.urllib.request, "urlopen", urlopen)
+    result = refresh_oui_master(db=db, principal=Principal(1, "admin", "admin"))
+    assert result["upstream_revision"] == revision
 
 
 def test_oui_refresh_surfaces_a_clear_error_when_ieee_is_unreachable(monkeypatch):

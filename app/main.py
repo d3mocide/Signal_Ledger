@@ -18,7 +18,8 @@ from .categorization import rebuild_categories
 from .database import SessionLocal, engine
 from .fingerprints import FINGERPRINT_VERSION, public_summary, signal_payload, similarity
 from .migrations import upgrade
-from .models import Anomaly, AuditEvent, Baseline, Device, DeviceReview, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, RuleProposal, SavedFilter, SurveyArea, SurveyRun, User, WorkspaceSetting
+from .models import Anomaly, AuditEvent, Baseline, Device, DeviceReview, IngestionJob, LoginSession, Observation, OUIAssignment, OUIImport, OUIMasterAssignment, RuleProposal, SavedFilter, SurveyArea, SurveyRun, User, WorkspaceSetting
+from .oui_catalog import MASTER_CATALOG, apply_match, load_catalog, lookup_stored_prefix, parse_oui_master_csv
 from .policies import CATEGORY_RULE_VERSION, DEVICE_ROLE_NAMES, ROLE_RULE_VERSION, validate_polygon
 from .raw_storage import write_raw
 from .security import Principal, ROLE_ORDER, ROLES, SESSION_COOKIE, authenticate, expires_at, password_hash, password_valid, session_token, token_hash
@@ -28,6 +29,8 @@ from .observability import configure_logging, event
 
 CARTO_API_KEY = os.getenv("CARTO_API_KEY") or None
 IEEE_OUI_URL = "https://standards-oui.ieee.org/oui/oui.csv"
+OUI_MASTER_API_URL = "https://api.github.com/repos/Ringmast4r/OUI-Master-Database/commits/master"
+OUI_MASTER_RAW_URL = "https://raw.githubusercontent.com/Ringmast4r/OUI-Master-Database/{revision}/LISTS/master_oui.csv"
 RAW = Path(os.getenv("RAW_STORAGE_PATH", "/tmp/signal-ledger/raw")); RAW.mkdir(parents=True, exist_ok=True)
 redis = Redis.from_url(os.getenv("REDIS_URL", "redis://redis:6379/0")); queue = Queue("signal-ledger", connection=redis)
 MAX_UPLOAD = 100 * 1024 * 1024; ALLOWED_SUFFIXES = {".csv", ".json", ".ndjson", ".kismet"}
@@ -435,7 +438,24 @@ def reset_user_password(user_id: int, body: AdminPasswordInput, db: Session = De
 @app.get("/v1/oui/status")
 def oui_status(db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     latest = db.scalar(select(OUIImport).order_by(OUIImport.created_at.desc()))
-    return {"assignments": db.scalar(select(func.count()).select_from(OUIAssignment)), "latest": dump(latest) if latest else None}
+    latest_master = db.scalar(select(OUIImport).where(OUIImport.source_kind == MASTER_CATALOG).order_by(OUIImport.created_at.desc()))
+    return {
+        "assignments": db.scalar(select(func.count()).select_from(OUIAssignment)),
+        "master_assignments": db.scalar(select(func.count()).select_from(OUIMasterAssignment)),
+        "latest": dump(latest) if latest else None,
+        "master_latest": dump(latest_master) if latest_master else None,
+    }
+
+def re_enrich_oui_devices(db: Session) -> int:
+    catalog = load_catalog(db)
+    updated = 0
+    for device in db.scalars(select(Device).where(Device.oui_prefix.is_not(None))).all():
+        before = (device.oui_organization, device.oui_registry, device.oui_sources, device.oui_device_type, device.oui_catalog)
+        apply_match(device, lookup_stored_prefix(catalog, device.oui_prefix))
+        if before != (device.oui_organization, device.oui_registry, device.oui_sources, device.oui_device_type, device.oui_catalog):
+            updated += 1
+    return updated
+
 def apply_oui_csv(db: Session, principal: Principal, blob: bytes, source_name: str, registry_version: str, action: str):
     if not blob or len(blob) > MAX_OUI_UPLOAD: raise HTTPException(413, "OUI registry must be 1 byte to 20 MB")
     digest = hashlib.sha256(blob).hexdigest()
@@ -449,11 +469,26 @@ def apply_oui_csv(db: Session, principal: Principal, blob: bytes, source_name: s
         organization = (row.get("Organization Name") or "").strip()
         if len(prefix) == 6 and all(char in "0123456789ABCDEF" for char in prefix) and organization: assignments[prefix] = organization[:255]
     if len(assignments) < 100: raise HTTPException(422, "CSV does not look like an IEEE MA-L registry")
-    item = OUIImport(source_name=source_name[:255], source_hash=digest, registry_version=registry_version[:80], assignments=len(assignments)); db.add(item); db.flush()
+    item = OUIImport(source_name=source_name[:255], source_hash=digest, registry_version=registry_version[:80], assignments=len(assignments), source_kind="ieee", upstream_url=IEEE_OUI_URL if action == "oui.refreshed" else None); db.add(item); db.flush()
     db.execute(delete(OUIAssignment)); db.add_all([OUIAssignment(prefix=prefix, organization=organization, import_id=item.id) for prefix, organization in assignments.items()])
-    catalog = assignments
-    for device in db.scalars(select(Device).where(Device.oui_prefix.is_not(None))).all(): device.oui_organization = catalog.get(device.oui_prefix, "unattributable")
-    audit(db, principal, action, "oui_import", item.id, {"assignments": len(assignments), "registry_version": item.registry_version}); db.commit()
+    reenriched = re_enrich_oui_devices(db)
+    audit(db, principal, action, "oui_import", item.id, {"assignments": len(assignments), "registry_version": item.registry_version, "re_enriched": reenriched}); db.commit()
+    return dump(item)
+
+def apply_oui_master_csv(db: Session, principal: Principal, blob: bytes, source_name: str, registry_version: str, action: str, upstream_url: str | None = None, upstream_revision: str | None = None):
+    if not blob or len(blob) > MAX_OUI_UPLOAD: raise HTTPException(413, "OUI Master registry must be 1 byte to 20 MB")
+    digest = hashlib.sha256(blob).hexdigest()
+    existing = db.scalar(select(OUIImport).where(OUIImport.source_hash == digest))
+    if existing: return {"idempotent": True, **dump(existing)}
+    try: assignments = parse_oui_master_csv(blob)
+    except ValueError as error: raise HTTPException(422, str(error))
+    item = OUIImport(source_name=source_name[:255], source_hash=digest, registry_version=registry_version[:80], assignments=len(assignments), source_kind=MASTER_CATALOG, upstream_url=upstream_url, upstream_revision=upstream_revision)
+    db.add(item); db.flush()
+    db.execute(delete(OUIMasterAssignment))
+    db.add_all([OUIMasterAssignment(**assignment, import_id=item.id) for assignment in assignments.values()])
+    reenriched = re_enrich_oui_devices(db)
+    audit(db, principal, action, "oui_import", item.id, {"assignments": len(assignments), "registry_version": item.registry_version, "upstream_url": upstream_url, "upstream_revision": upstream_revision, "re_enriched": reenriched})
+    db.commit()
     return dump(item)
 @app.post("/v1/oui/import")
 async def import_oui(file: UploadFile = File(...), registry_version: str = "IEEE MA-L", db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
@@ -469,6 +504,24 @@ def refresh_oui(db: Session = Depends(db_session), principal: Principal = Depend
     except (urllib.error.URLError, TimeoutError) as error:
         raise HTTPException(502, "Could not reach the IEEE OUI registry: " + str(getattr(error, "reason", error)))
     return apply_oui_csv(db, principal, blob, "oui.csv (fetched from IEEE)", "IEEE MA-L", "oui.refreshed")
+@app.post("/v1/oui-master/import")
+async def import_oui_master(file: UploadFile = File(...), registry_version: str = Form("OUI Master Database"), db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
+    if Path(file.filename or "").suffix.lower() != ".csv": raise HTTPException(415, "Upload the OUI Master CSV registry")
+    blob = await file.read()
+    return apply_oui_master_csv(db, principal, blob, Path(file.filename or "master_oui.csv").name, registry_version, "oui_master.imported")
+@app.post("/v1/oui-master/refresh")
+def refresh_oui_master(db: Session = Depends(db_session), principal: Principal = Depends(protected("admin"))):
+    headers = {"User-Agent": "signal-ledger-oui-refresh/1", "Accept": "application/vnd.github+json"}
+    try:
+        with urllib.request.urlopen(urllib.request.Request(OUI_MASTER_API_URL, headers=headers), timeout=20) as response:
+            revision = json.loads(response.read(1024 * 1024).decode("utf-8")).get("sha", "")
+        if not re.fullmatch(r"[0-9a-f]{40}", revision): raise ValueError("GitHub did not return a commit SHA")
+        upstream_url = OUI_MASTER_RAW_URL.format(revision=revision)
+        with urllib.request.urlopen(urllib.request.Request(upstream_url, headers=headers), timeout=30) as response:
+            blob = response.read(MAX_OUI_UPLOAD + 1)
+    except (urllib.error.URLError, TimeoutError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise HTTPException(502, "Could not reach the OUI Master catalog: " + str(getattr(error, "reason", error)))
+    return apply_oui_master_csv(db, principal, blob, "master_oui.csv (fetched from OUI Master Database)", "OUI Master Database", "oui_master.refreshed", upstream_url, revision)
 @app.get("/v1/overview")
 def overview(db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     count = lambda table: db.scalar(select(func.count()).select_from(table))

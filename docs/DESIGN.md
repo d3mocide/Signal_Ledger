@@ -66,6 +66,10 @@ the backend and parser worker are Python. Redis keeps imports asynchronous.
    stored in normalized tables.
 5. Only globally administered prefixes are matched to the local OUI data.
    Locally administered/randomized addresses are visibly `unattributable`.
+   IEEE MA-L is authoritative for a conflicting 24-bit assignment. An operator
+   may add OUI Master as a separate rich catalog that fills gaps and permits
+   longest-prefix MA-M/MA-S/IAB matching; source list, registry, matched prefix,
+   and heuristic device type remain attributable evidence.
 6. Observations store source facts plus coarse spatial cells. The current UI
    uses those cells rather than precise points.
 7. Category and role hypotheses retain the rule version, scores, and evidence
@@ -112,7 +116,8 @@ test before it is considered supported.
 
 ## Current open decisions and gates
 
-1. Select and document the reviewed full IEEE OUI snapshot/update process.
+1. Maintain a periodic operator review of upstream OUI Master terms, source
+   quality, and update behavior before enabling it in a deployment.
 2. Add restricted parser isolation, malware scanning, and robust MIME controls.
 3. Complete representative end-to-end, load, backup/restore, HMAC-rotation,
    accessibility, and browser acceptance evidence.
