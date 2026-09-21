@@ -46,6 +46,11 @@ before using the system for a new authorized area.
   names/types outrank generic vendor hints; locally administered and multicast
   addresses reduce or suppress vendor evidence. Confidence and rule evidence
   are shown with the device record.
+- A registered organization alone is intentionally conservative. In particular,
+  Hewlett Packard Enterprise is not treated as a printer vendor: HPE is an
+  enterprise-technology company, while HP Inc. owns the printing business.
+  An HPE assignment needs additional retained name/type evidence before it
+  receives a category hypothesis.
 - OUI data identifies an assigned organization, not a guaranteed product model
   or device identity. Category output remains a reviewable hypothesis.
 - OUI Master device-type fields are upstream name-based heuristics. They are

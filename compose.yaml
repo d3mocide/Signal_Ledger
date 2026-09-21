@@ -4,10 +4,12 @@ services:
     env_file: .env
     environment:
       RAW_STORAGE_PATH: /var/lib/signal-ledger/raw
+      PARSER_ISOLATION_MODE: ${PARSER_ISOLATION_MODE:-off}
     ports:
       - "8000:8000"
     volumes:
       - signal-ledger-data:/var/lib/signal-ledger
+      - parser-socket:/var/lib/signal-ledger/parser-socket
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -17,6 +19,34 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    restart: unless-stopped
+
+  parser:
+    build: .
+    command: python -m app.parser_worker
+    profiles: ["parser-isolation"]
+    environment:
+      PARSER_SOCKET_PATH: /var/lib/signal-ledger/parser-socket/parser.sock
+      PARSER_MAX_MEMORY_MB: ${PARSER_MAX_MEMORY_MB:-512}
+      PARSER_MAX_CPU_SECONDS: ${PARSER_MAX_CPU_SECONDS:-90}
+    volumes:
+      - parser-socket:/var/lib/signal-ledger/parser-socket
+    network_mode: none
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=128m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 64
+    mem_limit: 768m
+    cpus: 0.50
+    healthcheck:
+      test: ["CMD", "python", "-c", "from app.parser_isolation import isolation_healthy; raise SystemExit(not isolation_healthy())"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
     restart: unless-stopped
 
   db:
@@ -45,3 +75,4 @@ volumes:
   postgres-data:
   redis-data:
   signal-ledger-data:
+  parser-socket:

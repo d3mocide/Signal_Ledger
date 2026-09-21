@@ -57,7 +57,7 @@ class Device(Base):
     category_confidence: Mapped[float] = mapped_column(Float, default=0)
     category_evidence: Mapped[list] = mapped_column(JSON, default=list)
     category_scores: Mapped[dict] = mapped_column(JSON, default=dict)
-    category_rule_version: Mapped[str] = mapped_column(String(32), default="rules-v6")
+    category_rule_version: Mapped[str] = mapped_column(String(32), default="rules-v7")
     category_overridden: Mapped[bool] = mapped_column(Boolean, default=False)
     device_roles: Mapped[list] = mapped_column(JSON, default=list)
     role_scores: Mapped[dict] = mapped_column(JSON, default=dict)
@@ -84,7 +84,7 @@ class RuleProposal(Base):
     __tablename__ = "rule_proposals"
     id: Mapped[int] = mapped_column(primary_key=True)
     proposal_key: Mapped[str] = mapped_column(String(64), index=True)
-    rule_version: Mapped[str] = mapped_column(String(32), default="rules-v6")
+    rule_version: Mapped[str] = mapped_column(String(32), default="rules-v7")
     revision: Mapped[int] = mapped_column(Integer, default=1)
     target_category: Mapped[str] = mapped_column(String(48))
     matcher: Mapped[dict] = mapped_column(JSON, default=dict)

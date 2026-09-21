@@ -1173,3 +1173,92 @@ at any width since it's a ratio, not a fixed number.
   browser tool requires a Chrome binary and its installer stopped at a missing
   sudo password. Reload the app with a cache-busting URL before final visual
   acceptance.
+
+## 2026-09-21 — Upload preflight and anomaly-path coverage
+
+### Built
+
+- Moved quick-import validation ahead of collection and session creation, so a
+  rejected artifact cannot leave organizing records behind. Both direct-import
+  and run-attached upload routes now use the same pre-parser validation before
+  raw storage or queueing.
+- Added a shell-free `UPLOAD_SCANNER_COMMAND` hook. The command receives only
+  the upload over standard input; a nonzero result, execution failure, or
+  timeout rejects it. `UPLOAD_SCANNER_REQUIRED=true` fails closed when no
+  command is configured.
+- Strengthened structural checks for text captures: decoded UTF-8/control-byte
+  validation, CSV parsing with a recognized MAC/BSSID identifier, and JSON or
+  NDJSON parsing. Native Kismet SQLite captures also traverse the scanner hook.
+- Added a single synthetic-fixture integration test that uploads, processes,
+  baselines, and evaluates captures to produce coverage, new-device,
+  new-vendor, profile, spatial, and temporal findings.
+- Documented the scanner command contract, qualification evidence, and the
+  distinction between scanning and parser isolation.
+
+### Evidence
+
+- Focused explorer/roadmap regression run: **49 passed**.
+- Full containerized suite: **62 passed**. Python syntax and whitespace checks
+  passed; the image rebuild also completed successfully.
+- Scanner-engine/version/signature qualification and a restricted parser
+  execution boundary remain deployment gates. No external object-storage
+  provider or credentials were selected, so that roadmap item remains open.
+
+## 2026-09-21 — Optional networkless parser-isolation profile
+
+### Built
+
+- Added an opt-in fourth Compose service for parsing unfamiliar artifacts. The
+  normal worker streams each bounded raw capture to it through a Unix socket;
+  no raw input or normalized response is written to a shared spool volume.
+- The parser service has no network, database, Redis, or raw-upload volume. It
+  runs as the unprivileged application user with a read-only root filesystem,
+  dropped capabilities, `noexec` tmpfs input, process/CPU/memory limits, and a
+  bounded framed response protocol.
+- `PARSER_ISOLATION_MODE=required` rejects a new upload when the service is
+  absent and fails an active ingestion closed if it is invalid or exceeds its
+  timeout. Reports record `isolated` versus `in_process` parsing, and health
+  treats the parser as a required dependency in that mode. The default personal
+  profile remains the original three services and has zero parser-service
+  runtime cost.
+
+### Evidence
+
+- Added regressions for unavailable-required isolation and a real Unix-socket
+  parser process with no raw spool files.
+- A Compose-profile round trip streamed a WiGLE fixture from the app container
+  to the networkless parser container. A full upload → worker → report/device/
+  coverage test also passed with isolation required.
+- The parser service's Compose health check reached healthy state before the
+  required-mode upload/worker test. An absent parser rejects a direct import
+  before it creates collection or session records.
+- Full containerized suite: **66 passed**. The hardened profile requires
+  representative WiGLE/Kismet and near-limit capture qualification before it
+  is relied on for a shared deployment.
+
+## 2026-09-21 — First catalog-backed category calibration
+
+### Built
+
+- Audited only aggregate category, OUI-catalog, review-status, and generic
+  device-type fields from the local inventory; no address, SSID, or location
+  facts were queried or recorded.
+- Corrected the printer heuristic after it classified 145 HPE-attributed
+  devices from the word `Hewlett` alone. HPE is now deliberately unknown from
+  a vendor-only signal; HP Inc. remains a printer hint, and explicit device
+  name/type evidence still wins.
+- Released `rules-v7` with migration `0015_category_rules_v7`; the existing
+  audited Category View rebuild action applies it to retained observations and
+  preserves analyst overrides.
+
+### Evidence
+
+- The aggregate audit found 30 confirmed and 13 needs-review decisions, all in
+  the unknown category, with no submitted rule proposals. That is insufficient
+  evidence for broader category expansion; Axon and Pegatron remain unknown
+  rather than being guessed from organization names.
+- HPE documents that HP Inc. owns the printing business while HPE focuses on
+  enterprise technology, supporting the conservative split. The client-side
+  rebuild flow will report `rules-v7` after the backend migration is applied.
+- Full containerized suite after the calibration: **67 passed**; frontend build,
+  Python syntax checks, and `git diff --check` passed.

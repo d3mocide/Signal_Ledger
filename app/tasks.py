@@ -6,6 +6,7 @@ from .models import IngestionJob, SurveyRun, SurveyArea, Device, Observation, Au
 from .oui import vendor_for
 from .oui_catalog import apply_match, load_catalog, lookup
 from .parsers import PARSER_VERSION, parse
+from .parser_isolation import isolation_required, parse_isolated
 from .policies import CATEGORY_RULE_VERSION, ROLE_RULE_VERSION, category_from_scores, category_scores, device_role_scores, device_roles_from_scores, mac_address_scope, point_in_polygon
 from .raw_storage import materialize_raw
 from .observability import configure_logging, event
@@ -31,8 +32,10 @@ def process_ingestion(job_id: int):
         area = db.get(SurveyArea, run.survey_area_id) if run.survey_area_id else None
         exact_area = bool(area and area.precision == "exact")
         accepted = rejected = skipped = 0; reasons = {}; seen = set(); valid = []
+        isolated = isolation_required()
         with materialize_raw(job.raw_path, bool(job.raw_encrypted)) as source_path:
-            for line, parsed, error in parse(source_path, job.source_format):
+            parser = parse_isolated(source_path, job.source_format) if isolated else parse(source_path, job.source_format)
+            for line, parsed, error in parser:
                 if error:
                     rejected += 1; reasons[error] = reasons.get(error, 0) + 1; continue
                 if area and area.polygon and parsed.latitude is not None and parsed.longitude is not None and not point_in_polygon(parsed.latitude, parsed.longitude, area.polygon):
@@ -101,7 +104,7 @@ def process_ingestion(job_id: int):
         accepted = len(valid)
         located = sum(1 for _, parsed, _, _, _ in valid if parsed.latitude is not None and parsed.longitude is not None)
         run.completed = True
-        job.status = "complete"; job.parser_version = PARSER_VERSION; job.report = {"accepted": accepted, "rejected": rejected, "skipped_duplicates": skipped, "reasons": reasons, "parser_version": PARSER_VERSION, "source": job.source_format, "coverage": run.collector_coverage, "location_present": located, "location_completeness": round(located / accepted, 3) if accepted else 0}
+        job.status = "complete"; job.parser_version = PARSER_VERSION; job.report = {"accepted": accepted, "rejected": rejected, "skipped_duplicates": skipped, "reasons": reasons, "parser_version": PARSER_VERSION, "parser_isolation": "isolated" if isolated else "in_process", "source": job.source_format, "coverage": run.collector_coverage, "location_present": located, "location_completeness": round(located / accepted, 3) if accepted else 0}
         db.add(AuditEvent(actor="worker", role="system", action="ingestion.completed", resource_type="ingestion_job", resource_id=str(job.id), detail=job.report))
         db.commit()
         event(logger, "ingestion.completed", job_id=job.id, source=job.source_format, accepted=accepted, rejected=rejected, skipped=skipped)

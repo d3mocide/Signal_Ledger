@@ -7,7 +7,7 @@ import re
 from typing import Any
 
 
-CATEGORY_RULE_VERSION = "rules-v6"
+CATEGORY_RULE_VERSION = "rules-v7"
 ROLE_RULE_VERSION = "roles-v1"
 
 # These are deliberately broad, explainable hints, not an identity model. OUI
@@ -24,7 +24,10 @@ CATEGORY_RULES = (
     },
     {
         "category": "printer",
-        "vendor": ("hewlett", "hp", "canon", "epson", "brother", "lexmark", "xerox"),
+        # HPE is a distinct enterprise-technology company; only HP Inc. is a
+        # safe vendor-only printer hint. Legacy Hewlett-Packard assignments are
+        # intentionally left unknown unless name/type evidence is present.
+        "vendor": ("hp inc", "canon", "epson", "brother", "lexmark", "xerox"),
         "name": ("printer", "laserjet", "inkjet", "officejet", "mfc"),
         "type": ("printer", "print server"),
         "ssid": ("printer", "print", "et 2800", "ecotank"),
@@ -45,7 +48,7 @@ CATEGORY_RULES = (
     },
     {
         "category": "workstation",
-        "vendor": ("dell", "lenovo", "intel", "microsoft", "hewlett"),
+        "vendor": ("dell", "lenovo", "intel", "microsoft"),
         "name": ("macbook", "imac", "thinkpad", "latitude", "xps", "laptop", "desktop", "workstation", "computer"),
         "type": ("laptop", "desktop", "workstation", "computer"),
         "ssid": ("laptop", "desktop", "workstation", "computer"),

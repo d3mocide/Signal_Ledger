@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from cryptography.fernet import Fernet
@@ -40,6 +41,7 @@ from app.policies import classify_device, device_role_scores, device_roles_from_
 from app.raw_storage import materialize_raw, write_raw
 from app.security import Principal, password_hash, password_valid
 from app.upload_security import validate_upload
+import app.upload_security as upload_security
 
 
 def make_db():
@@ -96,6 +98,12 @@ def test_category_rules_prioritize_device_name_and_type_over_generic_vendor_hint
     assert classify_device(None, "RondasGMC", "wifi")[0] != "automotive"
     assert classify_device(None, "ET-2800 Series", "wifi")[0] == "printer"
     assert classify_device("Vantiva USA LLC", None, "wifi")[0] == "network"
+
+
+def test_hp_enterprise_is_not_misclassified_as_a_printer_from_vendor_alone():
+    assert classify_device("Hewlett Packard Enterprise", None, "wifi")[0] == "unknown"
+    assert classify_device("HP Inc.", None, "wifi")[0] == "printer"
+    assert classify_device("Hewlett Packard Enterprise", None, "wifi", device_type="Wi-Fi AP")[0] == "network"
 
 
 def test_device_roles_are_orthogonal_and_explainable():
@@ -230,7 +238,7 @@ def test_category_rebuild_uses_retained_observations_and_preserves_overrides():
     updated, skipped = rebuild_categories(db, 100)
     assert (updated, skipped) == (1, 1)
     assert device.category == "network"
-    assert device.category_rule_version == "rules-v6"
+    assert device.category_rule_version == "rules-v7"
     assert overridden.category == "camera"
 
 
@@ -343,6 +351,40 @@ def test_upload_preflight_rejects_source_mismatch_and_invalid_native_capture():
         validate_upload("capture.json", "wigle", b"{}")
     with pytest.raises(ValueError, match="SQLite"):
         validate_upload("capture.kismet", "kismet", b"not a sqlite database")
+
+
+def test_upload_scanner_is_shell_free_and_can_fail_closed(monkeypatch):
+    captured = {}
+
+    def clean(command, **kwargs):
+        captured["command"] = command
+        captured.update(kwargs)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setenv("UPLOAD_SCANNER_COMMAND", "capture-scanner --stdin")
+    monkeypatch.setattr(upload_security.subprocess, "run", clean)
+    blob = b"MAC,FirstTime\n00:11:22:33:44:55,2026-09-08T12:00:00Z\n"
+    assert validate_upload("capture.csv", "wigle", blob) == "text"
+    assert captured["command"] == ["capture-scanner", "--stdin"]
+    assert captured["input"] == blob
+    assert captured["shell"] is False
+
+    monkeypatch.setattr(upload_security.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=1))
+    with pytest.raises(ValueError, match="rejected"):
+        validate_upload("capture.csv", "wigle", blob)
+
+    monkeypatch.delenv("UPLOAD_SCANNER_COMMAND")
+    monkeypatch.setenv("UPLOAD_SCANNER_REQUIRED", "true")
+    with pytest.raises(ValueError, match="required"):
+        validate_upload("capture.csv", "wigle", blob)
+
+
+def test_native_kismet_upload_is_also_sent_to_configured_scanner(monkeypatch):
+    calls = []
+    monkeypatch.setenv("UPLOAD_SCANNER_COMMAND", "capture-scanner --stdin")
+    monkeypatch.setattr(upload_security.subprocess, "run", lambda *args, **kwargs: calls.append((args, kwargs)) or SimpleNamespace(returncode=0))
+    assert validate_upload("capture.kismet", "kismet", b"SQLite format 3\x00fixture") == "sqlite"
+    assert len(calls) == 1
 
 
 def test_raw_storage_can_encrypt_new_uploads_and_materialize_them(tmp_path, monkeypatch):

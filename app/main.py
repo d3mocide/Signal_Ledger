@@ -25,6 +25,7 @@ from .raw_storage import write_raw
 from .security import Principal, ROLE_ORDER, ROLES, SESSION_COOKIE, authenticate, expires_at, password_hash, password_valid, session_token, token_hash
 from .tasks import process_ingestion
 from .upload_security import validate_upload
+from .parser_isolation import isolation_healthy, isolation_required
 from .observability import configure_logging, event
 
 CARTO_API_KEY = os.getenv("CARTO_API_KEY") or None
@@ -361,6 +362,8 @@ def health():
         components["worker"] = any("signal-ledger" in worker.queue_names() for worker in Worker.all(connection=redis))
     except Exception as error:
         event(logger, "health.redis.unavailable", error_type=type(error).__name__)
+    if isolation_required():
+        components["parser_isolation"] = isolation_healthy()
     status = "ok" if all(components.values()) else "degraded"
     event(logger, "health.checked", status=status, **components)
     return JSONResponse({"status": status, "queue": "signal-ledger", "version": app.version, "components": components}, status_code=200 if status == "ok" else 503)
@@ -654,6 +657,20 @@ def purge_retention(body: RetentionSweepInput, db: Session = Depends(db_session)
             if raw_path != "expired": Path(raw_path).unlink(missing_ok=True)
         except OSError: pass
     return {"expired_raw_uploads": len(preview["raw_uploads"]), "purged_survey_runs": removed_runs}
+def queue_ingestion(survey_run_id: int, source_format: str, filename: str, blob: bytes, db: Session, principal: Principal):
+    """Persist an already validated artifact and enqueue its parser exactly once."""
+    digest = hashlib.sha256(blob).hexdigest(); old = db.scalar(select(IngestionJob).where(IngestionJob.file_hash == digest))
+    if old: return {**job_view(old), "idempotent": True}
+    path = RAW / digest; raw_encrypted = write_raw(path, blob)
+    job = IngestionJob(survey_run_id=survey_run_id, filename=filename, source_format=source_format, file_hash=digest, raw_path=str(path), raw_encrypted=raw_encrypted)
+    db.add(job); db.flush(); audit(db, principal, "ingestion.queued", "ingestion_job", job.id, {"source": source_format, "bytes": len(blob)}); db.commit(); db.refresh(job); queue.enqueue(process_ingestion, job.id, job_timeout=600); return job_view(job)
+
+
+def require_isolated_parser_if_configured():
+    if isolation_required() and not isolation_healthy():
+        raise HTTPException(503, "Isolated parser service is unavailable")
+
+
 @app.post("/v1/ingestions")
 async def ingest(survey_run_id: int, source_format: str, file: UploadFile = File(...), db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
     if source_format not in {"wigle", "kismet"}: raise HTTPException(422, "source_format must be wigle or kismet")
@@ -666,11 +683,8 @@ async def ingest(survey_run_id: int, source_format: str, file: UploadFile = File
         validate_upload(filename, source_format, blob)
     except ValueError as error:
         raise HTTPException(415, str(error)) from error
-    digest = hashlib.sha256(blob).hexdigest(); old = db.scalar(select(IngestionJob).where(IngestionJob.file_hash == digest))
-    if old: return {**dump(old), "idempotent": True}
-    path = RAW / digest; raw_encrypted = write_raw(path, blob)
-    job = IngestionJob(survey_run_id=survey_run_id, filename=filename, source_format=source_format, file_hash=digest, raw_path=str(path), raw_encrypted=raw_encrypted)
-    db.add(job); db.flush(); audit(db, principal, "ingestion.queued", "ingestion_job", job.id, {"source": source_format, "bytes": len(blob)}); db.commit(); db.refresh(job); queue.enqueue(process_ingestion, job.id, job_timeout=600); return job_view(job)
+    require_isolated_parser_if_configured()
+    return queue_ingestion(survey_run_id, source_format, filename, blob, db, principal)
 
 @app.post("/v1/imports")
 async def quick_import(source_format: str = Form(...), file: UploadFile = File(...), session_name: str | None = Form(default=None), collection_name: str | None = Form(default=None), db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
@@ -678,9 +692,14 @@ async def quick_import(source_format: str = Form(...), file: UploadFile = File(.
     if source_format not in {"wigle", "kismet"}: raise HTTPException(422, "source_format must be wigle or kismet")
     blob = await file.read()
     if not blob or len(blob) > MAX_UPLOAD: raise HTTPException(413, "Upload must be 1 byte to 100 MB")
+    filename = Path(file.filename or "upload").name
+    try:
+        validate_upload(filename, source_format, blob)
+    except ValueError as error:
+        raise HTTPException(415, str(error)) from error
     digest = hashlib.sha256(blob).hexdigest(); old = db.scalar(select(IngestionJob).where(IngestionJob.file_hash == digest))
     if old: return {**job_view(old), "idempotent": True}
-    file.file.seek(0)
+    require_isolated_parser_if_configured()
     collection = (collection_name or "").strip()[:160]
     area = db.scalar(select(SurveyArea).where(SurveyArea.name == collection)) if collection else None
     if collection and not area:
@@ -691,7 +710,7 @@ async def quick_import(source_format: str = Form(...), file: UploadFile = File(.
     run = SurveyRun(survey_area_id=area.id if area else None, name=(session_name or generated_name).strip()[:160] or generated_name, authorization_ref="operator-managed", collector_coverage=1, completed=False)
     db.add(run); db.flush(); audit(db, principal, "import_session.created", "survey_run", run.id, {"collection": collection, "generated_name": not bool(session_name)})
     db.commit()
-    return await ingest(run.id, source_format, file, db, principal)
+    return queue_ingestion(run.id, source_format, filename, blob, db, principal)
 
 @app.post("/v1/sessions/{session_id}/collection")
 def assign_collection(session_id: int, body: CollectionAssignment, db: Session = Depends(db_session), principal: Principal = Depends(protected("analyst"))):
@@ -855,7 +874,7 @@ def rebuild_device_categories(limit: int = Query(50000, ge=1, le=50000), db: Ses
     updated, overridden = rebuild_categories(db, limit)
     audit(db, principal, "device.categories_rebuilt", "device_category_rules", detail={"updated": updated, "overridden_skipped": overridden, "limit": limit})
     db.commit()
-    return {"rule_version": "rules-v6", "role_rule_version": ROLE_RULE_VERSION, "updated": updated, "overridden_skipped": overridden, "limit": limit}
+    return {"rule_version": CATEGORY_RULE_VERSION, "role_rule_version": ROLE_RULE_VERSION, "updated": updated, "overridden_skipped": overridden, "limit": limit}
 @app.get("/v1/devices/{device_id}")
 def device_detail(device_id: int, limit: int = Query(100, ge=1, le=500), db: Session = Depends(db_session), principal: Principal = Depends(protected("viewer"))):
     device = db.get(Device, device_id)

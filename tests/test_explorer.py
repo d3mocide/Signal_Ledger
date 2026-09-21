@@ -13,7 +13,7 @@ import app.main as main_module
 import app.tasks as tasks_module
 from app.crypto import decrypt_address
 from app.database import Base
-from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, apply_oui_csv, apply_oui_master_csv, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, export_devices_csv, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, refresh_oui_master, rename_area, retention_preview, reveal_device_address, update_anomaly
+from app.main import AnomalyPatch, AreaInput, AreaPatch, BaselineInput, HTTPException, RetentionSweepInput, apply_oui_csv, apply_oui_master_csv, create_area, create_baseline, delete_area, device_detail, device_vendor_summary, devices, dump, evaluate_baseline, export_devices_csv, import_oui, ingestion_report, list_anomalies, list_areas, list_runs, map_clusters, map_track, purge_retention, purge_run_data, quick_import, refresh_oui, refresh_oui_master, rename_area, retention_preview, reveal_device_address, update_anomaly
 from app.models import Device, IngestionJob, Observation, SurveyArea, SurveyRun
 from app.oui_catalog import load_catalog, lookup
 from app.security import Principal
@@ -248,6 +248,52 @@ def test_direct_import_creates_a_filename_named_session_and_default_collection(t
     assert not run.completed
 
 
+def test_invalid_direct_import_creates_no_collection_or_session(tmp_path, monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    monkeypatch.setattr(main_module, "RAW", tmp_path)
+    upload = UploadFile(filename="invalid.csv", file=BytesIO(b"not,a,capture\n"))
+
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(quick_import(
+            source_format="wigle",
+            file=upload,
+            session_name="Should not persist",
+            collection_name="Should not persist",
+            db=db,
+            principal=Principal(1, "analyst", "analyst"),
+        ))
+
+    assert error.value.status_code == 415
+    assert db.scalar(select(func.count()).select_from(SurveyArea)) == 0
+    assert db.scalar(select(func.count()).select_from(SurveyRun)) == 0
+
+
+def test_required_unavailable_parser_rejects_direct_import_before_record_creation(tmp_path, monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    monkeypatch.setattr(main_module, "RAW", tmp_path)
+    monkeypatch.setattr(main_module, "isolation_required", lambda: True)
+    monkeypatch.setattr(main_module, "isolation_healthy", lambda: False)
+    upload = UploadFile(filename="capture.csv", file=BytesIO(b"MAC,FirstTime\n00:11:22:33:44:55,2026-09-08T12:00:00Z\n"))
+
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(quick_import(
+            source_format="wigle",
+            file=upload,
+            session_name="Must not persist",
+            collection_name="Must not persist",
+            db=db,
+            principal=Principal(1, "analyst", "analyst"),
+        ))
+
+    assert error.value.status_code == 503
+    assert db.scalar(select(func.count()).select_from(SurveyArea)) == 0
+    assert db.scalar(select(func.count()).select_from(SurveyRun)) == 0
+
+
 def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
     engine = create_engine("sqlite://")
     Base.metadata.create_all(engine)
@@ -288,6 +334,68 @@ def test_upload_worker_report_device_and_coverage_flow(tmp_path, monkeypatch):
     assert inventory["items"][0]["category"] == "network"
     coverage = map_clusters(run_id=queued["capture_session_id"], limit=100, db=db, principal=Principal(1, "viewer", "viewer"))
     assert coverage == [{"cell": "37.775,-122.419", "count": 1, "avg_rssi": -41.0, "device_count": 1}]
+
+
+def test_uploaded_runs_produce_every_baseline_finding_type(tmp_path, monkeypatch):
+    """Exercise upload, worker, baseline creation, and later-run evaluation together."""
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, class_=_PostgisAgnosticSession)
+    monkeypatch.setattr(main_module, "RAW", tmp_path)
+    monkeypatch.setattr(main_module.queue, "enqueue", lambda *args, **kwargs: None)
+    monkeypatch.setattr(tasks_module, "SessionLocal", Session)
+    db = Session()
+    analyst = Principal(1, "analyst", "analyst")
+
+    def upload_and_process(filename, body, session_name):
+        queued = asyncio.run(quick_import(
+            source_format="wigle",
+            file=UploadFile(filename=filename, file=BytesIO(body)),
+            session_name=session_name,
+            collection_name="Authorized baseline area",
+            db=db,
+            principal=analyst,
+        ))
+        process_ingestion(queued["id"])
+        db.expire_all()
+        return queued
+
+    training = upload_and_process(
+        "baseline.csv",
+        b"MAC,FirstTime,SSID,Security,CurrentLatitude,CurrentLongitude,RSSI\n"
+        b"00:16:3E:11:22:33,2026-09-08T09:00:00Z,baseline-net,WPA2,37.1000,-122.1000,-42\n",
+        "Baseline capture",
+    )
+    area = db.scalar(select(SurveyArea).where(SurveyArea.name == "Authorized baseline area"))
+    baseline = create_baseline(BaselineInput(survey_area_id=area.id, name="Authorized baseline", run_ids=[training["capture_session_id"]]), db=db, principal=analyst)
+
+    later = asyncio.run(quick_import(
+        source_format="wigle",
+        file=UploadFile(
+            filename="later.csv",
+            file=BytesIO(
+                b"MAC,FirstTime,SSID,Security,CurrentLatitude,CurrentLongitude,RSSI\n"
+                b"00:16:3E:11:22:33,2026-09-09T14:00:00Z,changed-net,WPA3,38.1000,-121.1000,-38\n"
+                b"D8:50:E6:44:55:66,2026-09-09T14:30:00Z,new-device,WPA3,38.1000,-121.1000,-51\n"
+            ),
+        ),
+        session_name="Later capture",
+        collection_name="Authorized baseline area",
+        db=db,
+        principal=analyst,
+    ))
+    later_run = db.get(SurveyRun, later["capture_session_id"])
+    later_run.collector_coverage = .5
+    db.commit()
+    process_ingestion(later["id"])
+    db.expire_all()
+
+    result = evaluate_baseline(baseline["id"], db=db, principal=analyst)
+    assert result["findings"] == 6
+    findings = list_anomalies(baseline_id=baseline["id"], db=db, principal=analyst)
+    assert {item["kind"] for item in findings} == {
+        "coverage_anomaly", "novel_device", "novel_vendor", "profile_change", "spatial_outlier", "temporal_outlier",
+    }
 
 
 def test_hmac_rotation_creates_a_new_token_epoch_on_reingestion(tmp_path, monkeypatch):

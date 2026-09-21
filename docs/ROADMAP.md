@@ -60,6 +60,9 @@ policy defaults, and deterministic parser reports in CI.
   and collector coverage.
 - [x] Batched processing demonstrated on the authorized real WiGLE import.
 - [ ] Restricted parser isolation, malware scan, and robust MIME validation.
+  - [x] Pre-parser structural validation, fail-closed scanner hook, and no-record creation for rejected direct imports.
+  - [x] Optional restricted parser profile: bounded Unix-socket stream, networkless/read-only process, and fail-closed handoff.
+  - [ ] Qualify scanner and parser profiles against representative production captures before shared deployment.
 - [ ] Encrypted or external object storage with short retention configuration.
 - [x] Downloadable, human-readable ingestion report.
 - [x] Location-completeness, parser-version, and rejection-reason report context.
@@ -123,7 +126,7 @@ a coarse map/analytics view. Automated integration tests cover the path.
 - [x] Anomaly queue with score, confidence, explanation, and disposition.
 - [x] Audit trail for baseline creation/evaluation and dispositions.
 - [x] Analyst disposition notes and evidence links in the UI.
-- [ ] End-to-end integration tests from upload through every finding type.
+- [x] End-to-end integration test from upload through every finding type.
 
 **Exit gate:** selected runs yield a reproducible baseline and reviewable,
 non-automated findings with evidence and explanations.
@@ -278,10 +281,8 @@ expose their table semantics.
 
 ## Immediate next build sequence
 
-1. Add end-to-end upload-to-every-finding-type coverage and test it against a
-   representative authorized dataset.
-2. Finish restricted parser isolation, malware scanning, and an approved
+1. Qualify and deploy a scanner, restricted parser boundary, and approved
    encrypted/external raw-object storage deployment.
-3. Tune categorization thresholds from representative analyst feedback and
+2. Tune categorization thresholds from representative analyst feedback and
    perform the TLS/reverse-proxy and deployment-secret cutover on the intended
    production host.

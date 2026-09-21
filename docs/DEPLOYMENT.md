@@ -10,6 +10,11 @@ application container should not be exposed directly to an untrusted network.
    `APP_SECRET`, `ADDRESS_ENCRYPTION_KEY`, and `RAW_STORAGE_ENCRYPTION_KEY`.
    Set the raw-storage key if new upload artifacts should receive the optional
    application-level Fernet wrapping described in `POLICIES.md`.
+   For a deployment that accepts uploads, configure a scanner command available
+   inside the app container as `UPLOAD_SCANNER_COMMAND` and set
+   `UPLOAD_SCANNER_REQUIRED=true` after qualifying it with the intended scanner
+   definitions. The command reads the artifact on standard input and exits zero
+   only for a clean artifact; see `OPERATIONS.md` for the evidence to record.
 2. Set `COOKIE_SECURE=true` when the browser reaches the app through HTTPS.
    Keep it `false` only for a local HTTP development instance.
 3. Configure the proxy to forward only the application port, preserve the
@@ -19,6 +24,12 @@ application container should not be exposed directly to an untrusted network.
   `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` headers.
 5. Create the first administrator through the browser and make a backup before
   importing source files.
+
+For shared deployments or capture imports from tools you do not control, enable
+the optional isolated-parser profile documented in `OPERATIONS.md`. It is a
+fourth service with no network or data-store access; setting
+`PARSER_ISOLATION_MODE=required` without starting that profile fails ingestions
+closed rather than silently parsing in the app worker.
 
 The current UI includes Evidence Review, Rule Learning, Run Comparison,
 privacy-safe device fingerprints, saved inventory views, and policy-bounded

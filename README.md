@@ -32,6 +32,19 @@ Private, authorized-area discovery-log observatory. It ingests WiGLE CSV and Kis
 
 The stack intentionally uses three containers: app (FastAPI, static UI, and RQ worker under a supervisor), db (PostgreSQL/PostGIS), and redis (durable job queue). Raw uploads live on a named app volume; production encryption-at-rest should be supplied by the host volume or storage platform. On first use, create the initial administrator account in the UI. Passwords are Argon2-hashed and sessions are opaque HttpOnly cookies.
 
+Uploads are structure-checked before they create a job or reach a parser. To
+integrate a malware scanner, set `UPLOAD_SCANNER_COMMAND` to a command available
+inside the app container that reads an artifact from standard input and exits
+zero only for a clean result. Set `UPLOAD_SCANNER_REQUIRED=true` to fail closed
+when the scanner is absent, unavailable, times out, or rejects an artifact.
+
+For a stronger boundary around unfamiliar capture formats, the default
+three-service deployment can opt into a fourth, networkless parser service.
+It streams captures over a local Unix socket, has no database/Redis/raw-storage
+mount, runs with a read-only root filesystem and dropped capabilities, and is
+resource-limited. It is off by default for a personal installation; see the
+operations runbook before enabling it.
+
 ## Project records
 
 - [Design brief](docs/DESIGN.md) — current decisions, boundaries, and system shape.
@@ -53,7 +66,7 @@ The inventory intelligence layer currently includes:
 
 - Grouped and paginated evidence review with optional context, analyst
   dispositions, and audited category overrides.
-- Category rules `rules-v6` and role rules `roles-v1`, with retained evidence
+- Category rules `rules-v7` and role rules `roles-v1`, with retained evidence
   and confidence scores.
 - Analyst Learning for versioned rule proposals and false-positive measurement;
   accepting a proposal never silently changes production rules.
@@ -72,8 +85,8 @@ device deep links use `/#device?id=123`.
 The project does not use Prisma or automatic ORM schema generation. It uses the
 idempotent migration list in `app/migrations.py`. The app startup applies any
 pending migrations before serving traffic, and the applied versions are stored
-in `schema_migrations`. The current live OUI catalog migration is
-`0014_oui_master_catalog`.
+in `schema_migrations`. The current live schema migration is
+`0015_category_rules_v7`.
 
 ## OUI catalogs
 
@@ -99,8 +112,8 @@ presents only coarse cells.
 
 ## Validation status
 
-The current implementation has **58 containerized tests** passing, a passing
-frontend production build, live health verification, and migration `0014`
+The current implementation has **67 containerized tests** passing, a passing
+frontend production build, live health verification, and migration `0015`
 applied. Visual browser acceptance is still a separate open validation gate.
 
 Run the suite with:
@@ -121,7 +134,7 @@ behind HTTPS.
 This remains a private-tool foundation, not yet a production security
 deployment. Disposable backup/restore, HMAC-epoch, load, accessibility/browser,
 and local deployment-verification drills have passed. Restricted parser
-isolation and malware scanning, approved encrypted/external object storage,
+deployment-specific scanner qualification, approved encrypted/external object storage,
 categorization threshold tuning from representative feedback, and a real
 TLS/secret-store production deployment remain open. See [the operations
 runbook](docs/OPERATIONS.md) and [the roadmap](docs/ROADMAP.md) before using

@@ -15,7 +15,7 @@ COPY app ./app
 COPY tests ./tests
 COPY --from=frontend /frontend/dist/ ./app/static/
 COPY supervisord.conf ./
-RUN useradd --system --create-home ledger && mkdir -p /var/lib/signal-ledger/raw && chown -R ledger:ledger /app /var/lib/signal-ledger
+RUN useradd --system --create-home ledger && mkdir -p /var/lib/signal-ledger/raw /var/lib/signal-ledger/parser-socket && chown -R ledger:ledger /app /var/lib/signal-ledger
 USER ledger
 EXPOSE 8000
 CMD ["supervisord", "-c", "/app/supervisord.conf"]

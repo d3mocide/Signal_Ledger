@@ -51,7 +51,7 @@ Redis and processed by the RQ worker under Supervisor.
 
 ### Categorization and review
 
-- Category rule set `rules-v6` uses OUI organization, device name/type, SSID,
+- Category rule set `rules-v7` uses OUI organization, device name/type, SSID,
   protocol, and address scope.
 - Orthogonal role rule set `roles-v1` currently covers `retail_pos`,
   `security_access`, `smart_home`, `industrial_ot`, `medical`, and
@@ -113,11 +113,11 @@ state is component-local rather than encoded in the URL.
 
 The project uses the custom idempotent migration runner in
 `app/migrations.py`, not Prisma or automatic ORM migrations. The live schema
-currently includes migration `0014_oui_master_catalog`.
+currently includes migration `0015_category_rules_v7`.
 
 Current evidence:
 
-- 58 containerized backend tests pass.
+- 67 containerized backend tests pass.
 - Frontend TypeScript/Vite production build passes.
 - Live `/health` check passes after deployment.
 - `git diff --check` passes for the current worktree.
@@ -131,7 +131,10 @@ See [`ROADMAP.md`](ROADMAP.md) for the authoritative checklist. The current
 hardening evidence includes a 5,000-row disposable import/explorer load drill,
 a non-destructive database restore drill, a disposable HMAC token-epoch drill,
 dependency-aware health, structured redacted logs, and a post-upgrade verifier.
-Remaining gates are end-to-end upload-to-every-finding coverage, restricted
-parser isolation/malware scanning, approved encrypted or external raw-object
-storage, representative feedback threshold tuning, and a real TLS/secret-store
-production deployment.
+Remaining gates are scanner qualification for shared deployment, approved
+encrypted or external raw-object storage, representative feedback threshold
+tuning, and a real TLS/secret-store production deployment. An optional,
+networkless parser-isolation profile has structural and container integration
+coverage; a shared deployment still needs representative-capture qualification.
+The scanner hook has structural regression coverage but no scanner engine or
+definition set has yet been qualified for a target deployment.

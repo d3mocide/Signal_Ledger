@@ -84,7 +84,13 @@ New uploads can receive application-level Fernet wrapping when
 `RAW_STORAGE_ENCRYPTION_KEY` is configured; legacy plaintext jobs remain
 readable until separately migrated or purged. The admin-reviewed retention
 sweep exists, but external encrypted object storage and malware/parser
-controls are still operational gates. This is a development/private-
+controls are still operational gates. A local scanner command can gate uploads
+before job creation, but it must be qualified per deployment and does not
+isolate the parser. The optional Compose parser profile is a separate,
+networkless process that receives only a bounded Unix-socket byte stream and
+has no database, Redis, or raw-storage mount. Its transient input lives only in
+the parser container's `tmpfs`; its normalized response is framed and bounded
+before the RQ worker accepts it. This is a development/private-
 installation boundary, not a claim of production-grade at-rest protection.
 
 ## Supported input contract today
@@ -118,7 +124,8 @@ test before it is considered supported.
 
 1. Maintain a periodic operator review of upstream OUI Master terms, source
    quality, and update behavior before enabling it in a deployment.
-2. Add restricted parser isolation, malware scanning, and robust MIME controls.
+2. Qualify the optional parser-isolation profile and scanner engine against
+   representative shared-deployment capture inputs.
 3. Complete representative end-to-end, load, backup/restore, HMAC-rotation,
    accessibility, and browser acceptance evidence.
 4. Tune category thresholds after enough representative analyst feedback is

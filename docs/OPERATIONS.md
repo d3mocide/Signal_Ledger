@@ -50,6 +50,61 @@ the initial defaults may be supplied through `.env` before the first settings
 row is created. Make a backup before any sweep. The server does not schedule
 destructive work automatically.
 
+## Upload scanning
+
+The application rejects unsupported extensions, source/format mismatches,
+invalid UTF-8/control bytes, malformed JSON, and CSV captures without a
+recognizable MAC/BSSID header before it creates a job or sends anything to a
+parser. It can also execute a local scanner command without a shell.
+
+Set `UPLOAD_SCANNER_COMMAND` to the exact scanner invocation available in the
+app container. The command receives the unmodified upload on standard input,
+must emit no sensitive capture content to the application logs, and must exit
+zero only when the artifact is clean. Set `UPLOAD_SCANNER_REQUIRED=true` in a
+deployment that must reject uploads when the command is not configured, cannot
+start, times out, or reports a nonzero result. `UPLOAD_SCANNER_TIMEOUT_SECONDS`
+defaults to 120 and is bounded to 1–600 seconds.
+
+Qualify the selected scanner and its definitions in the deployment environment
+with an authorized harmless test fixture and a known-detection fixture. Record
+the image revision, scanner version/definition revision, command, result, and
+timestamp outside this repository. This hook does not itself isolate parsing;
+use and qualify the optional parser-isolation profile for shared deployments.
+
+## Optional parser isolation
+
+The default private installation parses in the RQ worker. A hardened deployment
+can instead enable an additional `parser` profile which receives a bounded
+capture stream over a Unix socket and returns normalized records to that worker.
+The parser has no network, no database/Redis credentials, no raw-upload volume,
+a read-only root filesystem, dropped Linux capabilities, a `noexec` temporary
+filesystem, 64 process IDs, 0.5 CPU, and a 768 MiB container memory cap. It is
+not started by the normal three-service Compose command.
+
+Enable it only after the host can reserve its resource limits:
+
+```bash
+PARSER_ISOLATION_MODE=required docker compose --profile parser-isolation up -d --build
+```
+
+Wait for `docker compose --profile parser-isolation ps` to show the parser as
+healthy before submitting a capture. This avoids an intentional fail-closed
+rejection during its short socket-startup window.
+
+The application rejects a new upload before it creates a job when the
+Unix-socket service is unavailable; it also fails the ingestion closed if the
+service does not complete within `PARSER_ISOLATION_TIMEOUT_SECONDS` (default
+120 seconds). The parser itself limits virtual memory to 512 MiB,
+CPU time to 90 seconds, and input size to the application's 100 MiB maximum;
+the `.env` values can lower or raise the first two within bounded ranges. Each
+ingestion report identifies `parser_isolation` as `isolated` or `in_process`.
+In required mode, `/health` also reports the parser as a required dependency.
+
+Validate this profile with representative authorized WiGLE and native Kismet
+fixtures, an intentional parser-service outage, and a capture near the 100 MiB
+limit. Keep it enabled for shared or third-party capture intake; personal,
+local-only deployments may deliberately leave it off.
+
 ## HMAC pseudonym rotation
 
 The HMAC secret scopes every device token. Rotating it changes all device
@@ -119,4 +174,4 @@ There is no Prisma schema or automatic ORM migration generation. App startup
 applies unapplied versions recorded in `schema_migrations`. During an upgrade,
 confirm the new version is recorded and run the rebuilt-image test suite before
 accepting traffic. The current feature set includes migration
-`0014_oui_master_catalog`.
+`0015_category_rules_v7`.

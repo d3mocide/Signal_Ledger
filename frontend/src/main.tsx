@@ -1525,7 +1525,7 @@ function CategoryOverview({ areas, role, showCategory, showRole, initialArea, se
       </div>
       {!roleRows.roles.length && !loading && <p className="muted">No role/context signals have been retained yet.</p>}
       {!rows.length && !loading && <p className="muted">No devices have been imported yet.</p>}
-      <p className="muted category-footnote">Rule set: rules-v6. Unknown means no configured signal cleared the evidence threshold. Open a device record to inspect evidence or apply an audited analyst override.</p>
+      <p className="muted category-footnote">Rule set: rules-v7. Unknown means no configured signal cleared the evidence threshold. Open a device record to inspect evidence or apply an audited analyst override.</p>
     </section>
   );
 }

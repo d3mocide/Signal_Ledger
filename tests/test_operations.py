@@ -17,6 +17,7 @@ def test_hmac_token_epochs_are_distinct_without_exposing_the_secret():
 
 
 def test_health_reports_dependency_status_without_database_details(monkeypatch):
+    monkeypatch.setenv("PARSER_ISOLATION_MODE", "off")
     class BrokenEngine:
         def connect(self):
             raise RuntimeError("database unavailable")
@@ -43,6 +44,7 @@ def test_health_reports_dependency_status_without_database_details(monkeypatch):
 
 
 def test_health_is_ok_only_when_database_and_redis_are_reachable(monkeypatch):
+    monkeypatch.setenv("PARSER_ISOLATION_MODE", "off")
     class Connection:
         def execute(self, statement):
             assert str(statement) == "SELECT 1"
@@ -72,3 +74,36 @@ def test_health_is_ok_only_when_database_and_redis_are_reachable(monkeypatch):
     response = main_module.health()
     assert response.status_code == 200
     assert json.loads(response.body)["components"] == {"database": True, "redis": True, "worker": True}
+
+
+def test_health_requires_the_isolated_parser_only_when_that_mode_is_enabled(monkeypatch):
+    class Connection:
+        def execute(self, statement):
+            assert str(statement) == "SELECT 1"
+
+    class Engine:
+        @contextmanager
+        def connect(self):
+            yield Connection()
+
+    class Redis:
+        def ping(self):
+            return True
+
+    class QueueWorker:
+        def queue_names(self):
+            return ["signal-ledger"]
+
+    class Worker:
+        @staticmethod
+        def all(connection):
+            return [QueueWorker()]
+
+    monkeypatch.setenv("PARSER_ISOLATION_MODE", "required")
+    monkeypatch.setattr(main_module, "engine", Engine())
+    monkeypatch.setattr(main_module, "redis", Redis())
+    monkeypatch.setattr(main_module, "Worker", Worker)
+    monkeypatch.setattr(main_module, "isolation_healthy", lambda: False)
+    response = main_module.health()
+    assert response.status_code == 503
+    assert json.loads(response.body)["components"]["parser_isolation"] is False
