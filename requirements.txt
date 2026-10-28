@@ -1,4 +1,4 @@
-fastapi==0.115.12
+fastapi==0.162.0
 uvicorn[standard]==0.34.2
 sqlalchemy==2.0.41
 psycopg[binary]==3.2.9
@@ -6,8 +6,8 @@ redis==5.2.1
 rq==2.3.3
 python-multipart==0.0.31
 pydantic==2.11.5
-supervisor==4.2.5
-setuptools<81
+supervisor==4.3.0
+setuptools>=84.1.0
 pytest==9.0.3
 argon2-cffi==23.1.0
 cryptography==50.0.0
