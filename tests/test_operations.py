@@ -13,7 +13,15 @@ def test_structured_log_fields_redact_sensitive_values():
 
 def test_hmac_token_epochs_are_distinct_without_exposing_the_secret():
     address = "001122334455"
-    assert device_token(address, b"first-disposable-epoch") != device_token(address, b"second-disposable-epoch")
+    assert device_token(address, "collection", 7, b"first-disposable-epoch") != device_token(address, "collection", 7, b"second-disposable-epoch")
+
+
+def test_device_tokens_are_stable_within_scope_and_distinct_across_scopes():
+    address = "001122334455"
+    secret = b"disposable-test-secret"
+    assert device_token(address, "collection", 7, secret) == device_token(address, "collection", 7, secret)
+    assert device_token(address, "collection", 7, secret) != device_token(address, "collection", 8, secret)
+    assert device_token(address, "collection", 7, secret) != device_token(address, "session", 7, secret)
 
 
 def test_health_reports_dependency_status_without_database_details(monkeypatch):

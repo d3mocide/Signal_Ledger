@@ -44,6 +44,8 @@ class Device(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     collection_id: Mapped[int | None] = mapped_column(ForeignKey("collections.id"), index=True, nullable=True)
     survey_area_id = synonym("collection_id")
+    identity_scope_kind: Mapped[str | None] = mapped_column(String(16), index=True, nullable=True)
+    identity_scope_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
     token: Mapped[str] = mapped_column(String(64), index=True)
     # This stores the actual matched assignment, not merely the first 24 bits.
     # MA-M and MA-S assignments use 7 and 9 hexadecimal characters respectively.
@@ -67,7 +69,7 @@ class Device(Base):
     first_seen: Mapped[datetime] = mapped_column(DateTime)
     last_seen: Mapped[datetime] = mapped_column(DateTime)
     encrypted_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    __table_args__ = (UniqueConstraint("token", name="uq_device_token"),)
+    __table_args__ = (UniqueConstraint("identity_scope_kind", "identity_scope_id", "token", name="uq_device_scope_token"),)
 
 class DeviceReview(Base):
     __tablename__ = "device_reviews"

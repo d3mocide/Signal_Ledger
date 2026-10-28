@@ -16,8 +16,26 @@ configure_logging()
 logger = logging.getLogger("signal_ledger")
 
 
-def device_token(normalized_address: str, secret: bytes | None = None) -> str:
+def legacy_device_token(normalized_address: str, secret: bytes | None = None) -> str:
+    """Return the v1 deployment-wide token used as the migration-safe base."""
     return hmac.new(secret if secret is not None else HMAC_SECRET, normalized_address.encode(), hashlib.sha256).hexdigest()
+
+
+def identity_scope(collection_id: int | None, capture_session_id: int) -> tuple[str, int]:
+    """Filed captures share a collection scope; direct imports are session-local."""
+    return ("collection", collection_id) if collection_id is not None else ("session", capture_session_id)
+
+
+def scoped_device_token(base_token: str, scope_kind: str, scope_id: int, secret: bytes | None = None) -> str:
+    if scope_kind not in {"collection", "session"} or not isinstance(scope_id, int) or scope_id < 1:
+        raise ValueError("invalid device identity scope")
+    key = secret if secret is not None else HMAC_SECRET
+    material = f"device-token-v2|{scope_kind}:{scope_id}|{base_token}"
+    return hmac.new(key, material.encode(), hashlib.sha256).hexdigest()
+
+
+def device_token(normalized_address: str, scope_kind: str, scope_id: int, secret: bytes | None = None) -> str:
+    return scoped_device_token(legacy_device_token(normalized_address, secret), scope_kind, scope_id, secret)
 
 def _cell(lat, lon):
     return f"{round(lat,3):.3f},{round(lon,3):.3f}" if lat is not None and lon is not None and not (lat == 0 and lon == 0) else None
@@ -29,7 +47,10 @@ def process_ingestion(job_id: int):
         if not job or job.status == "complete": return
         job.status = "processing"; db.commit()
         run = db.get(SurveyRun, job.survey_run_id)
+        if not run:
+            raise ValueError("capture session not found")
         area = db.get(SurveyArea, run.survey_area_id) if run.survey_area_id else None
+        scope_kind, scope_id = identity_scope(run.survey_area_id, run.id)
         exact_area = bool(area and area.precision == "exact")
         accepted = rejected = skipped = 0; reasons = {}; seen = set(); valid = []
         isolated = isolation_required()
@@ -43,14 +64,22 @@ def process_ingestion(job_id: int):
                 normalized = parsed.address.replace(":", "").replace("-", "").upper()
                 address_scope = mac_address_scope(parsed.address)
                 prefix = normalized[:6] if address_scope == "globally_administered" else None
-                token = device_token(normalized)
+                token = device_token(normalized, scope_kind, scope_id)
                 key = (token, parsed.captured_at, parsed.protocol, parsed.ssid, _cell(parsed.latitude, parsed.longitude))
                 if key in seen: skipped += 1; continue
                 seen.add(key)
                 valid.append((line, parsed, prefix, token, normalized))
         # Load the area inventory once, then flush in two bounded phases. This
         # avoids a select/flush/update round-trip for every row in a wardrive.
-        devices = {item.token: item for item in db.scalars(select(Device)).all()}
+        devices = {
+            item.token: item
+            for item in db.scalars(
+                select(Device).where(
+                    Device.identity_scope_kind == scope_kind,
+                    Device.identity_scope_id == scope_id,
+                )
+            ).all()
+        }
         oui_catalog = load_catalog(db)
         for _, parsed, prefix, token, normalized in valid:
             device = devices.get(token)
@@ -67,7 +96,7 @@ def process_ingestion(job_id: int):
             observed_role_scores, observed_role_evidence = device_role_scores(vendor, parsed.ssid, parsed.protocol, parsed.device_name, parsed.device_type)
             if not device:
                 category, confidence, evidence = category_from_scores(observed_scores, observed_evidence)
-                device = Device(token=token, oui_prefix=prefix, oui_organization=vendor, category=category, category_confidence=confidence, category_evidence=evidence, category_scores=observed_scores, category_rule_version=CATEGORY_RULE_VERSION, device_roles=device_roles_from_scores(observed_role_scores), role_scores=observed_role_scores, role_evidence=observed_role_evidence[:12], role_rule_version=ROLE_RULE_VERSION, address_scope=address_scope, first_seen=parsed.captured_at, last_seen=parsed.captured_at)
+                device = Device(collection_id=run.survey_area_id, identity_scope_kind=scope_kind, identity_scope_id=scope_id, token=token, oui_prefix=prefix, oui_organization=vendor, category=category, category_confidence=confidence, category_evidence=evidence, category_scores=observed_scores, category_rule_version=CATEGORY_RULE_VERSION, device_roles=device_roles_from_scores(observed_role_scores), role_scores=observed_role_scores, role_evidence=observed_role_evidence[:12], role_rule_version=ROLE_RULE_VERSION, address_scope=address_scope, first_seen=parsed.captured_at, last_seen=parsed.captured_at)
                 if exact_area: device.encrypted_address = encrypt_address(normalized)
                 db.add(device); devices[token] = device
             else:

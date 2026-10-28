@@ -406,9 +406,11 @@ def test_hmac_rotation_creates_a_new_token_epoch_on_reingestion(tmp_path, monkey
     capture = tmp_path / "authorized-capture.csv"
     capture.write_text("MAC,FirstTime,SSID\n00:11:22:33:44:55,2026-09-08T12:00:00Z,rotation-check\n")
     db = Session()
+    area = SurveyArea(name="Rotation area", authorization_ref="AUTH-ROTATION", precision="coarse")
+    db.add(area); db.flush()
 
     def ingest(epoch: bytes, suffix: str):
-        run = SurveyRun(name="Rotation " + suffix, authorization_ref="AUTH-ROTATION")
+        run = SurveyRun(survey_area_id=area.id, name="Rotation " + suffix, authorization_ref="AUTH-ROTATION")
         db.add(run); db.flush()
         job = IngestionJob(survey_run_id=run.id, filename="authorized-capture.csv", source_format="wigle", file_hash=suffix * 64, raw_path=str(capture))
         db.add(job); db.commit()
@@ -420,6 +422,51 @@ def test_hmac_rotation_creates_a_new_token_epoch_on_reingestion(tmp_path, monkey
     tokens = set(db.scalars(select(Device.token)).all())
     assert len(tokens) == 2
     assert db.query(Observation).count() == 2
+
+
+def test_process_ingestion_scopes_devices_by_collection_and_unfiled_session(tmp_path, monkeypatch):
+    engine = create_engine("sqlite://")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine, class_=_PostgisAgnosticSession)
+    monkeypatch.setattr(tasks_module, "SessionLocal", Session)
+    monkeypatch.setattr(tasks_module, "HMAC_SECRET", b"disposable-scope-test")
+    capture = tmp_path / "scope.csv"
+    capture.write_text("MAC,FirstTime,SSID\n00:11:22:33:44:55,2026-09-08T12:00:00Z,scope-check\n")
+    db = Session()
+    first_area = SurveyArea(name="First scope", authorization_ref="AUTH-SCOPE-1", precision="coarse")
+    second_area = SurveyArea(name="Second scope", authorization_ref="AUTH-SCOPE-2", precision="coarse")
+    db.add_all([first_area, second_area]); db.flush()
+
+    runs = [
+        SurveyRun(survey_area_id=first_area.id, name="First A", authorization_ref="AUTH-SCOPE-1"),
+        SurveyRun(survey_area_id=first_area.id, name="First B", authorization_ref="AUTH-SCOPE-1"),
+        SurveyRun(survey_area_id=second_area.id, name="Second", authorization_ref="AUTH-SCOPE-2"),
+        SurveyRun(name="Unfiled A", authorization_ref="AUTH-SCOPE-U"),
+        SurveyRun(name="Unfiled B", authorization_ref="AUTH-SCOPE-U"),
+    ]
+    db.add_all(runs); db.flush()
+    jobs = []
+    for index, run in enumerate(runs, start=1):
+        job = IngestionJob(survey_run_id=run.id, filename="scope.csv", source_format="wigle", file_hash=f"{index:064x}", raw_path=str(capture))
+        db.add(job); jobs.append(job)
+    db.commit()
+
+    for job in jobs:
+        process_ingestion(job.id)
+    db.expire_all()
+
+    devices = list(db.scalars(select(Device).order_by(Device.id)).all())
+    assert len(devices) == 4
+    assert len({device.token for device in devices}) == 4
+    assert {(device.identity_scope_kind, device.identity_scope_id) for device in devices} == {
+        ("collection", first_area.id),
+        ("collection", second_area.id),
+        ("session", runs[3].id),
+        ("session", runs[4].id),
+    }
+    first_device_ids = set(db.scalars(select(Observation.device_id).where(Observation.survey_run_id.in_([runs[0].id, runs[1].id]))).all())
+    assert len(first_device_ids) == 1
+    assert db.get(Device, first_device_ids.pop()).collection_id == first_area.id
 
 
 def test_failed_worker_keeps_capture_session_incomplete(tmp_path, monkeypatch):
